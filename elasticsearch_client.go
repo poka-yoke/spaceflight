@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -26,9 +27,17 @@ func updateSettings(client *elastic.Client, h *http.Client, url string, setting 
 func main() {
 	log.Println("Starting es-manager")
 
+	var message interface{}
 	if len(os.Args) == 2 {
-		message := os.Args[1]
+		err := json.Unmarshal([]byte(os.Args[1]), &message)
+		if err != nil {
+			log.Panicln(err)
+		}
 		log.Println(message)
+		// TODO: Parse the message contents here
+		for k, v := range message.(map[string]interface{}) {
+			log.Println(k, v)
+		}
 	} else {
 		log.Fatalln("Not enough Parameters!")
 	}
