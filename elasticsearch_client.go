@@ -1,10 +1,9 @@
 package main
 
 import (
-	//	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
-	//	"time"
+	"os"
 
 	"gopkg.in/olivere/elastic.v1"
 )
@@ -25,33 +24,45 @@ func updateSettings(client *elastic.Client, h *http.Client, url string, setting 
 }
 
 func main() {
+	log.Println("Starting es-manager")
+
+	if len(os.Args) == 2 {
+		message := os.Args[1]
+		log.Println(message)
+	} else {
+		log.Fatalln("Not enough Parameters!")
+	}
+
 	// Obtain a client and connect to the default Elasticsearch installation
 	// on 127.0.0.1:9200. Of course you can configure your client to connect
 	// to other hosts and configure it in various other ways.
 	h := http.DefaultClient
-	client, err := elastic.NewClient(h, "http://devex-es-develop-classic.us-east-1.elasticbeanstalk.com:80")
+
+	server := "http://devex-es-develop-classic.us-east-1.elasticbeanstalk.com:80"
+	log.Printf("Connecting to %s", server)
+	client, err := elastic.NewClient(h, server)
 	if err != nil {
 		// Handle error
-		panic(err)
+		log.Panicln(err)
 	}
 
 	// Getting the ES version number is quite common, so there's a shortcut
 	esversion, err := client.ElasticsearchVersion("http://devex-es-develop-classic.us-east-1.elasticbeanstalk.com:80")
 	if err != nil {
 		// Handle error
-		panic(err)
+		log.Panicln(err)
 	}
-	fmt.Printf("Elasticsearch version %s\n", esversion)
+	log.Printf("Elasticsearch version %s\n", esversion)
 
 	ret, err := updateSettings(client, h, "/_all/_settings", "auto_expand_replicas: 1-all")
 	if err != nil {
 		// Handle error
-		panic(err)
+		log.Panicln(err)
 	}
 	if ret != 200 {
-		fmt.Printf("Error! %d", ret)
+		log.Printf("Error! %d", ret)
 	} else {
-		fmt.Println("All good!")
+		log.Println("All good!")
 	}
 	ret, err = updateSettings(client, h, "/_cluster/settings", "{ \"transient\": { \"discovery.zen.minimum_master_nodes\": 2 } }")
 	if err != nil {
