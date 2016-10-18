@@ -83,4 +83,14 @@ func main() {
 	} else {
 		fmt.Println("All good!")
 	}
+	ret, err = updateSettings(client, h, "/_cluster/settings", "{ \"transient\": { \"discovery.zen.minimum_master_nodes\": 2 } }")
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+	if ret != 200 {
+		fmt.Printf("Error! %d", ret)
+	} else {
+		fmt.Println("All good!")
+	}
 }
