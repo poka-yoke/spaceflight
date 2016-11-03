@@ -103,6 +103,14 @@ func SplitResourceRecordSetTypeOnNames(l []*route53.ResourceRecordSet, f []strin
 }
 
 func main() {
+	zone_name := flag.String("zonename", "", "Hosted Zone's name to traverse")
+	ttl := flag.Int64("ttl", 300, "Desired TTL value")
+	flag.Parse()
+
+	if *zone_name == "" {
+		log.Fatal("Insufficient input parameters!")
+	}
+
 	sess, err := session.NewSession()
 	if err != nil {
 		log.Panicf("Failed to create session,", err)
@@ -111,22 +119,12 @@ func main() {
 
 	svc := route53.New(sess)
 
-	zone_name := flag.String("zonename", "", "Hosted Zone's name to traverse")
-	flag.Parse()
-
-	if *zone_name == "" {
-		log.Fatal("Insufficient input parameters!")
-	}
-
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(*zone_name),
 		MaxItems: aws.String("100"),
 	}
 	resp, err := svc.ListHostedZonesByName(params)
-
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
 		log.Println(err.Error())
 	}
 
@@ -141,5 +139,5 @@ func main() {
 	// Filter list in between
 	filter := []string{"A", "AAAA", "CNAME", "MX", "NAPTR", "PTR", "SPF", "SRV", "TXT"}
 	list = FilterResourceRecordSetType(list, filter)
-	UpsertResourceRecordSetTTL(list, 300, zone_id, svc)
+	UpsertResourceRecordSetTTL(list, ttl, zone_id, svc)
 }
