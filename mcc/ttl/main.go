@@ -9,6 +9,9 @@ import (
 	"log"
 )
 
+// GetResourceRecordSet returns a slice containing all responses for specified
+// query. It may issue more than one request as each returns a fixed amount of
+// entries at most.
 func GetResourceRecordSet(params *route53.ListResourceRecordSetsInput, svc *route53.Route53) (resource_record_set []*route53.ResourceRecordSet) {
 	for resp_is_truncated := true; resp_is_truncated; {
 		log.Printf("Query params: %s\n", params)
@@ -30,7 +33,9 @@ func GetResourceRecordSet(params *route53.ListResourceRecordSetsInput, svc *rout
 	return
 }
 
-func UpsertChangeList(list []*route53.ResourceRecordSet, ttl int64) (res []*route53.Change) {
+// upsertChangeList iterates over a list of records and returns a list of
+// Change objects of type Upsert with the specified TTL
+func upsertChangeList(list []*route53.ResourceRecordSet, ttl int64) (res []*route53.Change) {
 	for _, val := range list {
 		*val.TTL = ttl
 		change := &route53.Change{
@@ -43,8 +48,10 @@ func UpsertChangeList(list []*route53.ResourceRecordSet, ttl int64) (res []*rout
 	return
 }
 
+// UpsertResourceRecordSetTTL performs the request to change the TTL of the list
+// of records.
 func UpsertResourceRecordSetTTL(list []*route53.ResourceRecordSet, ttl int64, zone_id *string, svc *route53.Route53) {
-	change_slice := UpsertChangeList(list, ttl)
+	change_slice := upsertChangeList(list, ttl)
 
 	// Create batch with all jobs
 	change_batch := &route53.ChangeBatch{
@@ -70,6 +77,8 @@ func UpsertResourceRecordSetTTL(list []*route53.ResourceRecordSet, ttl int64, zo
 	fmt.Println(resp2)
 }
 
+// PrintRecords prints all records in a zone using the API's built-in method
+// ListResourceRecordSets.
 func PrintRecords(p *route53.ListResourceRecordSetsOutput, last bool) (shouldContinue bool) {
 	shouldContinue = *p.IsTruncated
 	for idx, val := range p.ResourceRecordSets {
@@ -78,6 +87,8 @@ func PrintRecords(p *route53.ListResourceRecordSetsOutput, last bool) (shouldCon
 	return
 }
 
+// FilterResourceRecordSetType returns a slice containing only the entries with
+// specified types of the original record slice
 func FilterResourceRecordSetType(l []*route53.ResourceRecordSet, f []string) (result []*route53.ResourceRecordSet) {
 	for _, elem := range l {
 		for _, filter := range f {
