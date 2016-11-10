@@ -9,6 +9,8 @@ import (
 	"log"
 )
 
+var verbose bool
+
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
 // entries at most.
@@ -17,7 +19,9 @@ func GetResourceRecordSet(
 	svc *route53.Route53,
 ) (resourceRecordSet []*route53.ResourceRecordSet) {
 	for respIsTruncated := true; respIsTruncated; {
-		log.Printf("Query params: %s\n", params)
+		if verbose {
+			log.Printf("Query params: %s\n", params)
+		}
 		resp, err := svc.ListResourceRecordSets(params)
 		if err != nil {
 			panic(err)
@@ -40,7 +44,8 @@ func GetResourceRecordSet(
 // Change objects of type Upsert with the specified TTL
 func upsertChangeList(
 	list []*route53.ResourceRecordSet,
-	ttl int64) (res []*route53.Change) {
+	ttl int64,
+) (res []*route53.Change) {
 	for _, val := range list {
 		*val.TTL = ttl
 		change := &route53.Change{
@@ -62,7 +67,8 @@ func UpsertResourceRecordSetTTL(
 	list []*route53.ResourceRecordSet,
 	ttl int64,
 	zoneID *string,
-	svc *route53.Route53) {
+	svc *route53.Route53,
+) {
 	changeSlice := upsertChangeList(list, ttl)
 
 	// Create batch with all jobs
@@ -86,14 +92,17 @@ func UpsertResourceRecordSetTTL(
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Println(resp2)
+	if verbose {
+		fmt.Println(resp2)
+	}
 }
 
 // PrintRecords prints all records in a zone using the API's built-in method
 // ListResourceRecordSets.
 func PrintRecords(
 	p *route53.ListResourceRecordSetsOutput,
-	last bool) (shouldContinue bool) {
+	last bool,
+) (shouldContinue bool) {
 	shouldContinue = *p.IsTruncated
 	for idx, val := range p.ResourceRecordSets {
 		fmt.Println(idx, *val)
@@ -105,7 +114,8 @@ func PrintRecords(
 // specified types of the original record slice
 func FilterResourceRecordSetType(
 	l []*route53.ResourceRecordSet,
-	f []string) (result []*route53.ResourceRecordSet) {
+	f []string,
+) (result []*route53.ResourceRecordSet) {
 	for _, elem := range l {
 		for _, filter := range f {
 			if *elem.Type == filter {
@@ -121,9 +131,8 @@ func FilterResourceRecordSetType(
 // matches from the f argument.
 func SplitResourceRecordSetTypeOnNames(
 	l []*route53.ResourceRecordSet,
-	f []string) (
-	result1 []*route53.ResourceRecordSet,
-	result2 []*route53.ResourceRecordSet) {
+	f []string,
+) (result1 []*route53.ResourceRecordSet, result2 []*route53.ResourceRecordSet) {
 	result1 = l
 	for _, elem := range l {
 		for _, filter := range f {
@@ -142,6 +151,8 @@ func main() {
 		"",
 		"Hosted Zone's name to traverse")
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
+	flag.BoolVar(&verbose, "v", false, "Increments output")
+
 	flag.Parse()
 
 	if *zoneName == "" {
@@ -166,8 +177,10 @@ func main() {
 	}
 
 	zoneID := resp.HostedZones[0].Id
-	// Pretty-print the response data.
-	fmt.Println(*zoneID)
+	if verbose {
+		// Pretty-print the response data.
+		fmt.Println(*zoneID)
+	}
 
 	params2 := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(*zoneID),
