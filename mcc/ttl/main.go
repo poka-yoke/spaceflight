@@ -11,6 +11,7 @@ import (
 )
 
 var verbose bool
+var wait bool
 
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
@@ -180,6 +181,7 @@ func main() {
 		"Hosted Zone's name to traverse")
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
+	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
 
 	flag.Parse()
 
@@ -231,5 +233,7 @@ func main() {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	WaitForChangeToComplete(changeResponse.ChangeInfo, svc)
+	if wait {
+		WaitForChangeToComplete(changeResponse.ChangeInfo, svc)
+	}
 }
