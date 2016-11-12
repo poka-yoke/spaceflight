@@ -22,7 +22,7 @@ func GetResourceRecordSet(
 ) (resourceRecordSet []*route53.ResourceRecordSet) {
 	for respIsTruncated := true; respIsTruncated; {
 		if verbose {
-			log.Printf("Query params: %s\n", params)
+			fmt.Printf("Query params: %s\n", params)
 		}
 		resp, err := svc.ListResourceRecordSets(params)
 		if err != nil {
