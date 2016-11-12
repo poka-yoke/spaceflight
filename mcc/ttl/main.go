@@ -7,9 +7,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"log"
+	"time"
 )
 
 var verbose bool
+var wait bool
 
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
@@ -20,7 +22,7 @@ func GetResourceRecordSet(
 ) (resourceRecordSet []*route53.ResourceRecordSet) {
 	for respIsTruncated := true; respIsTruncated; {
 		if verbose {
-			log.Printf("Query params: %s\n", params)
+			fmt.Printf("Query params: %s\n", params)
 		}
 		resp, err := svc.ListResourceRecordSets(params)
 		if err != nil {
@@ -61,6 +63,29 @@ func upsertChangeList(
 	return
 }
 
+// WaitForChangeToComplete waits until the ChangeInfo described by the argument is completed.
+func WaitForChangeToComplete(
+	changeInfo *route53.ChangeInfo,
+	svc *route53.Route53,
+) {
+	getChangeInput := route53.GetChangeInput{Id: changeInfo.Id}
+	getChangeOutput, err := svc.GetChange(&getChangeInput)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	for *getChangeOutput.ChangeInfo.Status != route53.ChangeStatusInsync {
+		time.Sleep(1)
+		getChangeOutput, err = svc.GetChange(&getChangeInput)
+		if err != nil {
+			log.Panic(err.Error())
+		}
+	}
+	if verbose {
+		fmt.Println(getChangeOutput.ChangeInfo)
+	}
+	log.Println("All changes applied")
+}
+
 // UpsertResourceRecordSetTTL performs the request to change the TTL of the list
 // of records.
 func UpsertResourceRecordSetTTL(
@@ -68,6 +93,9 @@ func UpsertResourceRecordSetTTL(
 	ttl int64,
 	zoneID *string,
 	svc *route53.Route53,
+) (
+	changeResponse *route53.ChangeResourceRecordSetsOutput,
+	err error,
 ) {
 	changeSlice := upsertChangeList(list, ttl)
 
@@ -88,13 +116,14 @@ func UpsertResourceRecordSetTTL(
 		log.Panic(err.Error())
 	}
 	// Submit batch changes
-	resp2, err := svc.ChangeResourceRecordSets(changeRRSInput)
+	changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
 	if err != nil {
 		log.Panic(err)
 	}
 	if verbose {
-		fmt.Println(resp2)
+		fmt.Println(changeResponse.ChangeInfo)
 	}
+	return
 }
 
 // PrintRecords prints all records in a zone using the API's built-in method
@@ -152,6 +181,7 @@ func main() {
 		"Hosted Zone's name to traverse")
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
+	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
 
 	flag.Parse()
 
@@ -199,5 +229,11 @@ func main() {
 		"TXT",
 	}
 	list = FilterResourceRecordSetType(list, filter)
-	UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
+	changeResponse, err := UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	if wait {
+		WaitForChangeToComplete(changeResponse.ChangeInfo, svc)
+	}
 }
