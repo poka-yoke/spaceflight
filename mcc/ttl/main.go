@@ -16,6 +16,8 @@ var wait bool
 
 type filter []string
 
+var entryTypeFlag filter
+
 func (f *filter) String() string {
 	return fmt.Sprint(*f)
 }
@@ -196,11 +198,18 @@ func main() {
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
 	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
+	flag.Var(&entryTypeFlag, "t", "comma-separated list of entry record types")
 
 	flag.Parse()
 
 	if *zoneName == "" {
 		log.Fatal("Insufficient input parameters!")
+	}
+
+	if len(entryTypeFlag) == 0 {
+		for _, f := range []string{"A", "AAAA", "CNAME", "MX", "NAPTR", "PTR", "SPF", "SRV", "TXT"} {
+			entryTypeFlag = append(entryTypeFlag, f)
+		}
 	}
 
 	sess, err := session.NewSession()
@@ -231,18 +240,7 @@ func main() {
 	}
 	list := GetResourceRecordSet(params2, svc)
 	// Filter list in between
-	filter := []string{
-		"A",
-		"AAAA",
-		"CNAME",
-		"MX",
-		"NAPTR",
-		"PTR",
-		"SPF",
-		"SRV",
-		"TXT",
-	}
-	list = FilterResourceRecordSetType(list, filter)
+	list = FilterResourceRecordSetType(list, entryTypeFlag)
 	changeResponse, err := UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
