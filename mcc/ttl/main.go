@@ -7,11 +7,25 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"log"
+	"strings"
 	"time"
 )
 
 var verbose bool
 var wait bool
+
+type filter []string
+
+func (f *filter) String() string {
+	return fmt.Sprint(*f)
+}
+
+func (f *filter) Set(value string) error {
+	for _, val := range strings.Split(value, ",") {
+		*f = append(*f, val)
+	}
+	return nil
+}
 
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
