@@ -122,7 +122,7 @@ func UpsertResourceRecordSetTTL(
 		Changes: changeSlice,
 	}
 	if err := changeBatch.Validate(); err != nil {
-		log.Panic(err)
+		log.Panic(err.Error())
 	}
 
 	changeRRSInput := &route53.ChangeResourceRecordSetsInput{
