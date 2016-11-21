@@ -17,6 +17,7 @@ var wait bool
 type filter []string
 
 var entryTypeFlag filter
+var entryNameFlag filter
 
 func (f *filter) String() string {
 	return fmt.Sprint(*f)
@@ -198,7 +199,12 @@ func main() {
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
 	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
-	flag.Var(&entryTypeFlag, "t", "comma-separated list of entry record types")
+	flag.Var(&entryTypeFlag,
+		"t",
+		"Comma-separated list of entry record types")
+	flag.Var(&entryNameFlag,
+		"n",
+		"Comma-separated list of entry record names")
 
 	flag.Parse()
 
@@ -241,6 +247,10 @@ func main() {
 	list := GetResourceRecordSet(params2, svc)
 	// Filter list in between
 	list = FilterResourceRecordSetType(list, entryTypeFlag)
+	list, list2 := SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
+	if len(list2) > 0 {
+		list = list2
+	}
 	changeResponse, err := UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
