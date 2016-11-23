@@ -19,6 +19,16 @@ func GetDB(connection string) (db *sql.DB, err error) {
 	return
 }
 
+// In returns true if the first argument is in the second.
+func In(item string, list []string) bool {
+	for _, element := range list {
+		if element == item {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 	connection := flag.String(
 		"connection",
@@ -33,13 +43,24 @@ func main() {
 	options := map[string]bool{
 		"showInactive": *showInactive,
 	}
+	function := func(surgeon.XODB, map[string]bool) (fmt.Stringer, error) {
+		return nil, nil
+	}
+	switch {
+	case In("ps", flag.Args()):
+		function = surgeon.GetProcesses
+	case In("locks", flag.Args()):
+		function = surgeon.GetBlocks
+	default:
+		flag.Usage()
+	}
 
 	db, err := GetDB(*connection)
 	defer db.Close()
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	result, err := surgeon.GetProcessLists(db, options)
+	result, err := function(db, options)
 	if err != nil {
 		log.Panic(err.Error())
 	}
