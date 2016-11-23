@@ -78,8 +78,8 @@ func (pl ProcessList) String() (output string) {
 	return
 }
 
-// GetProcessLists runs a custom query, returning results as ProcessList.
-func GetProcessLists(db XODB, options map[string]bool) (ProcessList, error) {
+// GetProcesses runs a custom query, returning results as ProcessList.
+func GetProcesses(db XODB, options map[string]bool) (fmt.Stringer, error) {
 	var err error
 
 	// sql query
