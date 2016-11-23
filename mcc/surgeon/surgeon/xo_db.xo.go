@@ -76,7 +76,12 @@ func (ss *StringSlice) Scan(src interface{}) error {
 func (ss StringSlice) Value() (driver.Value, error) {
 	v := make([]string, len(ss))
 	for i, s := range ss {
-		v[i] = `"` + strings.Replace(strings.Replace(s, `\`, `\\\`, -1), `"`, `\"`, -1) + `"`
+		v[i] = `"` + strings.Replace(
+			strings.Replace(s, `\`, `\\\`, -1),
+			`"`,
+			`\"`,
+			-1,
+		) + `"`
 	}
 	return "{" + strings.Join(v, ",") + "}", nil
 }
