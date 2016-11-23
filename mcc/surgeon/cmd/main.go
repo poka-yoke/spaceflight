@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/lib/pq"
-	"github.com/poka-yoke/spaceflight/mcc/surgeon/surgeon"
+	"github.com/poka-yoke/spaceflight/mcc/surgeon"
 	"log"
 	"strings"
 )
