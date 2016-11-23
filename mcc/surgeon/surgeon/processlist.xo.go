@@ -81,8 +81,7 @@ func GetProcessLists(db XODB) (ProcessList, error) {
 		`        'false'` +
 		`      END` +
 		`    FROM pg_stat_activity` +
-		`    WHERE query NOT ILIKE '%pg_stat_activity%'` +
-		``
+		`    WHERE query NOT ILIKE '%pg_stat_activity%'`
 
 	// run query
 	XOLog(sqlstr)
@@ -98,7 +97,15 @@ func GetProcessLists(db XODB) (ProcessList, error) {
 		pl := Process{}
 
 		// scan
-		err = q.Scan(&pl.Pid, &pl.Usename, &pl.Datname, &pl.Client, &pl.Duration, &pl.Query, &pl.Waiting)
+		err = q.Scan(
+			&pl.Pid,
+			&pl.Usename,
+			&pl.Datname,
+			&pl.Client,
+			&pl.Duration,
+			&pl.Query,
+			&pl.Waiting,
+		)
 		if err != nil {
 			return nil, err
 		}
