@@ -13,10 +13,12 @@ import (
 
 var verbose bool
 var wait bool
+var dryrun bool
 
 type filter []string
 
 var entryTypeFlag filter
+var entryNameFlag filter
 
 func (f *filter) String() string {
 	return fmt.Sprint(*f)
@@ -120,7 +122,7 @@ func UpsertResourceRecordSetTTL(
 		Changes: changeSlice,
 	}
 	if err := changeBatch.Validate(); err != nil {
-		log.Panic(err)
+		log.Panic(err.Error())
 	}
 
 	changeRRSInput := &route53.ChangeResourceRecordSetsInput{
@@ -132,11 +134,13 @@ func UpsertResourceRecordSetTTL(
 		log.Panic(err.Error())
 	}
 	// Submit batch changes
-	changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
+	if !dryrun {
+		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
+	}
 	if err != nil {
 		log.Panic(err)
 	}
-	if verbose {
+	if verbose && !dryrun {
 		fmt.Println(changeResponse.ChangeInfo)
 	}
 	return
@@ -198,7 +202,13 @@ func main() {
 	ttl := flag.Int64("ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
 	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
-	flag.Var(&entryTypeFlag, "t", "comma-separated list of entry record types")
+	flag.BoolVar(&dryrun, "dryrun", false, "Does not commit the changes")
+	flag.Var(&entryTypeFlag,
+		"t",
+		"Comma-separated list of entry record types")
+	flag.Var(&entryNameFlag,
+		"n",
+		"Comma-separated list of entry record names")
 
 	flag.Parse()
 
@@ -241,11 +251,15 @@ func main() {
 	list := GetResourceRecordSet(params2, svc)
 	// Filter list in between
 	list = FilterResourceRecordSetType(list, entryTypeFlag)
+	list, list2 := SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
+	if len(list2) > 0 {
+		list = list2
+	}
 	changeResponse, err := UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	if wait {
+	if wait && !dryrun {
 		WaitForChangeToComplete(changeResponse.ChangeInfo, svc)
 	}
 }
