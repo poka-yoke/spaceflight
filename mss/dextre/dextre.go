@@ -195,6 +195,9 @@ var Blacklists = []string{
 	"all.s5h.net",
 }
 
+// Lookup contains the lookup function used
+var Lookup = net.LookupHost
+
 // Reverse reverses slice of string elements.
 func Reverse(original []string) {
 	for i := len(original)/2 - 1; i >= 0; i-- {
@@ -219,7 +222,7 @@ func DNSBLQuery(ipAddress, bl string, addresses chan int) {
 		ReverseAddress(ipAddress),
 		bl,
 	)
-	result, _ := net.LookupHost(reversedIPAddress)
+	result, _ := Lookup(reversedIPAddress)
 	if len(result) > 0 {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
 	}
