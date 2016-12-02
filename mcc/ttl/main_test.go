@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/service/route53"
+	"strings"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 var one = "one.example.com"
@@ -10,15 +12,19 @@ var two = "two.example.com"
 
 var A = "A"
 var AAAA = "AAAA"
+var duration1 int64 = 1
+var duration5 int64 = 5
 
 var onerecordA = &route53.ResourceRecordSet{
 	Name: &one,
 	Type: &A,
+	TTL:  &duration1,
 }
 
 var tworecordAAAA = &route53.ResourceRecordSet{
 	Name: &two,
 	Type: &AAAA,
+	TTL:  &duration5,
 }
 
 var ResourceRecordSetList = []*route53.ResourceRecordSet{
@@ -70,11 +76,7 @@ var rrstest = []struct {
 
 func TestFilterResourceRecordSetType(t *testing.T) {
 	for _, tt := range rrstest {
-		name := tt.filter[0]
-		for i := 1; i < len(tt.filter); i++ {
-			name += "," + tt.filter[i]
-		}
-		t.Run(name, func(t *testing.T) {
+		t.Run(strings.Join(tt.filter, ","), func(t *testing.T) {
 			r := FilterResourceRecordSetType(tt.rrsl, tt.filter)
 			if len(r) != len(tt.out) {
 				t.Error("Result has different length than expected")
@@ -85,5 +87,29 @@ func TestFilterResourceRecordSetType(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+var ucltest = []struct {
+	original []*route53.ResourceRecordSet
+	ttl      int64
+}{
+	{
+		ResourceRecordSetList,
+		60,
+	},
+	{
+		ResourceRecordSetList,
+		300,
+	},
+}
+
+func TestUpsertChangeList(t *testing.T) {
+	for _, tt := range ucltest {
+		for _, change := range upsertChangeList(tt.original, tt.ttl) {
+			if *change.ResourceRecordSet.TTL != tt.ttl {
+				t.Error("TTL doesn't match")
+			}
+		}
 	}
 }
