@@ -11,12 +11,13 @@ import (
 	"time"
 )
 
+type filter []string
+
+var zoneName string
+var ttl int64
 var verbose bool
 var wait bool
 var dryrun bool
-
-type filter []string
-
 var entryTypeFlag filter
 var entryNameFlag filter
 
@@ -195,11 +196,9 @@ func SplitResourceRecordSetTypeOnNames(
 }
 
 func main() {
-	zoneName := flag.String(
-		"zonename",
-		"",
-		"Hosted Zone's name to traverse")
-	ttl := flag.Int64("ttl", 300, "Desired TTL value")
+
+	flag.StringVar(&zoneName, "zonename", "", "Hosted Zone's name to traverse")
+	flag.Int64Var(&ttl, "ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
 	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
 	flag.BoolVar(&dryrun, "dryrun", false, "Does not commit the changes")
@@ -212,7 +211,7 @@ func main() {
 
 	flag.Parse()
 
-	if *zoneName == "" {
+	if zoneName == "" {
 		log.Fatal("Insufficient input parameters!")
 	}
 
@@ -231,7 +230,7 @@ func main() {
 	svc := route53.New(sess)
 
 	params := &route53.ListHostedZonesByNameInput{
-		DNSName:  aws.String(*zoneName),
+		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
 	}
 	resp, err := svc.ListHostedZonesByName(params)
@@ -255,7 +254,7 @@ func main() {
 	if len(list2) > 0 {
 		list = list2
 	}
-	changeResponse, err := UpsertResourceRecordSetTTL(list, *ttl, zoneID, svc)
+	changeResponse, err := UpsertResourceRecordSetTTL(list, ttl, zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
 	}
