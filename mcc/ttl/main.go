@@ -195,8 +195,8 @@ func SplitResourceRecordSetTypeOnNames(
 	return
 }
 
-func main() {
-
+// Init sets the flag parsing and input validations
+func Init() {
 	flag.StringVar(&zoneName, "zonename", "", "Hosted Zone's name to traverse")
 	flag.Int64Var(&ttl, "ttl", 300, "Desired TTL value")
 	flag.BoolVar(&verbose, "v", false, "Increments output")
@@ -220,7 +220,10 @@ func main() {
 			entryTypeFlag = append(entryTypeFlag, f)
 		}
 	}
+}
 
+func main() {
+	Init()
 	sess, err := session.NewSession()
 	if err != nil {
 		log.Panicf("Failed to create session: %s", err)
