@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/service/route53"
+	"strings"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 var one = "one.example.com"
@@ -74,11 +76,7 @@ var rrstest = []struct {
 
 func TestFilterResourceRecordSetType(t *testing.T) {
 	for _, tt := range rrstest {
-		name := tt.filter[0]
-		for i := 1; i < len(tt.filter); i++ {
-			name += "," + tt.filter[i]
-		}
-		t.Run(name, func(t *testing.T) {
+		t.Run(strings.Join(tt.filter, ","), func(t *testing.T) {
 			r := FilterResourceRecordSetType(tt.rrsl, tt.filter)
 			if len(r) != len(tt.out) {
 				t.Error("Result has different length than expected")
