@@ -220,13 +220,25 @@ func Init() {
 	}
 
 	if len(entryTypeFlag) == 0 {
-		for _, f := range []string{"A", "AAAA", "CNAME", "MX", "NAPTR", "PTR", "SPF", "SRV", "TXT"} {
+		for _, f := range []string{
+			"A",
+			"AAAA",
+			"CNAME",
+			"MX",
+			"NAPTR",
+			"PTR",
+			"SPF",
+			"SRV",
+			"TXT",
+		} {
 			entryTypeFlag = append(entryTypeFlag, f)
 		}
 	}
 }
 
-func getZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
+// GetZoneID returns a string containing the ZoneID for use in further API
+// actions
+func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
@@ -252,7 +264,7 @@ func main() {
 	}
 
 	svc := route53.New(sess)
-	zoneID := getZoneID(zoneName, svc)
+	zoneID := GetZoneID(zoneName, svc)
 
 	list := GetResourceRecordSet(zoneID, svc)
 	// Filter list in between
