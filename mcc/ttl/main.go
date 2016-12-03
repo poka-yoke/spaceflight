@@ -223,7 +223,7 @@ func Init() {
 	}
 }
 
-func getZoneID(zoneName string, svc *route53.Route53) string {
+func getZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
@@ -232,7 +232,12 @@ func getZoneID(zoneName string, svc *route53.Route53) string {
 	if err != nil {
 		log.Println(err.Error())
 	}
-	return *resp.HostedZones[0].Id
+	zoneID = *resp.HostedZones[0].Id
+	if verbose {
+		// Pretty-print the response data.
+		fmt.Println(zoneID)
+	}
+	return
 }
 
 func main() {
@@ -245,10 +250,6 @@ func main() {
 
 	svc := route53.New(sess)
 	zoneID := getZoneID(zoneName, svc)
-	if verbose {
-		// Pretty-print the response data.
-		fmt.Println(zoneID)
-	}
 
 	params := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(zoneID),
