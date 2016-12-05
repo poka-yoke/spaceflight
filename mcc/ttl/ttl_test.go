@@ -150,3 +150,16 @@ func TestFilterSet(t *testing.T) {
 		})
 	}
 }
+
+func TestGetResourceRecordSet(t *testing.T) {
+	mockSvc := &mockRoute53Client{}
+	out := GetResourceRecordSet("test", mockSvc)
+	if len(out) != len(ResourceRecordSetList) {
+		t.Error("Response doesn't match")
+	}
+	for i, val := range ResourceRecordSetList {
+		if out[i] != val {
+			t.Error("Response doesn't match")
+		}
+	}
+}
