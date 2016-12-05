@@ -169,23 +169,39 @@ func TestFilterSet(t *testing.T) {
 	}
 }
 
+var grrstest = []string{
+	"test",
+}
+
 func TestGetResourceRecordSet(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
-	out := GetResourceRecordSet("test", mockSvc)
-	if len(out) != len(ResourceRecordSetList) {
-		t.Error("Response doesn't match")
+	for _, s := range grrstest {
+		t.Run(s, func(t *testing.T) {
+			out := GetResourceRecordSet(s, mockSvc)
+			if len(out) != len(ResourceRecordSetList) {
+				t.Error("Response doesn't match")
+			}
+			for i, val := range ResourceRecordSetList {
+				if out[i] != val {
+					t.Error("Response doesn't match")
+				}
+			}
+		})
 	}
-	for i, val := range ResourceRecordSetList {
-		if out[i] != val {
-			t.Error("Response doesn't match")
-		}
-	}
+}
+
+var gzitest = []string{
+	"test",
 }
 
 func TestGetZoneID(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
-	out := GetZoneID("test", mockSvc)
-	if out != "test" {
-		t.Error("Response doesn't match")
+	for _, s := range grrstest {
+		t.Run(s, func(t *testing.T) {
+			out := GetZoneID(s, mockSvc)
+			if out != s {
+				t.Error("Response doesn't match")
+			}
+		})
 	}
 }
