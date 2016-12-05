@@ -11,6 +11,7 @@ import (
 var one = "one.example.com"
 var two = "two.example.com"
 var hundred = "100"
+var zoneName = "test"
 var A = "A"
 var AAAA = "AAAA"
 var fals = false
@@ -34,6 +35,10 @@ var ResourceRecordSetList = []*route53.ResourceRecordSet{
 	tworecordAAAA,
 }
 
+var hostedZone = route53.HostedZone{
+	CallerReference: &hundred,
+}
+
 // Define a mock struct to be used in unit tests.
 type mockRoute53Client struct {
 	route53iface.Route53API
@@ -46,6 +51,19 @@ func (m *mockRoute53Client) ListResourceRecordSets(
 		IsTruncated:        &fals,
 		MaxItems:           &hundred,
 		ResourceRecordSets: ResourceRecordSetList,
+	}
+	return
+}
+
+func (m *mockRoute53Client) ListHostedZonesByName(
+	params *route53.ListHostedZonesByNameInput,
+) (out *route53.ListHostedZonesByNameOutput, err error) {
+	hostedZone.Id = &zoneName
+	hostedZone.Name = &zoneName
+	out = &route53.ListHostedZonesByNameOutput{
+		IsTruncated: &fals,
+		MaxItems:    &hundred,
+		HostedZones: []*route53.HostedZone{&hostedZone},
 	}
 	return
 }
@@ -161,5 +179,13 @@ func TestGetResourceRecordSet(t *testing.T) {
 		if out[i] != val {
 			t.Error("Response doesn't match")
 		}
+	}
+}
+
+func TestGetZoneID(t *testing.T) {
+	mockSvc := &mockRoute53Client{}
+	out := GetZoneID("test", mockSvc)
+	if out != "test" {
+		t.Error("Response doesn't match")
 	}
 }

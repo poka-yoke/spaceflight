@@ -201,7 +201,7 @@ func SplitResourceRecordSetTypeOnNames(
 
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
-func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
+func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
