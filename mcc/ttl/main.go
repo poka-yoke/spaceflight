@@ -37,9 +37,12 @@ func (f *filter) Set(value string) error {
 // query. It may issue more than one request as each returns a fixed amount of
 // entries at most.
 func GetResourceRecordSet(
-	params *route53.ListResourceRecordSetsInput,
+	zoneID string,
 	svc *route53.Route53,
 ) (resourceRecordSet []*route53.ResourceRecordSet) {
+	params := &route53.ListResourceRecordSetsInput{
+		HostedZoneId: aws.String(zoneID),
+	}
 	for respIsTruncated := true; respIsTruncated; {
 		if verbose {
 			fmt.Printf("Query params: %s\n", params)
@@ -217,13 +220,25 @@ func Init() {
 	}
 
 	if len(entryTypeFlag) == 0 {
-		for _, f := range []string{"A", "AAAA", "CNAME", "MX", "NAPTR", "PTR", "SPF", "SRV", "TXT"} {
+		for _, f := range []string{
+			"A",
+			"AAAA",
+			"CNAME",
+			"MX",
+			"NAPTR",
+			"PTR",
+			"SPF",
+			"SRV",
+			"TXT",
+		} {
 			entryTypeFlag = append(entryTypeFlag, f)
 		}
 	}
 }
 
-func getZoneID(zoneName string, svc *route53.Route53) string {
+// GetZoneID returns a string containing the ZoneID for use in further API
+// actions
+func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
@@ -232,7 +247,12 @@ func getZoneID(zoneName string, svc *route53.Route53) string {
 	if err != nil {
 		log.Println(err.Error())
 	}
-	return *resp.HostedZones[0].Id
+	zoneID = *resp.HostedZones[0].Id
+	if verbose {
+		// Pretty-print the response data.
+		fmt.Println(zoneID)
+	}
+	return
 }
 
 func main() {
@@ -244,16 +264,9 @@ func main() {
 	}
 
 	svc := route53.New(sess)
-	zoneID := getZoneID(zoneName, svc)
-	if verbose {
-		// Pretty-print the response data.
-		fmt.Println(zoneID)
-	}
+	zoneID := GetZoneID(zoneName, svc)
 
-	params := &route53.ListResourceRecordSetsInput{
-		HostedZoneId: aws.String(zoneID),
-	}
-	list := GetResourceRecordSet(params, svc)
+	list := GetResourceRecordSet(zoneID, svc)
 	// Filter list in between
 	list = FilterResourceRecordSetType(list, entryTypeFlag)
 	list, list2 := SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
