@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 type filter []string
@@ -222,6 +223,18 @@ func Init() {
 	}
 }
 
+func getZoneID(zoneName string, svc *route53.Route53) string {
+	params := &route53.ListHostedZonesByNameInput{
+		DNSName:  aws.String(zoneName),
+		MaxItems: aws.String("100"),
+	}
+	resp, err := svc.ListHostedZonesByName(params)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return *resp.HostedZones[0].Id
+}
+
 func main() {
 	Init()
 	sess, err := session.NewSession()
@@ -231,33 +244,23 @@ func main() {
 	}
 
 	svc := route53.New(sess)
-
-	params := &route53.ListHostedZonesByNameInput{
-		DNSName:  aws.String(zoneName),
-		MaxItems: aws.String("100"),
-	}
-	resp, err := svc.ListHostedZonesByName(params)
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	zoneID := resp.HostedZones[0].Id
+	zoneID := getZoneID(zoneName, svc)
 	if verbose {
 		// Pretty-print the response data.
-		fmt.Println(*zoneID)
+		fmt.Println(zoneID)
 	}
 
-	params2 := &route53.ListResourceRecordSetsInput{
-		HostedZoneId: aws.String(*zoneID),
+	params := &route53.ListResourceRecordSetsInput{
+		HostedZoneId: aws.String(zoneID),
 	}
-	list := GetResourceRecordSet(params2, svc)
+	list := GetResourceRecordSet(params, svc)
 	// Filter list in between
 	list = FilterResourceRecordSetType(list, entryTypeFlag)
 	list, list2 := SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
 	if len(list2) > 0 {
 		list = list2
 	}
-	changeResponse, err := UpsertResourceRecordSetTTL(list, ttl, zoneID, svc)
+	changeResponse, err := UpsertResourceRecordSetTTL(list, ttl, &zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
 	}
