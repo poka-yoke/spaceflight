@@ -1,32 +1,31 @@
-package main
+package ttl
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-type filter []string
+// Verbose flag
+var Verbose bool
 
-var zoneName string
-var ttl int64
-var verbose bool
-var wait bool
-var dryrun bool
-var entryTypeFlag filter
-var entryNameFlag filter
+// Dryrun flag
+var Dryrun bool
 
-func (f *filter) String() string {
+// Filter type for generic filtering
+type Filter []string
+
+// String interface for Filter
+func (f *Filter) String() string {
 	return fmt.Sprint(*f)
 }
 
-func (f *filter) Set(value string) error {
+// Set so flag can initialize flags of type Filter
+func (f *Filter) Set(value string) error {
 	for _, val := range strings.Split(value, ",") {
 		*f = append(*f, val)
 	}
@@ -44,7 +43,7 @@ func GetResourceRecordSet(
 		HostedZoneId: aws.String(zoneID),
 	}
 	for respIsTruncated := true; respIsTruncated; {
-		if verbose {
+		if Verbose {
 			fmt.Printf("Query params: %s\n", params)
 		}
 		resp, err := svc.ListResourceRecordSets(params)
@@ -103,7 +102,7 @@ func WaitForChangeToComplete(
 			log.Panic(err.Error())
 		}
 	}
-	if verbose {
+	if Verbose {
 		fmt.Println(getChangeOutput.ChangeInfo)
 	}
 	log.Println("All changes applied")
@@ -139,13 +138,13 @@ func UpsertResourceRecordSetTTL(
 		log.Panic(err.Error())
 	}
 	// Submit batch changes
-	if !dryrun {
+	if !Dryrun {
 		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
 	}
 	if err != nil {
 		log.Panic(err)
 	}
-	if verbose && !dryrun {
+	if Verbose && !Dryrun {
 		fmt.Println(changeResponse.ChangeInfo)
 	}
 	return
@@ -199,43 +198,6 @@ func SplitResourceRecordSetTypeOnNames(
 	return
 }
 
-// Init sets the flag parsing and input validations
-func Init() {
-	flag.StringVar(&zoneName, "zonename", "", "Hosted Zone's name to traverse")
-	flag.Int64Var(&ttl, "ttl", 300, "Desired TTL value")
-	flag.BoolVar(&verbose, "v", false, "Increments output")
-	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
-	flag.BoolVar(&dryrun, "dryrun", false, "Does not commit the changes")
-	flag.Var(&entryTypeFlag,
-		"t",
-		"Comma-separated list of entry record types")
-	flag.Var(&entryNameFlag,
-		"n",
-		"Comma-separated list of entry record names")
-
-	flag.Parse()
-
-	if zoneName == "" {
-		log.Fatal("Insufficient input parameters!")
-	}
-
-	if len(entryTypeFlag) == 0 {
-		for _, f := range []string{
-			"A",
-			"AAAA",
-			"CNAME",
-			"MX",
-			"NAPTR",
-			"PTR",
-			"SPF",
-			"SRV",
-			"TXT",
-		} {
-			entryTypeFlag = append(entryTypeFlag, f)
-		}
-	}
-}
-
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
 func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
@@ -248,36 +210,9 @@ func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
 		log.Println(err.Error())
 	}
 	zoneID = *resp.HostedZones[0].Id
-	if verbose {
+	if Verbose {
 		// Pretty-print the response data.
 		fmt.Println(zoneID)
 	}
 	return
-}
-
-func main() {
-	Init()
-	sess, err := session.NewSession()
-	if err != nil {
-		log.Panicf("Failed to create session: %s", err)
-		return
-	}
-
-	svc := route53.New(sess)
-	zoneID := GetZoneID(zoneName, svc)
-
-	list := GetResourceRecordSet(zoneID, svc)
-	// Filter list in between
-	list = FilterResourceRecordSetType(list, entryTypeFlag)
-	list, list2 := SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
-	if len(list2) > 0 {
-		list = list2
-	}
-	changeResponse, err := UpsertResourceRecordSetTTL(list, ttl, &zoneID, svc)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-	if wait && !dryrun {
-		WaitForChangeToComplete(changeResponse.ChangeInfo, svc)
-	}
 }
