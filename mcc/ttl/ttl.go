@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
 
 // Verbose flag
@@ -37,7 +38,7 @@ func (f *Filter) Set(value string) error {
 // entries at most.
 func GetResourceRecordSet(
 	zoneID string,
-	svc *route53.Route53,
+	svc route53iface.Route53API,
 ) (resourceRecordSet []*route53.ResourceRecordSet) {
 	params := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(zoneID),
@@ -200,7 +201,7 @@ func SplitResourceRecordSetTypeOnNames(
 
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
-func GetZoneID(zoneName string, svc *route53.Route53) (zoneID string) {
+func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
