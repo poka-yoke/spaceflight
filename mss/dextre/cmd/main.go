@@ -11,7 +11,22 @@ import (
 	"github.com/poka-yoke/spaceflight/mss/dextre"
 )
 
-var blacklists []string
+func fromFile(path *string) []string {
+	var blacklists []string
+
+	blfile, err := os.Open(*path)
+	if err != nil {
+		log.Fatal("Could't open file ", *path)
+		log.Fatal(err)
+	}
+	defer blfile.Close()
+
+	scanner := bufio.NewScanner(blfile)
+	for scanner.Scan() {
+		blacklists = append(blacklists, scanner.Text())
+	}
+	return blacklists
+}
 
 func main() {
 	ipAddress := flag.String(
@@ -29,17 +44,7 @@ func main() {
 
 	flag.Parse()
 
-	blfile, err := os.Open(*blacklist)
-	if err != nil {
-		log.Fatal("Could't open file ", *blacklist)
-		log.Fatal(err)
-	}
-	defer blfile.Close()
-
-	scanner := bufio.NewScanner(blfile)
-	for scanner.Scan() {
-		blacklists = append(blacklists, scanner.Text())
-	}
+	blacklists := fromFile(blacklist)
 
 	check := nagiosplugin.NewCheck()
 	defer check.Finish()
