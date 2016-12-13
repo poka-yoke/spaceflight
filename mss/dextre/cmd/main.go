@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/olorin/nagiosplugin"
 	"github.com/poka-yoke/spaceflight/mss/dextre"
 )
+
+var blacklists []string
 
 func main() {
 	ipAddress := flag.String(
@@ -16,27 +21,44 @@ func main() {
 	)
 	warning := flag.Int("w", 90, "Warning threshold")
 	critical := flag.Int("c", 95, "Critical threshold")
+	blacklist := flag.String(
+		"f",
+		"",
+		"Path to file containing black list addresses",
+	)
 
 	flag.Parse()
 
+	blfile, err := os.Open(*blacklist)
+	if err != nil {
+		log.Fatal("Could't open file ", *blacklist)
+		log.Fatal(err)
+	}
+	defer blfile.Close()
+
+	scanner := bufio.NewScanner(blfile)
+	for scanner.Scan() {
+		blacklists = append(blacklists, scanner.Text())
+	}
+
 	check := nagiosplugin.NewCheck()
 	defer check.Finish()
-	responses := make(chan int, len(dextre.Blacklists))
+	responses := make(chan int, len(blacklists))
 
 	queried := 0
 	positive := 0
-	for i := range dextre.Blacklists {
-		go dextre.DNSBLQuery(*ipAddress, dextre.Blacklists[i], responses)
+	for _, list := range blacklists {
+		go dextre.DNSBLQuery(*ipAddress, list, responses)
 	}
-	for i := 0; i < len(dextre.Blacklists); i++ {
+	for i := 0; i < len(blacklists); i++ {
 		response := <-responses
 		if response > 0 {
 			positive += response
 		}
 		queried++
 	}
-	warningAmount := len(dextre.Blacklists) * (*warning) / 100
-	criticalAmount := len(dextre.Blacklists) * (*critical) / 100
+	warningAmount := len(blacklists) * (*warning) / 100
+	criticalAmount := len(blacklists) * (*critical) / 100
 	checkLevel := nagiosplugin.OK
 	if positive > warningAmount {
 		checkLevel = nagiosplugin.WARNING
@@ -50,8 +72,8 @@ func main() {
 			"%v present in %v(%v%%) out of %v BLs | %v",
 			*ipAddress,
 			positive,
-			positive*100/len(dextre.Blacklists),
-			len(dextre.Blacklists),
+			positive*100/len(blacklists),
+			len(blacklists),
 			fmt.Sprintf(
 				"queried=%v positive=%v",
 				queried,
