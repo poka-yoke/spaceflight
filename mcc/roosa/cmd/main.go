@@ -70,10 +70,10 @@ func main() {
 			parent:  nil,
 			content: val,
 		}
-		append(treeList, root)
+		treeList = append(treeList, root)
 		rootLookup[val.Name] = root
 	}
-	for true; len(records) > 0; {
+	for _ = true; len(records) > 0; {
 		for i, val := range records {
 			if *val.Type == "CNAME" {
 				root := rootLookup[val.ResourceRecords[0].Value]
@@ -82,7 +82,7 @@ func main() {
 						content: val,
 					}
 					n.parent = root
-					append(root.children, n)
+					root.children = append(root.children, n)
 					rootLookup[val.Name] = n
 				}
 			} else {
