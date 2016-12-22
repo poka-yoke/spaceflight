@@ -39,16 +39,15 @@ func Init() {
 // PrintNode prints a Node, and all its children.
 func PrintNode(node *Node, indent int) {
 	indents := ""
-	for i := 0; i <= indent-1; i++ {
+	for i := 0; i < indent; i++ {
 		indents += "\t"
 	}
 	extra := ""
-	for i, record := range node.content.ResourceRecords {
-		extra += *record.Value
-		if i+1 < len(node.content.ResourceRecords) {
-			extra += ", "
-		}
+	l := len(node.content.ResourceRecords)
+	for _, record := range node.content.ResourceRecords[:l-1] {
+		extra += fmt.Sprintf("%v, ", *record.Value)
 	}
+	extra += *node.content.ResourceRecords[l-1].Value
 	fmt.Printf("%v%v %v %v\n", indents, *node.content.Name, *node.content.Type, extra)
 	indent++
 	for _, child := range node.children {
@@ -57,8 +56,8 @@ func PrintNode(node *Node, indent int) {
 }
 
 // FilterReferrals returns 'A', 'AAAA', and 'CNAME' records from a []*route53.ResourceRecordSet.
-func FilterReferrals(records []*route53.ResourceRecordSet) (filteredRecords []*route53.ResourceRecordSet) {
-	filteredRecords = ttl.FilterResourceRecordSetType(
+func FilterReferrals(records []*route53.ResourceRecordSet) []*route53.ResourceRecordSet {
+	return ttl.FilterResourceRecordSetType(
 		records,
 		[]string{
 			"A",
@@ -66,10 +65,9 @@ func FilterReferrals(records []*route53.ResourceRecordSet) (filteredRecords []*r
 			"CNAME",
 		},
 	)
-	return
 }
 
-// FillReferenceTrees fills a referral lookup table with the base records form a []*route53.ResourceRecordSet.
+// FillReferenceTrees fills a referral lookup table with the base records from a []*route53.ResourceRecordSet.
 func FillReferenceTrees(records []*route53.ResourceRecordSet) (rootLookup map[string][]*Node) {
 	rootLookup = map[string][]*Node{}
 	for _, val := range records {
