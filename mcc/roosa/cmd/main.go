@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -35,7 +36,8 @@ func main() {
 	svc := route53.New(sess)
 	zoneID := ttl.GetZoneID(zoneName, svc)
 
-	records := ttl.GetResourceRecordSet(zoneID, svc)
-	referenceTrees := roosa.GetReferenceTrees(records)
-	roosa.PrintReferenceTrees(referenceTrees)
+	referenceTreeList := roosa.NewReferenceTreeList(
+		ttl.GetResourceRecordSet(zoneID, svc),
+	)
+	fmt.Print(referenceTreeList)
 }
