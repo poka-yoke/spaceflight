@@ -43,6 +43,8 @@ func (n *Node) String() (output string) {
 		child.indent = n.indent + 1
 		output += child.String()
 	}
-	output = strings.TrimSuffix(output, "\n")
+	if n.IsRoot() {
+		output = strings.TrimSuffix(output, "\n")
+	}
 	return
 }
