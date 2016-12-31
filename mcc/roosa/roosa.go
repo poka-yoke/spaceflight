@@ -112,7 +112,7 @@ func GetReferenceTrees(
 func PrintReferenceTrees(referenceTrees map[string][]*Node) {
 	for _, tree := range referenceTrees {
 		for _, node := range tree {
-			fmt.Print(node)
+			fmt.Println(node)
 		}
 	}
 }
