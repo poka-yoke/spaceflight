@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 
-	"github.com/Devex/spaceflight/mcc/roosa"
+	"github.com/poka-yoke/spaceflight/mcc/roosa"
 	"github.com/poka-yoke/spaceflight/mcc/ttl"
 )
 
