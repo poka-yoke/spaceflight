@@ -13,12 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-var list bool
-var add bool
-var revoke bool
-var iprange string
+var list, add, revoke, graph bool
 var port int64
-var sgid string
+var iprange, sgid string
 
 func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
@@ -193,6 +190,7 @@ func main() {
 		"List all Security groups with ID, name and description")
 	flag.BoolVar(&add, "a", false, "Add a rule to a security group")
 	flag.BoolVar(&revoke, "r", false, "Revoke a rule to a security group")
+	flag.BoolVar(&graph, "g", false, "Output relations as a graph in DOT format")
 	flag.StringVar(&iprange, "ip", "127.0.0.1/32", "IPv4 CIDR: 127.0.0.1/32")
 	flag.Int64Var(&port, "p", 22, "Port for connections (default: 22)")
 	flag.StringVar(&sgid, "sgid", "", "Security Group ID, sg-XXXXXXX")
@@ -202,7 +200,10 @@ func main() {
 	sess := session.New(&aws.Config{Region: aws.String(region)})
 	svc := ec2.New(sess)
 
-	if list {
+	if list && graph {
+		res := GraphSGRelations(svc)
+		fmt.Print(res)
+	} else if list && !graph {
 		ListSecurityGroups(svc)
 	}
 	if add {
