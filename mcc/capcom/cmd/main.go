@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
+
+	"github.com/awalterschulze/gographviz"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -78,6 +81,111 @@ func RevokeIPToSecurityGroup(svc *ec2.EC2) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func registerNodes(
+	sglist []*ec2.SecurityGroup,
+	graph *gographviz.Escape,
+	nodesPresence map[string]bool,
+) {
+	for _, sg := range sglist {
+		val := fmt.Sprintf(
+			"{{%s|%s}}",
+			*sg.GroupId,
+			*sg.GroupName,
+		)
+		attrs := gographviz.NewAttrs()
+		attrs.Add("label", val)
+		log.Printf(
+			"Adding node for %s (%s)\n",
+			*sg.GroupName,
+			*sg.GroupId,
+		)
+		graph.AddNode("G", *sg.GroupId, attrs)
+		nodesPresence[*sg.GroupId] = true
+	}
+}
+
+func registerEdges(
+	sglist []*ec2.SecurityGroup,
+	graph *gographviz.Escape,
+	nodesPresence map[string]bool,
+) {
+	for _, sg := range sglist {
+		log.Printf(
+			"Processing entries for %s (%s)\n",
+			*sg.GroupName,
+			*sg.GroupId,
+		)
+		for _, perm := range sg.IpPermissions {
+			for _, pair := range perm.UserIdGroupPairs {
+				if nodesPresence[*pair.GroupId] {
+					attrs := gographviz.NewAttrs()
+					if perm.FromPort != nil &&
+						perm.ToPort != nil {
+						fromport := strconv.FormatInt(
+							*perm.FromPort,
+							10,
+						)
+						toport := strconv.FormatInt(
+							*perm.ToPort,
+							10,
+						)
+						if *perm.FromPort ==
+							*perm.ToPort {
+							val := fmt.Sprintf(
+								"%s: %s",
+								*perm.IpProtocol,
+								fromport,
+							)
+							attrs.Add("label", val)
+						} else {
+							val := fmt.Sprintf(
+								"%s: %s - %s",
+								*perm.IpProtocol,
+								fromport,
+								toport,
+							)
+							attrs.Add("label", val)
+						}
+					}
+					groupName := ""
+					if pair.GroupName != nil {
+						groupName = *pair.GroupName
+					}
+					log.Printf(
+						"Adding Edge for %s (%s) to %s (%s)\n",
+						*sg.GroupName,
+						*sg.GroupId,
+						groupName,
+						*pair.GroupId,
+					)
+					graph.AddEdge(
+						*sg.GroupId,
+						*pair.GroupId,
+						true,
+						attrs,
+					)
+				}
+			}
+		}
+	}
+}
+
+// GraphSGRelations returns a string containing a graph representation in DOT
+// format of the relations between Security Groups in the service.
+func GraphSGRelations(svc *ec2.EC2) string {
+	nodesPresence := make(map[string]bool)
+	sglist := getSecurityGroups(svc).SecurityGroups
+
+	g := gographviz.NewEscape()
+	g.SetName("G")
+	g.SetDir(true)
+	log.Println("Created graph")
+
+	registerNodes(sglist, g, nodesPresence)
+	registerEdges(sglist, g, nodesPresence)
+	return g.String()
 }
 
 func main() {
