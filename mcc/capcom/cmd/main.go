@@ -17,15 +17,18 @@ var iprange string
 var port int64
 var sgid string
 
-// ListSecurityGroups prints all available Security groups accessible by the
-// account on svc
-func ListSecurityGroups(svc *ec2.EC2) {
+func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
 		log.Panic(err)
 	}
+	return res
+}
 
-	for _, sg := range res.SecurityGroups {
+// ListSecurityGroups prints all available Security groups accessible by the
+// account on svc
+func ListSecurityGroups(svc *ec2.EC2) {
+	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		fmt.Printf("* %10s %20s %s\n",
 			*sg.GroupId,
 			*sg.GroupName,
