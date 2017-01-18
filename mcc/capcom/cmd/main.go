@@ -118,7 +118,18 @@ func registerNodes(
 			*sg.GroupName,
 			*sg.GroupId,
 		)
-		graph.AddNode("G", *sg.GroupId, nodeAttrs(sg))
+		attrs := nodeAttrs(sg)
+		switch {
+		case nodesPresence[*sg.GroupId]["running"] > 0:
+			attrs.Add("color", "green")
+		case nodesPresence[*sg.GroupId]["running"] == 0 &&
+			nodesPresence[*sg.GroupId]["stopped"] > 0:
+			attrs.Add("color", "yellow")
+		case nodesPresence[*sg.GroupId]["running"] == 0 &&
+			nodesPresence[*sg.GroupId]["stopped"] == 0:
+			attrs.Add("color", "red")
+		}
+		graph.AddNode("G", *sg.GroupId, attrs)
 		if nodesPresence[*sg.GroupId] == nil {
 			nodesPresence[*sg.GroupId] = nil
 		}
