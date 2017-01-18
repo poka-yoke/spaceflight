@@ -13,6 +13,27 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+type sGInstanceState map[string]map[string]int
+
+func (s sGInstanceState) getKeys() []string {
+	i := 0
+	keys := make([]string, len(s))
+	for k := range s {
+		keys[i] = k
+		i++
+	}
+	return keys
+}
+
+func (s sGInstanceState) has(key string) bool {
+	for _, k := range s.getKeys() {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
 var list, add, revoke, graph bool
 var port int64
 var iprange, sgid string
@@ -89,7 +110,7 @@ func nodeAttrs(sg *ec2.SecurityGroup) (attrs gographviz.Attrs) {
 func registerNodes(
 	sglist []*ec2.SecurityGroup,
 	graph *gographviz.Escape,
-	nodesPresence map[string]bool,
+	nodesPresence sGInstanceState,
 ) {
 	for _, sg := range sglist {
 		log.Printf(
@@ -98,7 +119,9 @@ func registerNodes(
 			*sg.GroupId,
 		)
 		graph.AddNode("G", *sg.GroupId, nodeAttrs(sg))
-		nodesPresence[*sg.GroupId] = true
+		if nodesPresence[*sg.GroupId] == nil {
+			nodesPresence[*sg.GroupId] = nil
+		}
 	}
 }
 
@@ -130,7 +153,7 @@ func edgeAttrs(perm *ec2.IpPermission) (attrs gographviz.Attrs) {
 func registerEdges(
 	sglist []*ec2.SecurityGroup,
 	graph *gographviz.Escape,
-	nodesPresence map[string]bool,
+	nodesPresence sGInstanceState,
 ) {
 	for _, sg := range sglist {
 		log.Printf(
@@ -140,7 +163,7 @@ func registerEdges(
 		)
 		for _, perm := range sg.IpPermissions {
 			for _, pair := range perm.UserIdGroupPairs {
-				if nodesPresence[*pair.GroupId] {
+				if nodesPresence.has(*pair.GroupId) {
 					groupName := ""
 					if pair.GroupName != nil {
 						groupName = *pair.GroupName
@@ -167,7 +190,7 @@ func registerEdges(
 // GraphSGRelations returns a string containing a graph representation in DOT
 // format of the relations between Security Groups in the service.
 func GraphSGRelations(svc *ec2.EC2) string {
-	nodesPresence := make(map[string]bool)
+	nodesPresence := make(sGInstanceState)
 	sglist := getSecurityGroups(svc).SecurityGroups
 
 	g := gographviz.NewEscape()
