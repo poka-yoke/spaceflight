@@ -80,27 +80,51 @@ func RevokeIPToSecurityGroup(svc *ec2.EC2) {
 	}
 }
 
+func nodeAttrs(sg *ec2.SecurityGroup) (attrs gographviz.Attrs) {
+	attrs = gographviz.NewAttrs()
+	attrs.Add("label", fmt.Sprintf("{{%s|}|%s}", *sg.GroupId, *sg.GroupName))
+	return
+}
+
 func registerNodes(
 	sglist []*ec2.SecurityGroup,
 	graph *gographviz.Escape,
 	nodesPresence map[string]bool,
 ) {
 	for _, sg := range sglist {
-		val := fmt.Sprintf(
-			"{{%s|%s}}",
-			*sg.GroupId,
-			*sg.GroupName,
-		)
-		attrs := gographviz.NewAttrs()
-		attrs.Add("label", val)
 		log.Printf(
 			"Adding node for %s (%s)\n",
 			*sg.GroupName,
 			*sg.GroupId,
 		)
-		graph.AddNode("G", *sg.GroupId, attrs)
+		graph.AddNode("G", *sg.GroupId, nodeAttrs(sg))
 		nodesPresence[*sg.GroupId] = true
 	}
+}
+
+func edgeAttrs(perm *ec2.IpPermission) (attrs gographviz.Attrs) {
+	var val string
+	if perm.FromPort != nil && perm.ToPort != nil {
+		fromport := strconv.FormatInt(*perm.FromPort, 10)
+		toport := strconv.FormatInt(*perm.ToPort, 10)
+		if *perm.FromPort == *perm.ToPort {
+			val = fmt.Sprintf(
+				"%s: %s",
+				*perm.IpProtocol,
+				fromport,
+			)
+		} else {
+			val = fmt.Sprintf(
+				"%s: %s - %s",
+				*perm.IpProtocol,
+				fromport,
+				toport,
+			)
+		}
+		attrs = gographviz.NewAttrs()
+		attrs.Add("label", val)
+	}
+	return attrs
 }
 
 func registerEdges(
@@ -117,35 +141,6 @@ func registerEdges(
 		for _, perm := range sg.IpPermissions {
 			for _, pair := range perm.UserIdGroupPairs {
 				if nodesPresence[*pair.GroupId] {
-					attrs := gographviz.NewAttrs()
-					if perm.FromPort != nil &&
-						perm.ToPort != nil {
-						fromport := strconv.FormatInt(
-							*perm.FromPort,
-							10,
-						)
-						toport := strconv.FormatInt(
-							*perm.ToPort,
-							10,
-						)
-						if *perm.FromPort ==
-							*perm.ToPort {
-							val := fmt.Sprintf(
-								"%s: %s",
-								*perm.IpProtocol,
-								fromport,
-							)
-							attrs.Add("label", val)
-						} else {
-							val := fmt.Sprintf(
-								"%s: %s - %s",
-								*perm.IpProtocol,
-								fromport,
-								toport,
-							)
-							attrs.Add("label", val)
-						}
-					}
 					groupName := ""
 					if pair.GroupName != nil {
 						groupName = *pair.GroupName
@@ -161,7 +156,7 @@ func registerEdges(
 						*sg.GroupId,
 						*pair.GroupId,
 						true,
-						attrs,
+						edgeAttrs(perm),
 					)
 				}
 			}
