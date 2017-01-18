@@ -187,11 +187,45 @@ func registerEdges(
 	}
 }
 
+func getInstancesPerSG(svc *ec2.EC2) sGInstanceState {
+	iState := make(sGInstanceState)
+	// TODO: Check for need of pagination and handle it
+	resp, err := svc.DescribeInstances(
+		&ec2.DescribeInstancesInput{
+			MaxResults: aws.Int64(1000),
+		},
+	)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	for _, res := range resp.Reservations {
+		groupID := []string{}
+		state := map[string]int{
+			"pending":       0,
+			"running":       0,
+			"shutting-down": 0,
+			"terminated":    0,
+			"stopping":      0,
+			"stopped":       0,
+		}
+		for _, group := range res.Groups {
+			groupID = append(groupID, *group.GroupId)
+		}
+		for _, instance := range res.Instances {
+			state[*instance.State.Name]++
+		}
+		for _, gid := range groupID {
+			iState[gid] = state
+		}
+	}
+	return iState
+}
+
 // GraphSGRelations returns a string containing a graph representation in DOT
 // format of the relations between Security Groups in the service.
 func GraphSGRelations(svc *ec2.EC2) string {
-	nodesPresence := make(sGInstanceState)
 	sglist := getSecurityGroups(svc).SecurityGroups
+	nodesPresence := getInstancesPerSG(svc)
 
 	g := gographviz.NewEscape()
 	g.SetName("G")
