@@ -69,13 +69,15 @@ func (m *mockRoute53Client) ListHostedZonesByName(
 }
 
 var rrstest = []struct {
-	rrsl   []*route53.ResourceRecordSet
-	filter []string
-	out    []*route53.ResourceRecordSet
+	rrsl       []*route53.ResourceRecordSet
+	typeFilter []string
+	nameFilter []string
+	out        []*route53.ResourceRecordSet
 }{
 	{
 		ResourceRecordSetList,
 		[]string{"A"},
+		[]string{"one.example.com"},
 		[]*route53.ResourceRecordSet{
 			onerecordA,
 		},
@@ -83,6 +85,7 @@ var rrstest = []struct {
 	{
 		ResourceRecordSetList,
 		[]string{"AAAA"},
+		[]string{"two.example.com"},
 		[]*route53.ResourceRecordSet{
 			tworecordAAAA,
 		},
@@ -90,11 +93,13 @@ var rrstest = []struct {
 	{
 		ResourceRecordSetList,
 		[]string{"MX"},
+		[]string{"non-existent"},
 		[]*route53.ResourceRecordSet{},
 	},
 	{
 		ResourceRecordSetList,
 		[]string{"TXT"},
+		[]string{"non-existent"},
 		[]*route53.ResourceRecordSet{},
 	},
 	{
@@ -103,6 +108,7 @@ var rrstest = []struct {
 			"A",
 			"AAAA",
 		},
+		[]string{"one.example.com", "two.example.com"},
 		[]*route53.ResourceRecordSet{
 			onerecordA,
 			tworecordAAAA,
@@ -110,19 +116,56 @@ var rrstest = []struct {
 	},
 }
 
-func TestFilterResourceRecordSetType(t *testing.T) {
+func TestFilterResourceRecords(t *testing.T) {
 	for _, tt := range rrstest {
-		t.Run(strings.Join(tt.filter, ","), func(t *testing.T) {
-			r := FilterResourceRecordSetType(tt.rrsl, tt.filter)
-			if len(r) != len(tt.out) {
-				t.Error("Result has different length than expected")
-			}
-			for index, value := range r {
-				if tt.out[index] != value {
-					t.Error("Results don't match as expected")
+		t.Run(
+			strings.Join(tt.typeFilter, ","),
+			func(t *testing.T) {
+				fn := func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+					if *elem.Type == filter {
+						return elem
+					}
+					return nil
 				}
-			}
-		})
+				r := FilterResourceRecords(
+					tt.rrsl,
+					tt.typeFilter,
+					fn,
+				)
+				if len(r) != len(tt.out) {
+					t.Error("Result has different length than expected")
+				}
+				for index, value := range r {
+					if tt.out[index] != value {
+						t.Error("Results don't match as expected")
+					}
+				}
+			},
+		)
+		t.Run(
+			strings.Join(tt.nameFilter, ","),
+			func(t *testing.T) {
+				fn := func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+					if *elem.Name == filter {
+						return elem
+					}
+					return nil
+				}
+				r := FilterResourceRecords(
+					tt.rrsl,
+					tt.nameFilter,
+					fn,
+				)
+				if len(r) != len(tt.out) {
+					t.Error("Result has different length than expected")
+				}
+				for index, value := range r {
+					if tt.out[index] != value {
+						t.Error("Results don't match as expected")
+					}
+				}
+			},
+		)
 	}
 }
 

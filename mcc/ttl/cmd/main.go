@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 
-	"github.com/poka-yoke/spaceflight/mcc/ttl"
+	"github.com/Devex/spaceflight/mcc/ttl"
 )
 
 var zoneName string
@@ -15,6 +15,7 @@ var myttl int64
 var verbose bool
 var wait bool
 var dryrun bool
+var exclude bool
 var entryTypeFlag ttl.Filter
 var entryNameFlag ttl.Filter
 
@@ -25,6 +26,12 @@ func Init() {
 	flag.BoolVar(&verbose, "v", false, "Increments output")
 	flag.BoolVar(&wait, "w", false, "Waits for changes to complete")
 	flag.BoolVar(&dryrun, "dryrun", false, "Does not commit the changes")
+	flag.BoolVar(
+		&exclude,
+		"exclude",
+		false,
+		"Filter lists are used to exclude records instead of including them",
+	)
 	flag.Var(&entryTypeFlag,
 		"t",
 		"Comma-separated list of entry record types")
@@ -57,6 +64,59 @@ func Init() {
 	ttl.Dryrun = dryrun
 }
 
+func filter(l []*route53.ResourceRecordSet) []*route53.ResourceRecordSet {
+	list := l
+	if exclude {
+		log.Println("Exclude!")
+		list = ttl.FilterResourceRecords(
+			l,
+			entryTypeFlag,
+			func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+				if *elem.Name != filter {
+					return elem
+				}
+				return nil
+			},
+		)
+		if len(entryNameFlag) > 0 {
+			list = ttl.FilterResourceRecords(
+				list,
+				entryNameFlag,
+				func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+					if *elem.Name != filter {
+						return elem
+					}
+					return nil
+				},
+			)
+		}
+	} else {
+		list = ttl.FilterResourceRecords(
+			l,
+			entryTypeFlag,
+			func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+				if *elem.Name == filter {
+					return elem
+				}
+				return nil
+			},
+		)
+		if len(entryNameFlag) > 0 {
+			list = ttl.FilterResourceRecords(
+				list,
+				entryNameFlag,
+				func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+					if *elem.Name == filter {
+						return elem
+					}
+					return nil
+				},
+			)
+		}
+	}
+	return list
+}
+
 func main() {
 	Init()
 	sess, err := session.NewSession()
@@ -70,11 +130,7 @@ func main() {
 
 	list := ttl.GetResourceRecordSet(zoneID, svc)
 	// Filter list in between
-	list = ttl.FilterResourceRecordSetType(list, entryTypeFlag)
-	list, list2 := ttl.SplitResourceRecordSetTypeOnNames(list, entryNameFlag)
-	if len(list2) > 0 {
-		list = list2
-	}
+	list = filter(list)
 	changeResponse, err := ttl.UpsertResourceRecordSetTTL(list, myttl, &zoneID, svc)
 	if err != nil {
 		log.Panic(err.Error())
