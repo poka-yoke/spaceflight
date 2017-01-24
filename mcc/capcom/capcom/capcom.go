@@ -1,7 +1,6 @@
-package main
+package capcom
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"strconv"
@@ -34,10 +33,6 @@ func (s sGInstanceState) has(key string) bool {
 	return false
 }
 
-var list, add, revoke, graph bool
-var port int64
-var iprange, sgid string
-
 func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
@@ -59,9 +54,9 @@ func ListSecurityGroups(svc *ec2.EC2) {
 
 // AuthorizeIPToSecurityGroup adds the IP to the Ingress list of the target
 // security group at the specified port
-func AuthorizeIPToSecurityGroup(svc *ec2.EC2) {
+func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, port int64, sgid string) {
 	ran := &ec2.IpRange{
-		CidrIp: aws.String(iprange),
+		CidrIp: aws.String(ipRange),
 	}
 	perm := &ec2.IpPermission{
 		FromPort:   &port,
@@ -81,9 +76,9 @@ func AuthorizeIPToSecurityGroup(svc *ec2.EC2) {
 
 // RevokeIPToSecurityGroup removes the IP from the Ingress list of the target
 // security group at the specified port
-func RevokeIPToSecurityGroup(svc *ec2.EC2) {
+func RevokeIPToSecurityGroup(svc *ec2.EC2, ipRange string, port int64, sgid string) {
 	ran := &ec2.IpRange{
-		CidrIp: aws.String(iprange),
+		CidrIp: aws.String(ipRange),
 	}
 	perm := &ec2.IpPermission{
 		FromPort:   &port,
@@ -248,31 +243,9 @@ func GraphSGRelations(svc *ec2.EC2) string {
 	return g.String()
 }
 
-func main() {
-	flag.BoolVar(&list, "l", false,
-		"List all Security groups with ID, name and description")
-	flag.BoolVar(&add, "a", false, "Add a rule to a security group")
-	flag.BoolVar(&revoke, "r", false, "Revoke a rule to a security group")
-	flag.BoolVar(&graph, "g", false, "Output relations as a graph in DOT format")
-	flag.StringVar(&iprange, "ip", "127.0.0.1/32", "IPv4 CIDR: 127.0.0.1/32")
-	flag.Int64Var(&port, "p", 22, "Port for connections (default: 22)")
-	flag.StringVar(&sgid, "sgid", "", "Security Group ID, sg-XXXXXXX")
-	flag.Parse()
-
+// Init initializes connection to AWS API
+func Init() *ec2.EC2 {
 	region := "us-east-1"
 	sess := session.New(&aws.Config{Region: aws.String(region)})
-	svc := ec2.New(sess)
-
-	if list && graph {
-		res := GraphSGRelations(svc)
-		fmt.Print(res)
-	} else if list && !graph {
-		ListSecurityGroups(svc)
-	}
-	if add {
-		AuthorizeIPToSecurityGroup(svc)
-	}
-	if revoke {
-		RevokeIPToSecurityGroup(svc)
-	}
+	return ec2.New(sess)
 }
