@@ -1,4 +1,4 @@
-package ttl
+package got
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
@@ -31,6 +32,15 @@ func (f *Filter) Set(value string) error {
 		*f = append(*f, val)
 	}
 	return nil
+}
+
+// Init initializes conections to Route53
+func Init() *route53.Route53 {
+	sess, err := session.NewSession()
+	if err != nil {
+		log.Panicf("Failed to create session: %s", err)
+	}
+	return route53.New(sess)
 }
 
 // GetResourceRecordSet returns a slice containing all responses for specified
@@ -86,6 +96,45 @@ func upsertChangeList(
 	return
 }
 
+// NewResourceRecordList creates a list of ResourceRecords with a ResourceRecord
+// per each string passed.
+func NewResourceRecordList(values []string) (ret []*route53.ResourceRecord) {
+	for _, val := range values {
+		ret = append(ret,
+			&route53.ResourceRecord{
+				Value: aws.String(val),
+			},
+		)
+	}
+	return
+}
+
+// UpsertChangeListNames iterates over a list of records and returns a list of
+// Change objects of type Upsert with the specified TTL
+func UpsertChangeListNames(
+	list []*route53.ResourceRecord,
+	ttl int64,
+	name string,
+	typ string,
+) (res []*route53.Change) {
+	val := &route53.ResourceRecordSet{
+		ResourceRecords: list,
+		TTL:             &ttl,
+		Type:            &typ,
+		Name:            &name,
+	}
+	change := &route53.Change{
+		Action:            aws.String("UPSERT"),
+		ResourceRecordSet: val,
+	}
+	log.Printf(
+		"Adding %s to change list for TTL %d\n",
+		*val.Name,
+		ttl)
+	res = append(res, change)
+	return
+}
+
 // WaitForChangeToComplete waits until the ChangeInfo described by the argument is completed.
 func WaitForChangeToComplete(
 	changeInfo *route53.ChangeInfo,
@@ -120,6 +169,9 @@ func UpsertResourceRecordSetTTL(
 	changeResponse *route53.ChangeResourceRecordSetsOutput,
 	err error,
 ) {
+	if len(list) <= 0 {
+		log.Fatal("No records to process.")
+	}
 	changeSlice := upsertChangeList(list, ttl)
 
 	// Create batch with all jobs
@@ -169,7 +221,8 @@ func PrintRecords(
 func FilterResourceRecords(
 	l []*route53.ResourceRecordSet,
 	f []string,
-	p func(*route53.ResourceRecordSet, string) *route53.ResourceRecordSet,
+	p func(*route53.ResourceRecordSet, string,
+	) *route53.ResourceRecordSet,
 ) (result []*route53.ResourceRecordSet) {
 	for _, elem := range l {
 		for _, filter := range f {
@@ -192,6 +245,9 @@ func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 	resp, err := svc.ListHostedZonesByName(params)
 	if err != nil {
 		log.Println(err.Error())
+	}
+	if len(resp.HostedZones) == 0 {
+		log.Fatalf("No results for zone %s. Exiting.\n", zoneName)
 	}
 	zoneID = *resp.HostedZones[0].Id
 	if Verbose {

@@ -1,4 +1,4 @@
-package ttl
+package got
 
 import (
 	"strings"
@@ -244,6 +244,72 @@ func TestGetZoneID(t *testing.T) {
 			out := GetZoneID(s, mockSvc)
 			if out != s {
 				t.Error("Response doesn't match")
+			}
+		})
+	}
+}
+
+var rrltest = []struct {
+	in  []string
+	out []*route53.ResourceRecord
+}{
+	{
+		[]string{
+			one,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &one,
+			},
+		},
+	},
+	{
+		[]string{
+			two,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &two,
+			},
+		},
+	},
+	{
+		[]string{
+			one,
+			two,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &one,
+			},
+			&route53.ResourceRecord{
+				Value: &two,
+			},
+		},
+	},
+}
+
+func TestNewResourceRecordList(t *testing.T) {
+	for _, tt := range rrltest {
+		t.Run(strings.Join(tt.in, ";"), func(t *testing.T) {
+			out := NewResourceRecordList(tt.in)
+			if len(tt.in) != len(out) {
+				t.Error(
+					"Erroneous amount of responses."+
+						" Expected %d, received %d.",
+					len(tt.in),
+					len(out),
+				)
+			}
+			for i, v := range out {
+				if *v.Value != *tt.out[i].Value {
+					t.Error(
+						"Erroneous response."+
+							" Expected %s, received %s.",
+						*tt.out[i].Value,
+						*v,
+					)
+				}
 			}
 		})
 	}
