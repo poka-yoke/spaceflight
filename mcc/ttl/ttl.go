@@ -164,35 +164,18 @@ func PrintRecords(
 	return
 }
 
-// FilterResourceRecordSetType returns a slice containing only the entries with
-// specified types of the original record slice
-func FilterResourceRecordSetType(
+// FilterResourceRecords returns a slice containing only the entries that
+// pass the check performed by the function argument
+func FilterResourceRecords(
 	l []*route53.ResourceRecordSet,
 	f []string,
+	p func(*route53.ResourceRecordSet, string) *route53.ResourceRecordSet,
 ) (result []*route53.ResourceRecordSet) {
 	for _, elem := range l {
 		for _, filter := range f {
-			if *elem.Type == filter {
-				result = append(result, elem)
-			}
-		}
-	}
-	return
-}
-
-// SplitResourceRecordSetTypeOnNames returns two slices: one containing all the
-// entries from the l argument, and another with the results of excluding the
-// matches from the f argument.
-func SplitResourceRecordSetTypeOnNames(
-	l []*route53.ResourceRecordSet,
-	f []string,
-) (result1 []*route53.ResourceRecordSet, result2 []*route53.ResourceRecordSet) {
-	result1 = l
-	for _, elem := range l {
-		for _, filter := range f {
-			if *elem.Name == filter {
-				result2 = append(result2, elem)
-				break
+			res := p(elem, filter)
+			if res != nil {
+				result = append(result, res)
 			}
 		}
 	}
