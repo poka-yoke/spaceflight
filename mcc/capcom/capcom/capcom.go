@@ -249,3 +249,28 @@ func Init() *ec2.EC2 {
 	sess := session.New(&aws.Config{Region: aws.String(region)})
 	return ec2.New(sess)
 }
+
+// CreateSG creates a new security group. If a vpcid is specified the security
+// group will be in that VPC
+func CreateSG(
+	name string,
+	description string,
+	vpcid string,
+	svc *ec2.EC2,
+) string {
+	if description == "" {
+		log.Fatal("Not a valid description")
+	}
+	params := &ec2.CreateSecurityGroupInput{
+		Description: aws.String(description),
+		GroupName:   aws.String(name),
+	}
+	if vpcid != "" {
+		params.VpcId = aws.String(vpcid)
+	}
+	res, err := svc.CreateSecurityGroup(params)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	return *res.GroupId
+}
