@@ -164,7 +164,7 @@ func UpsertResourceRecordSetTTL(
 	list []*route53.ResourceRecordSet,
 	ttl int64,
 	zoneID *string,
-	svc *route53.Route53,
+	svc route53iface.Route53API,
 ) (
 	changeResponse *route53.ChangeResourceRecordSetsOutput,
 	err error,
@@ -174,9 +174,26 @@ func UpsertResourceRecordSetTTL(
 	}
 	changeSlice := upsertChangeList(list, ttl)
 
+	changeResponse, err = ApplyChanges(changeSlice, zoneID, svc)
+	return
+}
+
+// ApplyChanges performs the request to change the list
+// of records.
+func ApplyChanges(
+	changes []*route53.Change,
+	zoneID *string,
+	svc route53iface.Route53API,
+) (
+	changeResponse *route53.ChangeResourceRecordSetsOutput,
+	err error,
+) {
+	if len(changes) <= 0 {
+		log.Fatal("No records to process.")
+	}
 	// Create batch with all jobs
 	changeBatch := &route53.ChangeBatch{
-		Changes: changeSlice,
+		Changes: changes,
 	}
 	if err := changeBatch.Validate(); err != nil {
 		log.Panic(err.Error())
@@ -193,12 +210,12 @@ func UpsertResourceRecordSetTTL(
 	// Submit batch changes
 	if !Dryrun {
 		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
-	}
-	if err != nil {
-		log.Panic(err)
-	}
-	if Verbose && !Dryrun {
-		fmt.Println(changeResponse.ChangeInfo)
+		if err != nil {
+			log.Panic(err)
+		}
+		if Verbose {
+			fmt.Println(changeResponse.ChangeInfo)
+		}
 	}
 	return
 }
