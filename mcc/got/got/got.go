@@ -1,4 +1,4 @@
-package ttl
+package got
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
@@ -31,6 +32,15 @@ func (f *Filter) Set(value string) error {
 		*f = append(*f, val)
 	}
 	return nil
+}
+
+// Init initializes conections to Route53
+func Init() *route53.Route53 {
+	sess, err := session.NewSession()
+	if err != nil {
+		log.Panicf("Failed to create session: %s", err)
+	}
+	return route53.New(sess)
 }
 
 // GetResourceRecordSet returns a slice containing all responses for specified
@@ -86,6 +96,45 @@ func upsertChangeList(
 	return
 }
 
+// NewResourceRecordList creates a list of ResourceRecords with a ResourceRecord
+// per each string passed.
+func NewResourceRecordList(values []string) (ret []*route53.ResourceRecord) {
+	for _, val := range values {
+		ret = append(ret,
+			&route53.ResourceRecord{
+				Value: aws.String(val),
+			},
+		)
+	}
+	return
+}
+
+// UpsertChangeListNames iterates over a list of records and returns a list of
+// Change objects of type Upsert with the specified TTL
+func UpsertChangeListNames(
+	list []*route53.ResourceRecord,
+	ttl int64,
+	name string,
+	typ string,
+) (res []*route53.Change) {
+	val := &route53.ResourceRecordSet{
+		ResourceRecords: list,
+		TTL:             &ttl,
+		Type:            &typ,
+		Name:            &name,
+	}
+	change := &route53.Change{
+		Action:            aws.String("UPSERT"),
+		ResourceRecordSet: val,
+	}
+	log.Printf(
+		"Adding %s to change list for TTL %d\n",
+		*val.Name,
+		ttl)
+	res = append(res, change)
+	return
+}
+
 // WaitForChangeToComplete waits until the ChangeInfo described by the argument is completed.
 func WaitForChangeToComplete(
 	changeInfo *route53.ChangeInfo,
@@ -115,16 +164,36 @@ func UpsertResourceRecordSetTTL(
 	list []*route53.ResourceRecordSet,
 	ttl int64,
 	zoneID *string,
-	svc *route53.Route53,
+	svc route53iface.Route53API,
 ) (
 	changeResponse *route53.ChangeResourceRecordSetsOutput,
 	err error,
 ) {
+	if len(list) <= 0 {
+		log.Fatal("No records to process.")
+	}
 	changeSlice := upsertChangeList(list, ttl)
 
+	changeResponse, err = ApplyChanges(changeSlice, zoneID, svc)
+	return
+}
+
+// ApplyChanges performs the request to change the list
+// of records.
+func ApplyChanges(
+	changes []*route53.Change,
+	zoneID *string,
+	svc route53iface.Route53API,
+) (
+	changeResponse *route53.ChangeResourceRecordSetsOutput,
+	err error,
+) {
+	if len(changes) <= 0 {
+		log.Fatal("No records to process.")
+	}
 	// Create batch with all jobs
 	changeBatch := &route53.ChangeBatch{
-		Changes: changeSlice,
+		Changes: changes,
 	}
 	if err := changeBatch.Validate(); err != nil {
 		log.Panic(err.Error())
@@ -141,12 +210,12 @@ func UpsertResourceRecordSetTTL(
 	// Submit batch changes
 	if !Dryrun {
 		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
-	}
-	if err != nil {
-		log.Panic(err)
-	}
-	if Verbose && !Dryrun {
-		fmt.Println(changeResponse.ChangeInfo)
+		if err != nil {
+			log.Panic(err)
+		}
+		if Verbose {
+			fmt.Println(changeResponse.ChangeInfo)
+		}
 	}
 	return
 }
@@ -164,35 +233,19 @@ func PrintRecords(
 	return
 }
 
-// FilterResourceRecordSetType returns a slice containing only the entries with
-// specified types of the original record slice
-func FilterResourceRecordSetType(
+// FilterResourceRecords returns a slice containing only the entries that
+// pass the check performed by the function argument
+func FilterResourceRecords(
 	l []*route53.ResourceRecordSet,
 	f []string,
+	p func(*route53.ResourceRecordSet, string,
+	) *route53.ResourceRecordSet,
 ) (result []*route53.ResourceRecordSet) {
 	for _, elem := range l {
 		for _, filter := range f {
-			if *elem.Type == filter {
-				result = append(result, elem)
-			}
-		}
-	}
-	return
-}
-
-// SplitResourceRecordSetTypeOnNames returns two slices: one containing all the
-// entries from the l argument, and another with the results of excluding the
-// matches from the f argument.
-func SplitResourceRecordSetTypeOnNames(
-	l []*route53.ResourceRecordSet,
-	f []string,
-) (result1 []*route53.ResourceRecordSet, result2 []*route53.ResourceRecordSet) {
-	result1 = l
-	for _, elem := range l {
-		for _, filter := range f {
-			if *elem.Name == filter {
-				result2 = append(result2, elem)
-				break
+			res := p(elem, filter)
+			if res != nil {
+				result = append(result, res)
 			}
 		}
 	}
@@ -209,6 +262,9 @@ func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 	resp, err := svc.ListHostedZonesByName(params)
 	if err != nil {
 		log.Println(err.Error())
+	}
+	if len(resp.HostedZones) == 0 {
+		log.Fatalf("No results for zone %s. Exiting.\n", zoneName)
 	}
 	zoneID = *resp.HostedZones[0].Id
 	if Verbose {
