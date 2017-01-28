@@ -1,8 +1,9 @@
-package ttl
+package got
 
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
@@ -10,6 +11,7 @@ import (
 
 var one = "one.example.com"
 var two = "two.example.com"
+var awsCname = "ec2-1-2-3-4.compute-1.amazonaws.com"
 var hundred = "100"
 var zoneName = "test"
 var A = "A"
@@ -17,6 +19,7 @@ var AAAA = "AAAA"
 var fals = false
 var duration1 int64 = 1
 var duration5 int64 = 5
+var now = time.Now()
 
 var onerecordA = &route53.ResourceRecordSet{
 	Name: &one,
@@ -65,6 +68,19 @@ func (m *mockRoute53Client) ListHostedZonesByName(
 		MaxItems:    &hundred,
 		HostedZones: []*route53.HostedZone{&hostedZone},
 	}
+	return
+}
+
+func (m *mockRoute53Client) ChangeResourceRecordSets(
+	params *route53.ChangeResourceRecordSetsInput,
+) (out *route53.ChangeResourceRecordSetsOutput, err error) {
+	out = &route53.ChangeResourceRecordSetsOutput{
+		ChangeInfo: &route53.ChangeInfo{
+			Id:     params.HostedZoneId,
+			Status: pstr("PENDING"),
+		},
+	}
+
 	return
 }
 
@@ -244,6 +260,147 @@ func TestGetZoneID(t *testing.T) {
 			out := GetZoneID(s, mockSvc)
 			if out != s {
 				t.Error("Response doesn't match")
+			}
+		})
+	}
+}
+
+var rrltest = []struct {
+	in  []string
+	out []*route53.ResourceRecord
+}{
+	{
+		[]string{
+			one,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &one,
+			},
+		},
+	},
+	{
+		[]string{
+			two,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &two,
+			},
+		},
+	},
+	{
+		[]string{
+			one,
+			two,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &one,
+			},
+			&route53.ResourceRecord{
+				Value: &two,
+			},
+		},
+	},
+	{
+		[]string{
+			awsCname,
+		},
+		[]*route53.ResourceRecord{
+			&route53.ResourceRecord{
+				Value: &awsCname,
+			},
+		},
+	},
+}
+
+func TestNewResourceRecordList(t *testing.T) {
+	for _, tt := range rrltest {
+		t.Run(strings.Join(tt.in, ";"), func(t *testing.T) {
+			out := NewResourceRecordList(tt.in)
+			if len(tt.in) != len(out) {
+				t.Error(
+					"Erroneous amount of responses."+
+						" Expected %d, received %d.",
+					len(tt.in),
+					len(out),
+				)
+			}
+			for i, v := range out {
+				if *v.Value != *tt.out[i].Value {
+					t.Error(
+						"Erroneous response."+
+							" Expected %s, received %s.",
+						*tt.out[i].Value,
+						*v,
+					)
+				}
+			}
+		})
+	}
+}
+
+func pstr(str string) *string {
+	return &str
+}
+
+var actest = []struct {
+	input struct {
+		changes []*route53.Change
+		zoneid  string
+	}
+	output struct {
+		out *route53.ChangeResourceRecordSetsOutput
+		err error
+	}
+}{
+	{
+		struct {
+			changes []*route53.Change
+			zoneid  string
+		}{
+			[]*route53.Change{
+				&route53.Change{
+					Action:            pstr("UPSERT"),
+					ResourceRecordSet: onerecordA,
+				},
+			},
+			"test1",
+		},
+		struct {
+			out *route53.ChangeResourceRecordSetsOutput
+			err error
+		}{
+			&route53.ChangeResourceRecordSetsOutput{
+				ChangeInfo: &route53.ChangeInfo{
+					Id: pstr("test1"),
+					// Possible values: PENDING | INSYNC
+					Status: pstr("PENDING"),
+					// It's a *time.Time
+					SubmittedAt: &now,
+				},
+			},
+			nil,
+		},
+	},
+}
+
+func TestApplyChanges(t *testing.T) {
+	mockSvc := &mockRoute53Client{}
+	for _, tt := range actest {
+		t.Run(tt.input.zoneid, func(t *testing.T) {
+			out, err := ApplyChanges(
+				tt.input.changes,
+				&tt.input.zoneid,
+				mockSvc,
+			)
+			if out == nil {
+				t.Error("Returned nil")
+			} else if *out.ChangeInfo.Id != *tt.output.out.ChangeInfo.Id ||
+				*out.ChangeInfo.Status != *tt.output.out.ChangeInfo.Status ||
+				err != tt.output.err {
+				t.Error("Unexpected outcome")
 			}
 		})
 	}

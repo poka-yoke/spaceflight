@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
 )
 
-var source string
+var source, proto string
 var port int64
 
 // addCmd represents the add command
@@ -23,7 +25,23 @@ string) to the specified port. E.g.:
 	Run: func(cmd *cobra.Command, args []string) {
 		svc := capcom.Init()
 		for _, sgid := range args {
-			capcom.AuthorizeIPToSecurityGroup(svc, source, port, sgid)
+			if strings.HasPrefix(source, "sg-") {
+				capcom.AuthorizeSGIDToSecurityGroup(
+					svc,
+					source,
+					proto,
+					port,
+					sgid,
+				)
+			} else {
+				capcom.AuthorizeIPToSecurityGroup(
+					svc,
+					source,
+					proto,
+					port,
+					sgid,
+				)
+			}
 		}
 	},
 }
@@ -37,6 +55,7 @@ func init() {
 	// and all subcommands, e.g.:
 	// addCmd.PersistentFlags().String("foo", "", "A help for foo")
 	addCmd.PersistentFlags().StringVarP(&source, "source", "s", "", "CIDR or sgid to be used as source of the Security Group Inbound rule")
+	addCmd.PersistentFlags().StringVarP(&proto, "proto", "", "tcp", "Which protocol will the rule affect to")
 	addCmd.PersistentFlags().Int64VarP(&port, "port", "p", 22, "Port for the rule")
 
 	// Cobra supports local flags which will only run when this command

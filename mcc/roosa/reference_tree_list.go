@@ -29,9 +29,15 @@ func NewReferenceTreeList(
 	records []*route53.ResourceRecordSet,
 ) *ReferenceTreeList {
 	return &ReferenceTreeList{
-		records: ttl.FilterResourceRecordSetType(
+		records: ttl.FilterResourceRecords(
 			records,
 			recordTypes,
+			func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
+				if *elem.Type == filter {
+					return elem
+				}
+				return nil
+			},
 		),
 		lookup: nil,
 	}

@@ -54,15 +54,37 @@ func ListSecurityGroups(svc *ec2.EC2) {
 
 // AuthorizeIPToSecurityGroup adds the IP to the Ingress list of the target
 // security group at the specified port
-func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, port int64, sgid string) {
+func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port int64, sgid string) {
 	ran := &ec2.IpRange{
 		CidrIp: aws.String(ipRange),
 	}
 	perm := &ec2.IpPermission{
 		FromPort:   &port,
 		ToPort:     &port,
-		IpProtocol: aws.String("tcp"),
+		IpProtocol: &proto,
 		IpRanges:   []*ec2.IpRange{ran},
+	}
+	params := &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId:       aws.String(sgid),
+		IpPermissions: []*ec2.IpPermission{perm},
+	}
+	_, err := svc.AuthorizeSecurityGroupIngress(params)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+// AuthorizeSGIDToSecurityGroup adds the IP to the Ingress list of the target
+// security group at the specified port
+func AuthorizeSGIDToSecurityGroup(svc *ec2.EC2, sgID string, proto string, port int64, sgid string) {
+	ran := &ec2.UserIdGroupPair{
+		GroupId: &sgID,
+	}
+	perm := &ec2.IpPermission{
+		FromPort:         &port,
+		ToPort:           &port,
+		IpProtocol:       &proto,
+		UserIdGroupPairs: []*ec2.UserIdGroupPair{ran},
 	}
 	params := &ec2.AuthorizeSecurityGroupIngressInput{
 		GroupId:       aws.String(sgid),
@@ -76,15 +98,37 @@ func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, port int64, sgid s
 
 // RevokeIPToSecurityGroup removes the IP from the Ingress list of the target
 // security group at the specified port
-func RevokeIPToSecurityGroup(svc *ec2.EC2, ipRange string, port int64, sgid string) {
+func RevokeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port int64, sgid string) {
 	ran := &ec2.IpRange{
 		CidrIp: aws.String(ipRange),
 	}
 	perm := &ec2.IpPermission{
 		FromPort:   &port,
 		ToPort:     &port,
-		IpProtocol: aws.String("tcp"),
+		IpProtocol: &proto,
 		IpRanges:   []*ec2.IpRange{ran},
+	}
+	params := &ec2.RevokeSecurityGroupIngressInput{
+		GroupId:       aws.String(sgid),
+		IpPermissions: []*ec2.IpPermission{perm},
+	}
+	_, err := svc.RevokeSecurityGroupIngress(params)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+// RevokeSGIDToSecurityGroup adds the IP to the Ingress list of the target
+// security group at the specified port
+func RevokeSGIDToSecurityGroup(svc *ec2.EC2, sgID string, proto string, port int64, sgid string) {
+	ran := &ec2.UserIdGroupPair{
+		GroupId: &sgID,
+	}
+	perm := &ec2.IpPermission{
+		FromPort:         &port,
+		ToPort:           &port,
+		IpProtocol:       &proto,
+		UserIdGroupPairs: []*ec2.UserIdGroupPair{ran},
 	}
 	params := &ec2.RevokeSecurityGroupIngressInput{
 		GroupId:       aws.String(sgid),
@@ -248,4 +292,50 @@ func Init() *ec2.EC2 {
 	region := "us-east-1"
 	sess := session.New(&aws.Config{Region: aws.String(region)})
 	return ec2.New(sess)
+}
+
+// CreateSG creates a new security group. If a vpcid is specified the security
+// group will be in that VPC
+func CreateSG(
+	name string,
+	description string,
+	vpcid string,
+	svc *ec2.EC2,
+) string {
+	if description == "" {
+		log.Fatal("Not a valid description")
+	}
+	params := &ec2.CreateSecurityGroupInput{
+		Description: aws.String(description),
+		GroupName:   aws.String(name),
+	}
+	if vpcid != "" {
+		params.VpcId = aws.String(vpcid)
+	}
+	res, err := svc.CreateSecurityGroup(params)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	return *res.GroupId
+}
+
+// FindSGByName gets an array of sgids for a name search
+func FindSGByName(name string, vpc string, svc *ec2.EC2) (ret []string) {
+	filter := &ec2.Filter{
+		Name:   aws.String("group-name"),
+		Values: []*string{&name},
+	}
+	params := &ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			filter,
+		},
+	}
+	res, err := svc.DescribeSecurityGroups(params)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	for _, sg := range res.SecurityGroups {
+		ret = append(ret, *sg.GroupId)
+	}
+	return ret
 }
