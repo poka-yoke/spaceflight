@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"strings"
 
-	"github.com/Devex/spaceflight/mcc/capcom/capcom"
+	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
 )
 
 var name, vpcid string

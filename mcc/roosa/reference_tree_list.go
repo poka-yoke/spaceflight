@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 
-	"github.com/Devex/spaceflight/mcc/ttl"
+	"github.com/poka-yoke/spaceflight/mcc/ttl"
 )
 
 // ReferenceTreeList is a type representing the reference trees for a list of
