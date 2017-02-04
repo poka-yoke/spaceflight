@@ -81,22 +81,6 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 
 }
 
-func TestAuthorizeIPToSecurityGroup(t *testing.T) {
-	svc := &mockEC2Client{}
-	ipRange := ""
-	proto := ""
-	port := int64(0)
-	sgid := ""
-	/*
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("We should have panicked!")
-			}
-		}()
-	*/
-	AuthorizeIPToSecurityGroup(svc, ipRange, proto, port, sgid)
-}
-
 var csgtable = []struct {
 	name        string
 	description string

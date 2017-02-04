@@ -101,62 +101,6 @@ func AuthorizeAccessToSecurityGroup(
 	return
 }
 
-// AuthorizeIPToSecurityGroup adds the IP to the Ingress list of the target
-// security group at the specified port
-func AuthorizeIPToSecurityGroup(
-	svc ec2iface.EC2API,
-	ipRange string,
-	proto string,
-	port int64,
-	sgid string,
-) {
-	ran := &ec2.IpRange{
-		CidrIp: aws.String(ipRange),
-	}
-	perm := &ec2.IpPermission{
-		FromPort:   &port,
-		ToPort:     &port,
-		IpProtocol: &proto,
-		IpRanges:   []*ec2.IpRange{ran},
-	}
-	params := &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId:       aws.String(sgid),
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	_, err := svc.AuthorizeSecurityGroupIngress(params)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
-// AuthorizeSGIDToSecurityGroup adds the IP to the Ingress list of the target
-// security group at the specified port
-func AuthorizeSGIDToSecurityGroup(
-	svc ec2iface.EC2API,
-	sgID string,
-	proto string,
-	port int64,
-	sgid string,
-) {
-	ran := &ec2.UserIdGroupPair{
-		GroupId: &sgID,
-	}
-	perm := &ec2.IpPermission{
-		FromPort:         &port,
-		ToPort:           &port,
-		IpProtocol:       &proto,
-		UserIdGroupPairs: []*ec2.UserIdGroupPair{ran},
-	}
-	params := &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId:       aws.String(sgid),
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	_, err := svc.AuthorizeSecurityGroupIngress(params)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
 // RevokeIPToSecurityGroup removes the IP from the Ingress list of the target
 // security group at the specified port
 func RevokeIPToSecurityGroup(
