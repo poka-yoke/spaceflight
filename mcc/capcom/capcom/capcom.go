@@ -351,13 +351,12 @@ func CreateSG(
 
 // FindSGByName gets an array of sgids for a name search
 func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
-	filter := &ec2.Filter{
-		Name:   aws.String("group-name"),
-		Values: []*string{&name},
-	}
 	params := &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
-			filter,
+			&ec2.Filter{
+				Name:   aws.String("group-name"),
+				Values: []*string{&name},
+			},
 		},
 	}
 	res, err := svc.DescribeSecurityGroups(params)
