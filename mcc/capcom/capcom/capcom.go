@@ -43,13 +43,15 @@ func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
 
 // ListSecurityGroups prints all available Security groups accessible by the
 // account on svc
-func ListSecurityGroups(svc *ec2.EC2) {
+func ListSecurityGroups(svc *ec2.EC2) (out []string) {
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
-		fmt.Printf("* %10s %20s %s\n",
+		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
 			*sg.GroupId,
 			*sg.GroupName,
-			*sg.Description)
+			*sg.Description),
+		)
 	}
+	return
 }
 
 // AuthorizeIPToSecurityGroup adds the IP to the Ingress list of the target
