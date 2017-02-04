@@ -23,7 +23,7 @@ but can also be presented in dot format for graphics processing.`,
 		if graph {
 			fmt.Print(capcom.GraphSGRelations(svc))
 		} else {
-			capcom.ListSecurityGroups(svc)
+			fmt.Print(capcom.ListSecurityGroups(svc))
 		}
 	},
 }
