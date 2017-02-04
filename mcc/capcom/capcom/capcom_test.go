@@ -13,6 +13,15 @@ type mockEC2Client struct {
 	ec2iface.EC2API
 }
 
+func (m *mockEC2Client) AuthorizeSecurityGroupIngress(
+	params *ec2.AuthorizeSecurityGroupIngressInput,
+) (
+	out *ec2.AuthorizeSecurityGroupIngressOutput,
+	err error,
+) {
+	return
+}
+
 func (m *mockEC2Client) CreateSecurityGroup(
 	params *ec2.CreateSecurityGroupInput,
 ) (
@@ -59,18 +68,17 @@ func TestListSecurityGroups(t *testing.T) {
 	}
 }
 
-func TestAuthorizeIPToSecurityGroup(t *testing.T) {
+func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 	svc := &mockEC2Client{}
-	ipRange := ""
+	origin := "/32"
 	proto := ""
 	port := int64(0)
-	sgid := ""
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("We should have panicked!")
-		}
-	}()
-	AuthorizeIPToSecurityGroup(svc, ipRange, proto, port, sgid)
+	destination := "sg-"
+	_, err := AuthorizeAccessToSecurityGroup(svc, origin, proto, port, destination)
+	if err != nil {
+		t.Error(err)
+	}
+
 }
 
 var csgtable = []struct {
