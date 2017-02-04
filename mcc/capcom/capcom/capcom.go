@@ -339,6 +339,9 @@ func CreateSG(
 	if vpcid != "" {
 		params.VpcId = aws.String(vpcid)
 	}
+	if err := params.Validate(); err != nil {
+		log.Panic(err.Error())
+	}
 	res, err := svc.CreateSecurityGroup(params)
 	if err != nil {
 		log.Panic(err.Error())
