@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
 type sGInstanceState map[string]map[string]int
@@ -33,7 +34,7 @@ func (s sGInstanceState) has(key string) bool {
 	return false
 }
 
-func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
+func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
 		log.Panic(err)
@@ -43,7 +44,7 @@ func getSecurityGroups(svc *ec2.EC2) *ec2.DescribeSecurityGroupsOutput {
 
 // ListSecurityGroups prints all available Security groups accessible by the
 // account on svc
-func ListSecurityGroups(svc *ec2.EC2) (out []string) {
+func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
 			*sg.GroupId,
@@ -56,7 +57,13 @@ func ListSecurityGroups(svc *ec2.EC2) (out []string) {
 
 // AuthorizeIPToSecurityGroup adds the IP to the Ingress list of the target
 // security group at the specified port
-func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port int64, sgid string) {
+func AuthorizeIPToSecurityGroup(
+	svc ec2iface.EC2API,
+	ipRange string,
+	proto string,
+	port int64,
+	sgid string,
+) {
 	ran := &ec2.IpRange{
 		CidrIp: aws.String(ipRange),
 	}
@@ -78,7 +85,13 @@ func AuthorizeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port
 
 // AuthorizeSGIDToSecurityGroup adds the IP to the Ingress list of the target
 // security group at the specified port
-func AuthorizeSGIDToSecurityGroup(svc *ec2.EC2, sgID string, proto string, port int64, sgid string) {
+func AuthorizeSGIDToSecurityGroup(
+	svc ec2iface.EC2API,
+	sgID string,
+	proto string,
+	port int64,
+	sgid string,
+) {
 	ran := &ec2.UserIdGroupPair{
 		GroupId: &sgID,
 	}
@@ -100,7 +113,13 @@ func AuthorizeSGIDToSecurityGroup(svc *ec2.EC2, sgID string, proto string, port 
 
 // RevokeIPToSecurityGroup removes the IP from the Ingress list of the target
 // security group at the specified port
-func RevokeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port int64, sgid string) {
+func RevokeIPToSecurityGroup(
+	svc ec2iface.EC2API,
+	ipRange string,
+	proto string,
+	port int64,
+	sgid string,
+) {
 	ran := &ec2.IpRange{
 		CidrIp: aws.String(ipRange),
 	}
@@ -122,7 +141,13 @@ func RevokeIPToSecurityGroup(svc *ec2.EC2, ipRange string, proto string, port in
 
 // RevokeSGIDToSecurityGroup adds the IP to the Ingress list of the target
 // security group at the specified port
-func RevokeSGIDToSecurityGroup(svc *ec2.EC2, sgID string, proto string, port int64, sgid string) {
+func RevokeSGIDToSecurityGroup(
+	svc ec2iface.EC2API,
+	sgID string,
+	proto string,
+	port int64,
+	sgid string,
+) {
 	ran := &ec2.UserIdGroupPair{
 		GroupId: &sgID,
 	}
@@ -239,7 +264,7 @@ func registerEdges(
 	}
 }
 
-func getInstancesPerSG(svc *ec2.EC2) sGInstanceState {
+func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 	iState := make(sGInstanceState)
 	// TODO: Check for need of pagination and handle it
 	resp, err := svc.DescribeInstances(
@@ -275,7 +300,7 @@ func getInstancesPerSG(svc *ec2.EC2) sGInstanceState {
 
 // GraphSGRelations returns a string containing a graph representation in DOT
 // format of the relations between Security Groups in the service.
-func GraphSGRelations(svc *ec2.EC2) string {
+func GraphSGRelations(svc ec2iface.EC2API) string {
 	sglist := getSecurityGroups(svc).SecurityGroups
 	nodesPresence := getInstancesPerSG(svc)
 
@@ -290,7 +315,7 @@ func GraphSGRelations(svc *ec2.EC2) string {
 }
 
 // Init initializes connection to AWS API
-func Init() *ec2.EC2 {
+func Init() ec2iface.EC2API {
 	region := "us-east-1"
 	sess := session.New(&aws.Config{Region: aws.String(region)})
 	return ec2.New(sess)
@@ -302,7 +327,7 @@ func CreateSG(
 	name string,
 	description string,
 	vpcid string,
-	svc *ec2.EC2,
+	svc ec2iface.EC2API,
 ) string {
 	if description == "" {
 		log.Fatal("Not a valid description")
@@ -322,7 +347,7 @@ func CreateSG(
 }
 
 // FindSGByName gets an array of sgids for a name search
-func FindSGByName(name string, vpc string, svc *ec2.EC2) (ret []string) {
+func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 	filter := &ec2.Filter{
 		Name:   aws.String("group-name"),
 		Values: []*string{&name},
