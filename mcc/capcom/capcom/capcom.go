@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/awalterschulze/gographviz"
 
@@ -51,6 +52,51 @@ func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 			*sg.GroupName,
 			*sg.Description),
 		)
+	}
+	return
+}
+
+// AuthorizeAccessToSecurityGroup adds the specified origin to the Ingress
+// list of the destination security group on protocol and port
+func AuthorizeAccessToSecurityGroup(
+	svc ec2iface.EC2API,
+	origin string,
+	proto string,
+	port int64,
+	destination string,
+) (out *ec2.AuthorizeSecurityGroupIngressOutput, err error) {
+	perm := &ec2.IpPermission{}
+	if !strings.HasPrefix(destination, "sg-") {
+		log.Fatalf("Destination %s is invalid\n", destination)
+	}
+	perm.FromPort = &port
+	perm.ToPort = &port
+	perm.IpProtocol = &proto
+	if strings.HasPrefix(origin, "sg-") {
+		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{
+			{
+				GroupId: &origin,
+			},
+		}
+	} else if strings.HasSuffix(origin, "/32") {
+		perm.IpRanges = []*ec2.IpRange{
+			{
+				CidrIp: &origin,
+			},
+		}
+	} else {
+		log.Fatalf("Origin %s is neither sgid nor"+
+			" IP range in CIDR notation",
+			origin,
+		)
+	}
+	params := &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId:       &destination,
+		IpPermissions: []*ec2.IpPermission{perm},
+	}
+	out, error := svc.AuthorizeSecurityGroupIngress(params)
+	if error != nil {
+		log.Panic(error)
 	}
 	return
 }
