@@ -56,19 +56,16 @@ func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 	return
 }
 
-// AuthorizeAccessToSecurityGroup adds the specified origin to the Ingress
-// list of the destination security group on protocol and port
-func AuthorizeAccessToSecurityGroup(
-	svc ec2iface.EC2API,
+// BuildIPPermission provides an IpPermission object fully populated
+func BuildIPPermission(
 	origin string,
 	proto string,
 	port int64,
-	destination string,
-) (out *ec2.AuthorizeSecurityGroupIngressOutput, err error) {
-	perm := &ec2.IpPermission{}
-	if !strings.HasPrefix(destination, "sg-") {
-		log.Fatalf("Destination %s is invalid\n", destination)
-	}
+) (
+	perm *ec2.IpPermission,
+	err error,
+) {
+	perm = &ec2.IpPermission{}
 	perm.FromPort = &port
 	perm.ToPort = &port
 	perm.IpProtocol = &proto
@@ -90,11 +87,51 @@ func AuthorizeAccessToSecurityGroup(
 			origin,
 		)
 	}
+	return
+}
+
+// AuthorizeAccessToSecurityGroup adds the specified origin to the Ingress
+// list of the destination security group on protocol and port
+func AuthorizeAccessToSecurityGroup(
+	svc ec2iface.EC2API,
+	origin string,
+	proto string,
+	port int64,
+	destination string,
+) (out *ec2.AuthorizeSecurityGroupIngressOutput, err error) {
+	perm, _ := BuildIPPermission(origin, proto, port)
+	if !strings.HasPrefix(destination, "sg-") {
+		log.Fatalf("Destination %s is invalid\n", destination)
+	}
 	params := &ec2.AuthorizeSecurityGroupIngressInput{
 		GroupId:       &destination,
 		IpPermissions: []*ec2.IpPermission{perm},
 	}
 	out, error := svc.AuthorizeSecurityGroupIngress(params)
+	if error != nil {
+		log.Panic(error)
+	}
+	return
+}
+
+// RevokeAccessToSecurityGroup adds the specified origin to the Ingress
+// list of the destination security group on protocol and port
+func RevokeAccessToSecurityGroup(
+	svc ec2iface.EC2API,
+	origin string,
+	proto string,
+	port int64,
+	destination string,
+) (out *ec2.RevokeSecurityGroupIngressOutput, err error) {
+	perm, _ := BuildIPPermission(origin, proto, port)
+	if !strings.HasPrefix(destination, "sg-") {
+		log.Fatalf("Destination %s is invalid\n", destination)
+	}
+	params := &ec2.RevokeSecurityGroupIngressInput{
+		GroupId:       &destination,
+		IpPermissions: []*ec2.IpPermission{perm},
+	}
+	out, error := svc.RevokeSecurityGroupIngress(params)
 	if error != nil {
 		log.Panic(error)
 	}
