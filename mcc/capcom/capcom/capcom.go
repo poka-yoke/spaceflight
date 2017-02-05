@@ -138,62 +138,6 @@ func RevokeAccessToSecurityGroup(
 	return
 }
 
-// RevokeIPToSecurityGroup removes the IP from the Ingress list of the target
-// security group at the specified port
-func RevokeIPToSecurityGroup(
-	svc ec2iface.EC2API,
-	ipRange string,
-	proto string,
-	port int64,
-	sgid string,
-) {
-	ran := &ec2.IpRange{
-		CidrIp: aws.String(ipRange),
-	}
-	perm := &ec2.IpPermission{
-		FromPort:   &port,
-		ToPort:     &port,
-		IpProtocol: &proto,
-		IpRanges:   []*ec2.IpRange{ran},
-	}
-	params := &ec2.RevokeSecurityGroupIngressInput{
-		GroupId:       aws.String(sgid),
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	_, err := svc.RevokeSecurityGroupIngress(params)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
-// RevokeSGIDToSecurityGroup adds the IP to the Ingress list of the target
-// security group at the specified port
-func RevokeSGIDToSecurityGroup(
-	svc ec2iface.EC2API,
-	sgID string,
-	proto string,
-	port int64,
-	sgid string,
-) {
-	ran := &ec2.UserIdGroupPair{
-		GroupId: &sgID,
-	}
-	perm := &ec2.IpPermission{
-		FromPort:         &port,
-		ToPort:           &port,
-		IpProtocol:       &proto,
-		UserIdGroupPairs: []*ec2.UserIdGroupPair{ran},
-	}
-	params := &ec2.RevokeSecurityGroupIngressInput{
-		GroupId:       aws.String(sgid),
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	_, err := svc.RevokeSecurityGroupIngress(params)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
 func nodeAttrs(sg *ec2.SecurityGroup) (attrs gographviz.Attrs) {
 	attrs = gographviz.NewAttrs()
 	attrs.Add("label", fmt.Sprintf("{{%s|}|%s}", *sg.GroupId, *sg.GroupName))
