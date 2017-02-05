@@ -187,3 +187,29 @@ func TestCreateSG(t *testing.T) {
 		)
 	}
 }
+
+var fsgbntable = []struct {
+	name string
+	vpc  string
+	ret  []string
+}{
+	{
+		name: "",
+		vpc:  "",
+		ret: []string{
+			"",
+		},
+	},
+}
+
+func TestFindSGByName(t *testing.T) {
+	svc := &mockEC2Client{}
+	for _, tt := range fsgbntable {
+		ret := FindSGByName(tt.name, tt.vpc, svc)
+		for index := range ret {
+			if ret[index] != tt.ret[index] {
+				t.Error("Unexpected output")
+			}
+		}
+	}
+}
