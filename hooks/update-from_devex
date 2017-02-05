@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. $(dirname ${0})/git_utils
+
+if [ $(git remote | grep -c devex) -ge 1 ]; then
+    git fetch
+    echo "Updating your develop branch..."
+    update_branch "devex/develop"
+    echo "Switching to from_devex branch, creating local if doesn't exist..."
+    checkout_branch "origin/from_devex"
+    echo "Rebasing develop onto from_devex..."
+    git rebase develop
+    echo "Fixing imports..."
+    find . -name *.go -exec sed -i .bak 's%github.com/Devex/spaceflight%github.com/poka-yoke/spaceflight%' {} \;
+    echo "Committing changes for poka-yoke path..."
+    git add -u
+    git commit -m "Unified import paths to poka-yoke"
+    echo "Updating from_devex in poka-yoke..."
+    git push origin from_devex
+    echo "Now you should issue a new PR from poka-yoke:from_devex to poka-yoke:master."
+    echo "If you have hub installed, the following command should work:"
+    echo "    git pull-request -h origin:from_devex -b origin:master -m 'Message'"
+else
+    echo "You need to have the remote devex created"
+fi

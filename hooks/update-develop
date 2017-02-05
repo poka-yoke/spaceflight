@@ -1,0 +1,19 @@
+#!/bin/bash
+
+. $(dirname ${0})/git_utils
+
+if [ $(git remote | grep -c devex) -ge 1 ]; then
+    echo "Updating your master branch..."
+    update_branch "origin/master"
+    echo "Updating Devex/develop branch..."
+    git fetch devex develop
+    echo "Switching to develop branch, creating local if doesn't exist..."
+    checkout_branch "devex/develop"
+    echo "Updating Devex/develop branch..."
+    git fetch
+    echo "Rebasing origin master onto develop"
+    git rebase master
+    git push devex develop
+else
+    echo "You need to have the remote devex created"
+fi
