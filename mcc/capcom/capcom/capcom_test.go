@@ -77,29 +77,75 @@ func TestListSecurityGroups(t *testing.T) {
 	}
 }
 
+// This table can be used for both TestAuthorizeAccessToSecurityGroup and
+// TestRevokeAccessToSecurityGroup
+var atsgtable = []struct {
+	origin      string
+	proto       string
+	port        int64
+	destination string
+	err         error
+}{
+	{
+		origin:      "/32",
+		proto:       "tcp",
+		port:        int64(0),
+		destination: "sg-",
+		err:         nil,
+	},
+	{
+		origin:      "sg-",
+		proto:       "tcp",
+		port:        int64(0),
+		destination: "sg-",
+		err:         nil,
+	},
+	{
+		origin:      "/32",
+		proto:       "udp",
+		port:        int64(0),
+		destination: "sg-",
+		err:         nil,
+	},
+	{
+		origin:      "sg-",
+		proto:       "icmp",
+		port:        int64(0),
+		destination: "sg-",
+		err:         nil,
+	},
+}
+
 func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 	svc := &mockEC2Client{}
-	origin := "/32"
-	proto := ""
-	port := int64(0)
-	destination := "sg-"
-	_, err := AuthorizeAccessToSecurityGroup(svc, origin, proto, port, destination)
-	if err != nil {
-		t.Error(err)
+	for _, tt := range atsgtable {
+		_, err := AuthorizeAccessToSecurityGroup(
+			svc,
+			tt.origin,
+			tt.proto,
+			tt.port,
+			tt.destination,
+		)
+		if err != tt.err {
+			t.Error(err)
+		}
 	}
 
 }
 func TestRevokeAccessToSecurityGroup(t *testing.T) {
 	svc := &mockEC2Client{}
-	origin := "/32"
-	proto := ""
-	port := int64(0)
-	destination := "sg-"
-	_, err := RevokeAccessToSecurityGroup(svc, origin, proto, port, destination)
-	if err != nil {
-		t.Error(err)
+	for _, tt := range atsgtable {
+		_, err := RevokeAccessToSecurityGroup(
+			svc,
+			tt.origin,
+			tt.proto,
+			tt.port,
+			tt.destination,
+		)
+		if err != tt.err {
+			t.Error(err)
+		}
 	}
-
 }
 
 var csgtable = []struct {
