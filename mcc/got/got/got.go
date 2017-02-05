@@ -88,9 +88,9 @@ func NewResourceRecordList(values []string) (ret []*route53.ResourceRecord) {
 	return
 }
 
-// UpsertChangeListNames iterates over a list of records and returns a list of
-// Change objects of type Upsert with the specified TTL
-func UpsertChangeListNames(
+// UpsertChangeList generates a list of changes for UPSERT the records in list
+// according with ttl, name, and type
+func UpsertChangeList(
 	list []*route53.ResourceRecord,
 	ttl int64,
 	name string,
@@ -153,7 +153,7 @@ func UpsertResourceRecordSetTTL(
 	}
 	changeSlice := []*route53.Change{}
 	for _, r := range list {
-		partialChangeSlice := UpsertChangeListNames(r.ResourceRecords, ttl, *r.Name, *r.Type)
+		partialChangeSlice := UpsertChangeList(r.ResourceRecords, ttl, *r.Name, *r.Type)
 		changeSlice = append(changeSlice, partialChangeSlice...)
 	}
 
