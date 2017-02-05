@@ -185,30 +185,6 @@ func TestFilterResourceRecords(t *testing.T) {
 	}
 }
 
-var ucltest = []struct {
-	original []*route53.ResourceRecordSet
-	ttl      int64
-}{
-	{
-		ResourceRecordSetList,
-		60,
-	},
-	{
-		ResourceRecordSetList,
-		300,
-	},
-}
-
-func TestUpsertChangeList(t *testing.T) {
-	for _, tt := range ucltest {
-		for _, change := range upsertChangeList(tt.original, tt.ttl) {
-			if *change.ResourceRecordSet.TTL != tt.ttl {
-				t.Error("TTL doesn't match")
-			}
-		}
-	}
-}
-
 var fstest = []string{
 	"",
 	"a,b",
