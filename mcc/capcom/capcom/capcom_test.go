@@ -53,6 +53,15 @@ func (m *mockEC2Client) DescribeSecurityGroups(
 	return
 }
 
+func (m *mockEC2Client) RevokeSecurityGroupIngress(
+	params *ec2.RevokeSecurityGroupIngressInput,
+) (
+	out *ec2.RevokeSecurityGroupIngressOutput,
+	err error,
+) {
+	return
+}
+
 var ListSecurityGroupsExpectedOutput = []string{
 	fmt.Sprintf("* %10s %20s %s\n", "", "", ""),
 }
@@ -75,6 +84,18 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 	port := int64(0)
 	destination := "sg-"
 	_, err := AuthorizeAccessToSecurityGroup(svc, origin, proto, port, destination)
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+func TestRevokeAccessToSecurityGroup(t *testing.T) {
+	svc := &mockEC2Client{}
+	origin := "/32"
+	proto := ""
+	port := int64(0)
+	destination := "sg-"
+	_, err := RevokeAccessToSecurityGroup(svc, origin, proto, port, destination)
 	if err != nil {
 		t.Error(err)
 	}
