@@ -31,7 +31,7 @@ var upsertCmd = &cobra.Command{
 		}
 		zoneid := got.GetZoneID(zoneName, svc)
 		list := got.NewResourceRecordList(args)
-		changes := got.UpsertChangeListNames(list, ttl, name, typ)
+		changes := got.UpsertChangeList(list, ttl, name, typ)
 		if !dryrun {
 			res, err := got.ApplyChanges(changes, &zoneid, svc)
 			if err != nil {

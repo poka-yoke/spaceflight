@@ -75,27 +75,6 @@ func GetResourceRecordSet(
 	return
 }
 
-// upsertChangeList iterates over a list of records and returns a list of
-// Change objects of type Upsert with the specified TTL
-func upsertChangeList(
-	list []*route53.ResourceRecordSet,
-	ttl int64,
-) (res []*route53.Change) {
-	for _, val := range list {
-		*val.TTL = ttl
-		change := &route53.Change{
-			Action:            aws.String("UPSERT"),
-			ResourceRecordSet: val,
-		}
-		log.Printf(
-			"Adding %s to change list for TTL %d\n",
-			*val.Name,
-			ttl)
-		res = append(res, change)
-	}
-	return
-}
-
 // NewResourceRecordList creates a list of ResourceRecords with a ResourceRecord
 // per each string passed.
 func NewResourceRecordList(values []string) (ret []*route53.ResourceRecord) {
@@ -109,9 +88,9 @@ func NewResourceRecordList(values []string) (ret []*route53.ResourceRecord) {
 	return
 }
 
-// UpsertChangeListNames iterates over a list of records and returns a list of
-// Change objects of type Upsert with the specified TTL
-func UpsertChangeListNames(
+// UpsertChangeList generates a list of changes for UPSERT the records in list
+// according with ttl, name, and type
+func UpsertChangeList(
 	list []*route53.ResourceRecord,
 	ttl int64,
 	name string,
@@ -172,7 +151,11 @@ func UpsertResourceRecordSetTTL(
 	if len(list) <= 0 {
 		log.Fatal("No records to process.")
 	}
-	changeSlice := upsertChangeList(list, ttl)
+	changeSlice := []*route53.Change{}
+	for _, r := range list {
+		partialChangeSlice := UpsertChangeList(r.ResourceRecords, ttl, *r.Name, *r.Type)
+		changeSlice = append(changeSlice, partialChangeSlice...)
+	}
 
 	changeResponse, err = ApplyChanges(changeSlice, zoneID, svc)
 	return
