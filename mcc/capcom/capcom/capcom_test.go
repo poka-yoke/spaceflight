@@ -87,7 +87,7 @@ var atsgtable = []struct {
 	err         error
 }{
 	{
-		origin:      "/32",
+		origin:      "1.2.3.4/32",
 		proto:       "tcp",
 		port:        int64(0),
 		destination: "sg-",
@@ -101,7 +101,7 @@ var atsgtable = []struct {
 		err:         nil,
 	},
 	{
-		origin:      "/32",
+		origin:      "1.2.3.4/32",
 		proto:       "udp",
 		port:        int64(0),
 		destination: "sg-",

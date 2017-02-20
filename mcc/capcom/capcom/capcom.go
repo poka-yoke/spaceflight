@@ -3,6 +3,7 @@ package capcom
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -45,13 +46,22 @@ func BuildIPPermission(
 	perm.FromPort = &port
 	perm.ToPort = &port
 	perm.IpProtocol = &proto
+	m, err := regexp.MatchString(
+		"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}"+
+			"([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"+
+			"(/([0-9]|[1-2][0-9]|3[0-2]))$",
+		origin,
+	)
+	if err != nil {
+		log.Panic(err.Error())
+	}
 	if strings.HasPrefix(origin, "sg-") {
 		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{
 			{
 				GroupId: &origin,
 			},
 		}
-	} else if strings.HasSuffix(origin, "/32") {
+	} else if m {
 		perm.IpRanges = []*ec2.IpRange{
 			{
 				CidrIp: &origin,
