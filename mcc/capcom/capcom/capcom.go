@@ -55,21 +55,14 @@ func BuildIPPermission(
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	if strings.HasPrefix(origin, "sg-") {
-		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{
-			{
-				GroupId: &origin,
-			},
-		}
-	} else if m {
-		perm.IpRanges = []*ec2.IpRange{
-			{
-				CidrIp: &origin,
-			},
-		}
-	} else {
-		log.Fatalf("Origin %s is neither sgid nor"+
-			" IP range in CIDR notation",
+	switch {
+	case strings.HasPrefix(origin, "sg-"):
+		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
+	case m:
+		perm.IpRanges = []*ec2.IpRange{{CidrIp: &origin}}
+	default:
+		err = fmt.Errorf(
+			"%s is neither sgid nor IP range in CIDR notation",
 			origin,
 		)
 	}
@@ -85,7 +78,10 @@ func AuthorizeAccessToSecurityGroup(
 	port int64,
 	destination string,
 ) (out *ec2.AuthorizeSecurityGroupIngressOutput, err error) {
-	perm, _ := BuildIPPermission(origin, proto, port)
+	perm, err := BuildIPPermission(origin, proto, port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if !strings.HasPrefix(destination, "sg-") {
 		log.Fatalf("Destination %s is invalid\n", destination)
 	}
@@ -109,7 +105,10 @@ func RevokeAccessToSecurityGroup(
 	port int64,
 	destination string,
 ) (out *ec2.RevokeSecurityGroupIngressOutput, err error) {
-	perm, _ := BuildIPPermission(origin, proto, port)
+	perm, err := BuildIPPermission(origin, proto, port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if !strings.HasPrefix(destination, "sg-") {
 		log.Fatalf("Destination %s is invalid\n", destination)
 	}
