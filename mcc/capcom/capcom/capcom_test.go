@@ -1,6 +1,7 @@
 package capcom
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -73,6 +74,58 @@ func TestListSecurityGroups(t *testing.T) {
 	for index, line := range out {
 		if line != expected[index] {
 			t.Error("Unexpected output")
+		}
+	}
+}
+
+var biptable = []struct {
+	origin string
+	proto  string
+	port   int64
+	err    error
+}{
+	{
+		origin: "1.2.3.4/32",
+		proto:  "tcp",
+		port:   int64(0),
+		err:    nil,
+	},
+	{
+		origin: "sg-",
+		proto:  "tcp",
+		port:   int64(0),
+		err:    nil,
+	},
+	{
+		origin: "1.2.3.4/32",
+		proto:  "udp",
+		port:   int64(0),
+		err:    nil,
+	},
+	{
+		origin: "sg-",
+		proto:  "icmp",
+		port:   int64(0),
+		err:    nil,
+	},
+	{
+		origin: "1.2.3./32",
+		proto:  "udp",
+		port:   int64(0),
+		err:    errors.New(""),
+	},
+}
+
+func TestBuildIPPermission(t *testing.T) {
+	for _, tt := range biptable {
+		_, err := BuildIPPermission(
+			tt.origin,
+			tt.proto,
+			tt.port,
+		)
+		if (err != nil && tt.err == nil) ||
+			(err == nil && tt.err != nil) {
+			t.Error(err)
 		}
 	}
 }
