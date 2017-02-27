@@ -1,6 +1,7 @@
 package capcom
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -77,72 +78,53 @@ func TestListSecurityGroups(t *testing.T) {
 	}
 }
 
-// This table can be used for both TestAuthorizeAccessToSecurityGroup and
-// TestRevokeAccessToSecurityGroup
-var atsgtable = []struct {
-	origin      string
-	proto       string
-	port        int64
-	destination string
-	err         error
+var biptable = []struct {
+	origin string
+	proto  string
+	port   int64
+	err    error
 }{
 	{
-		origin:      "1.2.3.4/32",
-		proto:       "tcp",
-		port:        int64(0),
-		destination: "sg-",
-		err:         nil,
+		origin: "1.2.3.4/32",
+		proto:  "tcp",
+		port:   int64(0),
+		err:    nil,
 	},
 	{
-		origin:      "sg-",
-		proto:       "tcp",
-		port:        int64(0),
-		destination: "sg-",
-		err:         nil,
+		origin: "sg-",
+		proto:  "tcp",
+		port:   int64(0),
+		err:    nil,
 	},
 	{
-		origin:      "1.2.3.4/32",
-		proto:       "udp",
-		port:        int64(0),
-		destination: "sg-",
-		err:         nil,
+		origin: "1.2.3.4/32",
+		proto:  "udp",
+		port:   int64(0),
+		err:    nil,
 	},
 	{
-		origin:      "sg-",
-		proto:       "icmp",
-		port:        int64(0),
-		destination: "sg-",
-		err:         nil,
+		origin: "sg-",
+		proto:  "icmp",
+		port:   int64(0),
+		err:    nil,
+	},
+	{
+		origin: "1.2.3./32",
+		proto:  "udp",
+		port:   int64(0),
+		err:    errors.New(""),
 	},
 }
 
-func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
-	svc := &mockEC2Client{}
-	for _, tt := range atsgtable {
-		_, err := AuthorizeAccessToSecurityGroup(
-			svc,
+func TestBuildIPPermission(t *testing.T) {
+	for _, tt := range biptable {
+		_, err := BuildIPPermission(
 			tt.origin,
 			tt.proto,
 			tt.port,
-			tt.destination,
 		)
-		if err != tt.err {
-			t.Error(err)
-		}
-	}
-
-}
-func TestRevokeAccessToSecurityGroup(t *testing.T) {
-	svc := &mockEC2Client{}
-	for _, tt := range atsgtable {
-		_, err := RevokeAccessToSecurityGroup(
-			svc,
-			tt.origin,
-			tt.proto,
-			tt.port,
-			tt.destination,
-		)
-		if err != tt.err {
+		if (err != nil && tt.err == nil) ||
+			(err == nil && tt.err != nil) {
 			t.Error(err)
 		}
 	}
