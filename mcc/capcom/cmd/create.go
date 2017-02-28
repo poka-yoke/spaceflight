@@ -13,7 +13,7 @@ var name, vpcid string
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "capcom create [flags] <description>",
+	Use:   "create [flags] <description>",
 	Short: "Create a new Security Group",
 	Long: `Example:
     capcom create --name test This is a test SG
