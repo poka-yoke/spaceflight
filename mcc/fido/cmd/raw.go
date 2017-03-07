@@ -2,32 +2,32 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/fido/fido"
+	"github.com/Devex/spaceflight/mcc/fido/fido"
 )
+
+var name string
 
 // rawCmd represents the raw command
 var rawCmd = &cobra.Command{
-	Use:   "raw",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "raw [flags]",
+	Short: "Obtain raw information from OpsWorks",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		var root, sn fido.Section
-		en := fido.NewStringEntry("key1", "val1")
-		en2 := fido.NewStringEntry("key2", "val2")
-		root = root.AddEntry(en)
-		root = root.AddEntry(en2)
-		sn = sn.AddEntry(en)
-		root = root.AddSection(sn)
+		svc := fido.Init()
+		sID, err := fido.GetStackID(svc, name)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		fmt.Println(root)
+		customJSON, err := fido.GetCustomJSON(svc, sID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(customJSON)
 	},
 }
 
@@ -39,6 +39,13 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// rawCmd.PersistentFlags().String("foo", "", "A help for foo")
+	rawCmd.PersistentFlags().StringVarP(
+		&name,
+		"name",
+		"",
+		"",
+		"Name of stack to retrieve",
+	)
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
