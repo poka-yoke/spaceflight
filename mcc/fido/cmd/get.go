@@ -12,9 +12,9 @@ import (
 var name string
 
 // rawCmd represents the raw command
-var rawCmd = &cobra.Command{
-	Use:   "raw [flags]",
-	Short: "Obtain raw information from OpsWorks",
+var getCmd = &cobra.Command{
+	Use:   "get [flags]",
+	Short: "Obtain CustomJSON from OpsWorks stack",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		svc := fido.Init()
@@ -32,14 +32,14 @@ var rawCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(rawCmd)
+	RootCmd.AddCommand(getCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// rawCmd.PersistentFlags().String("foo", "", "A help for foo")
-	rawCmd.PersistentFlags().StringVarP(
+	getCmd.PersistentFlags().StringVarP(
 		&name,
 		"name",
 		"",
