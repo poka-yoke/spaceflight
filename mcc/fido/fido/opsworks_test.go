@@ -97,6 +97,18 @@ func (m *mockOpsWorksClient) DescribeStacks(
 	return
 }
 
+func (m *mockOpsWorksClient) UpdateStack(
+	params *opsworks.UpdateStackInput,
+) (
+	out *opsworks.UpdateStackOutput,
+	err error,
+) {
+	ma := getStackMap()
+	s := ma[*params.StackId]
+	s.CustomJson = params.CustomJson
+	return
+}
+
 func TestGetStackID(t *testing.T) {
 	svc := &mockOpsWorksClient{}
 	for name, tt := range getStackMap() {
@@ -126,6 +138,24 @@ func TestGetCustomJSON(t *testing.T) {
 				"Expected StackID %s but received %s\n",
 				*tt.CustomJson,
 				out,
+			)
+		}
+	}
+}
+
+func TestPushCustomJSON(t *testing.T) {
+	svc := &mockOpsWorksClient{}
+	cJSON := "NewCustomJSON"
+	for _, tt := range list {
+		err := PushCustomJSON(svc, *tt.StackId, cJSON)
+		if err != nil {
+			t.Errorf("Unexpected error %s\n", err.Error())
+		}
+		if *tt.CustomJson != cJSON {
+			t.Errorf(
+				"Expected %s but got %s\n",
+				cJSON,
+				*tt.CustomJson,
 			)
 		}
 	}
