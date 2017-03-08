@@ -53,3 +53,13 @@ func GetCustomJSON(
 	}
 	return *out.Stacks[0].CustomJson, nil
 }
+
+// PushCustomJSON uploads a CustomJSON to an OpsWorks stack
+func PushCustomJSON(svc opsworksiface.OpsWorksAPI, stackid, customJSON string) (err error) {
+	params := &opsworks.UpdateStackInput{
+		StackId:    &stackid,
+		CustomJson: &customJSON,
+	}
+	_, err = svc.UpdateStack(params)
+	return
+}
