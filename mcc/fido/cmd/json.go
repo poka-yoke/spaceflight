@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
+
+	"github.com/Devex/spaceflight/mcc/fido/fido"
 )
 
 // jsonCmd represents the json command
@@ -12,7 +16,25 @@ var jsonCmd = &cobra.Command{
 	Short: "Modify contents of supplied JSON file",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("json called")
+		customJSON, err := fido.ReadFromPipe()
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		// Convert JSON into struct
+		data := new(interface{})
+		err = json.Unmarshal([]byte(customJSON), data)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		// Convert struct into JSON
+		out, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			log.Panic(err)
+		}
+		fmt.Print(string(out))
+
 	},
 }
 
