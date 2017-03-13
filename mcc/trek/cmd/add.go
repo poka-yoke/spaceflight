@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/mcc/fido/fido"
 	"github.com/Devex/spaceflight/mcc/trek/trek"
 )
 
@@ -18,7 +17,7 @@ var addCmd = &cobra.Command{
 	Short: "Adds a redirect",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		redirects, err := fido.ReadFromPipe()
+		redirects, err := trek.ReadFromPipe()
 		if err != nil {
 			log.Fatal(err.Error())
 		}
