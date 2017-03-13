@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
 )
@@ -12,8 +13,8 @@ var name, vpcid string
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "capcom create [flags] <description>",
+	Use:   "create [flags] <description>",
+	Short: "Create a new Security Group",
 	Long: `Example:
     capcom create --name test This is a test SG
     capcom create --name test --vpcid vpc-12345678 This is a test SG in a vpc`,
