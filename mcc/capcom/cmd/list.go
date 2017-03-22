@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
+	"github.com/Devex/spaceflight/mcc/capcom/capcom"
 )
 
-var graph bool
+var graph, search bool
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -22,6 +23,14 @@ but can also be presented in dot format for graphics processing.`,
 		svc := capcom.Init()
 		if graph {
 			fmt.Print(capcom.GraphSGRelations(svc))
+		} else if search {
+			list, err := capcom.FindSecurityGroupsWithRange(svc, args[0])
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			for _, l := range list {
+				fmt.Println(l)
+			}
 		} else {
 			fmt.Print(capcom.ListSecurityGroups(svc))
 		}
@@ -41,5 +50,6 @@ func init() {
 	// is called directly, e.g.:
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	listCmd.Flags().BoolVarP(&graph, "graph", "g", false, "Output relations as a graph in DOT format")
+	listCmd.Flags().BoolVarP(&search, "search", "s", false, "Search for this following CIDR in all SGs")
 
 }
