@@ -5,6 +5,26 @@ import (
 	"testing"
 )
 
+// TestIsHostname tests checking for a hostname.
+func TestIsHostname(t *testing.T) {
+	values := map[string]bool{
+		"hostname.domain.tld":        true,
+		"domain.tld":                 true,
+		"*.domain.tld":               true,
+		"/path/to/file":              false,
+		"http://hostname.domain.tld": false,
+	}
+	for k, v := range values {
+		if IsHostname(k) != v {
+			should := "should "
+			if !v {
+				should = "should not "
+			}
+			t.Errorf("%v %sbe considered a hostname", k, should)
+		}
+	}
+}
+
 // TestAdd tests adding a new redirect.
 func TestAdd(t *testing.T) {
 	redirect := "/en /;\n"
