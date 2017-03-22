@@ -64,4 +64,21 @@ func TestAdd(t *testing.T) {
 	if err == nil {
 		t.Errorf("Both original and final should be present")
 	}
+	vhosts := "server {\n" +
+		"\tlisten 80;\n" +
+		"\tserver_name\thelp.example.com;\n" +
+		"\treturn 301\thttp://www.example.com/help;\n" +
+		"}\n"
+	hostname := "about.example.com"
+	url := "http://www.example.com/about"
+	vhostToAdd := "server {\n" +
+		"\tlisten 80;\n" +
+		"\tserver_name\tabout.example.com;\n" +
+		"\treturn 301\thttp://www.example.com/about;\n" +
+		"}"
+	expected := fmt.Sprintf("%s\n%s", vhosts, vhostToAdd)
+	output, err = Add(vhosts, hostname, url)
+	if output != expected && err == nil {
+		t.Errorf("VHost to %s was not added: \n%s\n++++++\n%s", hostname, output, expected)
+	}
 }
