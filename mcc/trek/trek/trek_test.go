@@ -5,6 +5,26 @@ import (
 	"testing"
 )
 
+// TestIsURL tests checking for a url.
+func TestIsURL(t *testing.T) {
+	values := map[string]bool{
+		"hostname.domain.tld":        false,
+		"domain.tld":                 false,
+		"*.domain.tld":               false,
+		"/path/to/file":              false,
+		"http://hostname.domain.tld": true,
+	}
+	for k, v := range values {
+		if IsURL(k) != v {
+			should := "should "
+			if !v {
+				should = "should not "
+			}
+			t.Errorf("%v %sbe considered a URL", k, should)
+		}
+	}
+}
+
 // TestIsHostname tests checking for a hostname.
 func TestIsHostname(t *testing.T) {
 	values := map[string]bool{
