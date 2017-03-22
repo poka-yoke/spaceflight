@@ -6,7 +6,20 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 )
+
+// RFC1123HostnameRegExp : Hostname Regular expression according with RFC1123HostnameRegExp.
+const RFC1123HostnameRegExp = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]|\\*)\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$"
+
+// IsHostname returns true is argument can be considered a hostname.
+func IsHostname(name string) bool {
+	m, err := regexp.MatchString(RFC1123HostnameRegExp, name)
+	if err != nil {
+		return false
+	}
+	return m
+}
 
 // ReadFromPipe returns a string containing stdin contents
 func ReadFromPipe() (string, error) {
