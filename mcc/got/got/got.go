@@ -109,8 +109,34 @@ func UpsertChangeList(
 	log.Printf(
 		"Adding %s to change list for TTL %d\n",
 		*val.Name,
-		ttl)
+		ttl,
+	)
 	res = append(res, change)
+	return
+}
+
+// DeleteChangeList generates a list of changes for DELETEing the records in
+// names, according to a common type
+func DeleteChangeList(
+	names []string,
+	typ string,
+	list []*route53.ResourceRecordSet,
+) (res []*route53.Change) {
+	var record *route53.ResourceRecordSet
+	for _, name := range names {
+		for _, i := range list {
+			if *i.Name == name &&
+				*i.Type == typ {
+				record = i
+			}
+		}
+		change := &route53.Change{
+			Action:            aws.String("DELETE"),
+			ResourceRecordSet: record,
+		}
+		res = append(res, change)
+		log.Printf("Added %s to delete list\n", name)
+	}
 	return
 }
 

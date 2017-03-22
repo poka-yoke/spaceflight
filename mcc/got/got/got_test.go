@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
 
-var one = "one.example.com"
-var two = "two.example.com"
+var one = "one.example.com."
+var two = "two.example.com."
 var awsCname = "ec2-1-2-3-4.compute-1.amazonaws.com"
 var hundred = "100"
 var zoneName = "test"
@@ -93,7 +93,7 @@ var rrstest = []struct {
 	{
 		ResourceRecordSetList,
 		[]string{"A"},
-		[]string{"one.example.com"},
+		[]string{"one.example.com."},
 		[]*route53.ResourceRecordSet{
 			onerecordA,
 		},
@@ -101,7 +101,7 @@ var rrstest = []struct {
 	{
 		ResourceRecordSetList,
 		[]string{"AAAA"},
-		[]string{"two.example.com"},
+		[]string{"two.example.com."},
 		[]*route53.ResourceRecordSet{
 			tworecordAAAA,
 		},
@@ -124,7 +124,7 @@ var rrstest = []struct {
 			"A",
 			"AAAA",
 		},
-		[]string{"one.example.com", "two.example.com"},
+		[]string{"one.example.com.", "two.example.com."},
 		[]*route53.ResourceRecordSet{
 			onerecordA,
 			tworecordAAAA,
@@ -379,5 +379,40 @@ func TestApplyChanges(t *testing.T) {
 				t.Error("Unexpected outcome")
 			}
 		})
+	}
+}
+
+var dcltest = []struct {
+	names  []string
+	typ    string
+	result []*route53.ResourceRecordSet
+}{
+	{
+		typ: "CNAME",
+		names: []string{
+			"one.example.com.",
+		},
+		result: []*route53.ResourceRecordSet{ResourceRecordSetList[0]},
+	},
+}
+
+func TestDeleteChangeList(t *testing.T) {
+	for _, tt := range dcltest {
+		res := DeleteChangeList(tt.names, tt.typ, ResourceRecordSetList)
+		if len(res) != len(tt.names) {
+			t.Errorf(
+				"Unexpected length of results, expected %d and got %d\n",
+				len(tt.names),
+				len(res),
+			)
+		}
+		for _, change := range res {
+			if *change.Action != "DELETE" {
+				t.Errorf(
+					"Expected DELETE action, got %s\n",
+					*change.Action,
+				)
+			}
+		}
 	}
 }
