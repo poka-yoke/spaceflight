@@ -79,7 +79,7 @@ func Add(initialContent, original, final string) (
 				"\tlisten 80;\n"+
 				"\tserver_name\t%s;\n"+
 				"\treturn 301\t%s;\n"+
-				"}",
+				"}\n",
 			original,
 			final,
 		)

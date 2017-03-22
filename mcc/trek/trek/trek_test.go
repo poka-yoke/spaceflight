@@ -77,7 +77,7 @@ func TestAdd(t *testing.T) {
 		"\tserver_name\tabout.example.com;\n" +
 		"\treturn 301\thttp://www.example.com/about;\n" +
 		"}"
-	expected = fmt.Sprintf("%s\n%s", vhosts, vhostToAdd)
+	expected = fmt.Sprintf("%s\n%s\n", vhosts, vhostToAdd)
 	output, err = Add(vhosts, hostname, url)
 	if output != expected && err == nil {
 		t.Errorf(
