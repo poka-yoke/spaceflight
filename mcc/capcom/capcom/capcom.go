@@ -12,6 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
+// CIDRValidationRegEx is used to validate the format of a CIDR
+const CIDRValidationRegEx = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}" +
+	"([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])" +
+	"(/([0-9]|[1-2][0-9]|3[0-2]))$"
+
 func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
@@ -20,8 +25,8 @@ func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	return res
 }
 
-// ListSecurityGroups prints all available Security groups accessible by the
-// account on svc
+// ListSecurityGroups prints all available Security groups accessible
+// by the account on svc
 func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
@@ -29,6 +34,38 @@ func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 			*sg.GroupName,
 			*sg.Description),
 		)
+	}
+	return
+}
+
+// FindSecurityGroupsWithRange returns a list of SGIDs where the CIDR
+// passed in matches any of the rules
+func FindSecurityGroupsWithRange(
+	svc ec2iface.EC2API,
+	cidr string,
+) (
+	out []string,
+	err error,
+) {
+	m, err := regexp.MatchString(
+		CIDRValidationRegEx,
+		cidr,
+	)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	if !m {
+		err = fmt.Errorf("CIDR supplied, %s, is not a valid CIDR\n", cidr)
+		return
+	}
+	for _, sg := range getSecurityGroups(svc).SecurityGroups {
+		for _, perm := range sg.IpPermissions {
+			for _, ipRange := range perm.IpRanges {
+				if *ipRange.CidrIp == cidr {
+					out = append(out, *sg.GroupId)
+				}
+			}
+		}
 	}
 	return
 }
@@ -47,9 +84,7 @@ func BuildIPPermission(
 	perm.ToPort = &port
 	perm.IpProtocol = &proto
 	m, err := regexp.MatchString(
-		"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}"+
-			"([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"+
-			"(/([0-9]|[1-2][0-9]|3[0-2]))$",
+		CIDRValidationRegEx,
 		origin,
 	)
 	if err != nil {
