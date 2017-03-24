@@ -55,7 +55,7 @@ func FindSecurityGroupsWithRange(
 		log.Panic(err.Error())
 	}
 	if !m {
-		err = fmt.Errorf("CIDR supplied, %s, is not a valid CIDR\n", cidr)
+		err = fmt.Errorf("CIDR supplied, %s, is not a valid CIDR", cidr)
 		return
 	}
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
