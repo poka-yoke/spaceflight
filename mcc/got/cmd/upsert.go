@@ -12,8 +12,8 @@ var name, typ string
 
 // upsertCmd represents the upsert command
 var upsertCmd = &cobra.Command{
-	Use:   "upsert",
-	Short: "upsert [flags] <destination>",
+	Use:   "upsert [flags] <destination>",
+	Short: "Upsert a DNS record",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		svc := got.Init()
