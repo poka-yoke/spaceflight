@@ -3,6 +3,7 @@ package capcom
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,6 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
+
+// CIDRValidationRegEx is used to validate the format of a CIDR
+const CIDRValidationRegEx = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}" +
+	"([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])" +
+	"(/([0-9]|[1-2][0-9]|3[0-2]))$"
 
 func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
@@ -19,8 +25,8 @@ func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	return res
 }
 
-// ListSecurityGroups prints all available Security groups accessible by the
-// account on svc
+// ListSecurityGroups prints all available Security groups accessible
+// by the account on svc
 func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
@@ -28,6 +34,38 @@ func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
 			*sg.GroupName,
 			*sg.Description),
 		)
+	}
+	return
+}
+
+// FindSecurityGroupsWithRange returns a list of SGIDs where the CIDR
+// passed in matches any of the rules
+func FindSecurityGroupsWithRange(
+	svc ec2iface.EC2API,
+	cidr string,
+) (
+	out []string,
+	err error,
+) {
+	m, err := regexp.MatchString(
+		CIDRValidationRegEx,
+		cidr,
+	)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	if !m {
+		err = fmt.Errorf("CIDR supplied, %s, is not a valid CIDR", cidr)
+		return
+	}
+	for _, sg := range getSecurityGroups(svc).SecurityGroups {
+		for _, perm := range sg.IpPermissions {
+			for _, ipRange := range perm.IpRanges {
+				if *ipRange.CidrIp == cidr {
+					out = append(out, *sg.GroupId)
+				}
+			}
+		}
 	}
 	return
 }
@@ -45,40 +83,34 @@ func BuildIPPermission(
 	perm.FromPort = &port
 	perm.ToPort = &port
 	perm.IpProtocol = &proto
-	if strings.HasPrefix(origin, "sg-") {
-		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{
-			{
-				GroupId: &origin,
-			},
-		}
-	} else if strings.HasSuffix(origin, "/32") {
-		perm.IpRanges = []*ec2.IpRange{
-			{
-				CidrIp: &origin,
-			},
-		}
-	} else {
-		log.Fatalf("Origin %s is neither sgid nor"+
-			" IP range in CIDR notation",
+	m, err := regexp.MatchString(
+		CIDRValidationRegEx,
+		origin,
+	)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	switch {
+	case strings.HasPrefix(origin, "sg-"):
+		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
+	case m:
+		perm.IpRanges = []*ec2.IpRange{{CidrIp: &origin}}
+	default:
+		err = fmt.Errorf(
+			"%s is neither sgid nor IP range in CIDR notation",
 			origin,
 		)
 	}
 	return
 }
 
-// AuthorizeAccessToSecurityGroup adds the specified origin to the Ingress
+// AuthorizeAccessToSecurityGroup adds the specified permissions to the Ingress
 // list of the destination security group on protocol and port
 func AuthorizeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
-	origin string,
-	proto string,
-	port int64,
+	perm *ec2.IpPermission,
 	destination string,
-) (out *ec2.AuthorizeSecurityGroupIngressOutput, err error) {
-	perm, _ := BuildIPPermission(origin, proto, port)
-	if !strings.HasPrefix(destination, "sg-") {
-		log.Fatalf("Destination %s is invalid\n", destination)
-	}
+) *ec2.AuthorizeSecurityGroupIngressOutput {
 	params := &ec2.AuthorizeSecurityGroupIngressInput{
 		GroupId:       &destination,
 		IpPermissions: []*ec2.IpPermission{perm},
@@ -87,22 +119,16 @@ func AuthorizeAccessToSecurityGroup(
 	if error != nil {
 		log.Panic(error)
 	}
-	return
+	return out
 }
 
-// RevokeAccessToSecurityGroup adds the specified origin to the Ingress
+// RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
 // list of the destination security group on protocol and port
 func RevokeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
-	origin string,
-	proto string,
-	port int64,
+	perm *ec2.IpPermission,
 	destination string,
-) (out *ec2.RevokeSecurityGroupIngressOutput, err error) {
-	perm, _ := BuildIPPermission(origin, proto, port)
-	if !strings.HasPrefix(destination, "sg-") {
-		log.Fatalf("Destination %s is invalid\n", destination)
-	}
+) *ec2.RevokeSecurityGroupIngressOutput {
 	params := &ec2.RevokeSecurityGroupIngressInput{
 		GroupId:       &destination,
 		IpPermissions: []*ec2.IpPermission{perm},
@@ -111,7 +137,7 @@ func RevokeAccessToSecurityGroup(
 	if error != nil {
 		log.Panic(error)
 	}
-	return
+	return out
 }
 
 // Init initializes connection to AWS API
