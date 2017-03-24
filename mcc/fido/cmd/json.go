@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/mcc/fido/fido"
+	"github.com/poka-yoke/spaceflight/mcc/fido/fido"
 )
 
 // jsonCmd represents the json command
