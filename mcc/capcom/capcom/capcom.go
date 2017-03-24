@@ -83,23 +83,21 @@ func BuildIPPermission(
 	perm.FromPort = &port
 	perm.ToPort = &port
 	perm.IpProtocol = &proto
-	m, err := regexp.MatchString(
-		CIDRValidationRegEx,
-		origin,
-	)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-	switch {
-	case strings.HasPrefix(origin, "sg-"):
+	if strings.HasPrefix(origin, "sg-") {
+		// It's a security group
 		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
-	case m:
+	} else {
+		_, _, err = net.ParseCIDR(origin)
+		if err != nil {
+			// It's not a valid CIDR, and it wasn't an SGID before
+			err = fmt.Errorf(
+				"%s is neither sgid nor IP range in CIDR notation",
+				origin,
+			)
+			return
+		}
+		// It's a valid CIDR
 		perm.IpRanges = []*ec2.IpRange{{CidrIp: &origin}}
-	default:
-		err = fmt.Errorf(
-			"%s is neither sgid nor IP range in CIDR notation",
-			origin,
-		)
 	}
 	return
 }
