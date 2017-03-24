@@ -3,7 +3,7 @@ package capcom
 import (
 	"fmt"
 	"log"
-	"regexp"
+	"net"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -11,11 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
-
-// CIDRValidationRegEx is used to validate the format of a CIDR
-const CIDRValidationRegEx = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}" +
-	"([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])" +
-	"(/([0-9]|[1-2][0-9]|3[0-2]))$"
 
 func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
 	res, err := svc.DescribeSecurityGroups(nil)
@@ -47,26 +42,48 @@ func FindSecurityGroupsWithRange(
 	out []string,
 	err error,
 ) {
-	m, err := regexp.MatchString(
-		CIDRValidationRegEx,
-		cidr,
-	)
+	// IP we are searching for in the Security Groups
+	searchIP, _, err := net.ParseCIDR(cidr)
 	if err != nil {
-		log.Panic(err.Error())
+		err = fmt.Errorf("%s is not a valid CIDR\n", cidr)
 	}
-	if !m {
-		err = fmt.Errorf("CIDR supplied, %s, is not a valid CIDR\n", cidr)
-		return
-	}
+	// Obtain and traverse AWS's Security Group structure
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		for _, perm := range sg.IpPermissions {
 			for _, ipRange := range perm.IpRanges {
-				if *ipRange.CidrIp == cidr {
+				cont, err := NetworkContainsIPCheck(
+					*ipRange.CidrIp,
+					searchIP,
+				)
+				if err != nil {
+					log.Printf(
+						"Invalid CIDR %s in SG %s (%s)\n",
+						*ipRange.CidrIp,
+						*sg.GroupName,
+						*sg.GroupId,
+					)
+				}
+				if cont {
 					out = append(out, *sg.GroupId)
 				}
 			}
 		}
 	}
+	return
+}
+
+// NetworkContainsIPCheck returns true if the subnet expresed in the
+// CIDR in contains the IP object
+func NetworkContainsIPCheck(cidr string, searchIP net.IP) (out bool, err error) {
+	ip, sub, err := net.ParseCIDR(cidr)
+	if err != nil {
+		err = fmt.Errorf(
+			"Failed parsing CIDR %s\n",
+			cidr,
+		)
+		return
+	}
+	out = ip.Equal(searchIP) || sub.Contains(searchIP)
 	return
 }
 

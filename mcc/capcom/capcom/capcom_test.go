@@ -3,6 +3,7 @@ package capcom
 import (
 	"errors"
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -232,6 +233,70 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 			if v != tt.ret[k] {
 				t.Error("Unexpected output")
 			}
+		}
+	}
+}
+
+var ncictable = []struct {
+	cidr string
+	ip   string
+	ret  bool
+	err  error
+}{
+	{
+		cidr: "0.0.0.0/0",
+		ip:   "1.2.3.4/32",
+		ret:  true,
+		err:  nil,
+	},
+	{
+		cidr: "deadbeef",
+		ip:   "1.2.3.4/32",
+		ret:  false,
+		err:  errors.New(""),
+	},
+	{
+		cidr: "192.168.1.0/24",
+		ip:   "192.168.1.1/32",
+		ret:  true,
+		err:  nil,
+	},
+	{
+		cidr: "192.168.1.0/24",
+		ip:   "192.168.3.1/32",
+		ret:  false,
+		err:  nil,
+	},
+	{
+		cidr: "192.168.1.0/24",
+		ip:   "192.168.1.0/24",
+		ret:  true,
+		err:  nil,
+	},
+	{
+		cidr: "192.168.1.0/24",
+		ip:   "192.168.3.0/24",
+		ret:  false,
+		err:  nil,
+	},
+	{
+		cidr: "192.168.0.0/16",
+		ip:   "192.168.10.0/24",
+		ret:  true,
+		err:  nil,
+	},
+}
+
+func TestNetworkContainsIPCheck(t *testing.T) {
+	for _, tt := range ncictable {
+		ip, _, _ := net.ParseCIDR(tt.ip)
+		ret, err := NetworkContainsIPCheck(tt.cidr, ip)
+		if (err != nil && tt.err == nil) ||
+			(err == nil && tt.err != nil) {
+			t.Error("Unexpected/mismatched error")
+		}
+		if ret != tt.ret {
+			t.Error("Unexpected mismatch")
 		}
 	}
 }
