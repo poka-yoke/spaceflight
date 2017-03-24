@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"log"
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
@@ -20,11 +23,16 @@ string) to the specified port. E.g.:
 	Run: func(cmd *cobra.Command, args []string) {
 		svc := capcom.Init()
 		for _, sgid := range args {
-			capcom.RevokeAccessToSecurityGroup(
+			if !strings.HasPrefix(sgid, "sg-") {
+				log.Fatalf("%s is invalid SG id\n", sgid)
+			}
+			perm, err := capcom.BuildIPPermission(source, proto, port)
+			if err != nil {
+				log.Fatal(err)
+			}
+			_ = capcom.RevokeAccessToSecurityGroup(
 				svc,
-				source,
-				proto,
-				port,
+				perm,
 				sgid,
 			)
 		}
