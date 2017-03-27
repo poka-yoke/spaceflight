@@ -39,7 +39,7 @@ func FindSecurityGroupsWithRange(
 	svc ec2iface.EC2API,
 	cidr string,
 ) (
-	out []string,
+	out []SearchResult,
 	err error,
 ) {
 	// IP we are searching for in the Security Groups
@@ -64,7 +64,12 @@ func FindSecurityGroupsWithRange(
 					)
 				}
 				if cont {
-					out = append(out, *sg.GroupId)
+					out = append(out, SearchResult{
+						GroupID:  *sg.GroupId,
+						Protocol: *perm.IpProtocol,
+						Port:     *perm.ToPort,
+						Source:   *ipRange.CidrIp,
+					})
 				}
 			}
 		}
