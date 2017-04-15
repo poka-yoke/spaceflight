@@ -51,6 +51,8 @@ func (m *mockEC2Client) DescribeSecurityGroups(
 				GroupName:   aws.String(""),
 				IpPermissions: []*ec2.IpPermission{
 					{
+						IpProtocol: aws.String("tcp"),
+						ToPort:     aws.Int64(22),
 						IpRanges: []*ec2.IpRange{
 							{CidrIp: aws.String("1.2.3.4/32")},
 						},
@@ -207,14 +209,18 @@ func TestFindSGByName(t *testing.T) {
 var fsgwtable = []struct {
 	cidr string
 	err  error
-	ret  []string
+	ret  []SearchResult
 }{
 	{
 		cidr: "1.2.3.4/32",
 		err:  nil,
-		ret: []string{
-			"sg-1234",
-		},
+		ret: []SearchResult{
+			SearchResult{
+				GroupID:  "sg-1234",
+				Protocol: "tcp",
+				Port:     22,
+				Source:   "1.2.3.4/32",
+			}},
 	},
 }
 
@@ -230,8 +236,12 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 			t.Error("Mismatched results and expectations length")
 		}
 		for k, v := range ret {
-			if v != tt.ret[k] {
-				t.Error("Unexpected output")
+			if v.String() != tt.ret[k].String() {
+				t.Errorf(
+					"Unexpected output %s != %s",
+					v.String(),
+					tt.ret[k].String(),
+				)
 			}
 		}
 	}

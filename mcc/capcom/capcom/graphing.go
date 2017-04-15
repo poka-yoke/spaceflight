@@ -66,9 +66,9 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 	return iState
 }
 
-func nodeAttrs(sg *ec2.SecurityGroup) (attrs gographviz.Attrs) {
-	attrs = gographviz.NewAttrs()
-	attrs.Add("label", fmt.Sprintf("{{%s|}|%s}", *sg.GroupId, *sg.GroupName))
+func nodeAttrs(sg *ec2.SecurityGroup) (attrs map[string]string) {
+	attrs = make(map[string]string)
+	attrs["label"] = fmt.Sprintf("{{%s|}|%s}", *sg.GroupId, *sg.GroupName)
 	return
 }
 
@@ -86,13 +86,13 @@ func registerNodes(
 		attrs := nodeAttrs(sg)
 		switch {
 		case nodesPresence[*sg.GroupId]["running"] > 0:
-			attrs.Add("color", "green")
+			attrs["color"] = "green"
 		case nodesPresence[*sg.GroupId]["running"] == 0 &&
 			nodesPresence[*sg.GroupId]["stopped"] > 0:
-			attrs.Add("color", "yellow")
+			attrs["color"] = "yellow"
 		case nodesPresence[*sg.GroupId]["running"] == 0 &&
 			nodesPresence[*sg.GroupId]["stopped"] == 0:
-			attrs.Add("color", "red")
+			attrs["color"] = "red"
 		}
 		graph.AddNode("G", *sg.GroupId, attrs)
 		if nodesPresence[*sg.GroupId] == nil {
@@ -101,7 +101,7 @@ func registerNodes(
 	}
 }
 
-func edgeAttrs(perm *ec2.IpPermission) (attrs gographviz.Attrs) {
+func edgeAttrs(perm *ec2.IpPermission) (attrs map[string]string) {
 	var val string
 	if perm.FromPort != nil && perm.ToPort != nil {
 		fromport := strconv.FormatInt(*perm.FromPort, 10)
@@ -120,8 +120,8 @@ func edgeAttrs(perm *ec2.IpPermission) (attrs gographviz.Attrs) {
 				toport,
 			)
 		}
-		attrs = gographviz.NewAttrs()
-		attrs.Add("label", val)
+		attrs = make(map[string]string)
+		attrs["label"] = val
 	}
 	return attrs
 }
