@@ -16,6 +16,7 @@ if [ $(git remote | grep -c devex) -ge 1 ]; then
     git add -u
     git commit -m "Unified import paths to poka-yoke"
     echo "Updating from_devex in poka-yoke..."
+    git pull --rebase
     git push origin from_devex
     echo "Now you should issue a new PR from poka-yoke:from_devex to poka-yoke:master."
     echo "If you have hub installed, the following command should work:"
