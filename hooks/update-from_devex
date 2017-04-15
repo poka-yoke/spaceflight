@@ -18,9 +18,12 @@ if [ $(git remote | grep -c devex) -ge 1 ]; then
     echo "Updating from_devex in poka-yoke..."
     git pull --rebase
     git push origin from_devex
-    echo "Now you should issue a new PR from poka-yoke:from_devex to poka-yoke:master."
-    echo "If you have hub installed, the following command should work:"
-    echo "    git pull-request -h origin:from_devex -b origin:master -m 'Message'"
+    if $(which hub &>/dev/null); then
+        echo "Publishing PR:"
+        hub pull-request -f -h poka-yoke:from_devex -b poka-yoke:master -m 'Updating from Devex'
+    else
+        echo "Now you should issue a new PR from poka-yoke:from_devex to poka-yoke:master."
+    fi
 else
     echo "You need to have the remote devex created"
 fi
