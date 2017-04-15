@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 
 	"github.com/poka-yoke/spaceflight/mcc/roosa"
-	"github.com/poka-yoke/spaceflight/mcc/ttl"
 )
 
 var zoneName string
@@ -34,10 +33,10 @@ func main() {
 	}
 
 	svc := route53.New(sess)
-	zoneID := ttl.GetZoneID(zoneName, svc)
+	zoneID := roosa.GetZoneID(zoneName, svc)
 
 	referenceTreeList := roosa.NewReferenceTreeList(
-		ttl.GetResourceRecordSet(zoneID, svc),
+		roosa.GetResourceRecordSet(zoneID, svc),
 	)
 	fmt.Print(referenceTreeList)
 }

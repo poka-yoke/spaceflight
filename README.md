@@ -26,7 +26,6 @@ Finally, here you can find a relation of tools:
 | [fido](mcc/fido) | MCC | Configuration management tool |
 | [surgeon](mcc/surgeon) | MCC | (WIP) Service Diagnosing tool |
 | [es](orbiter/es) | Orbiter | (WIP) ElasticSearch automatic tuning Lambda |
-| [ttl](mcc/ttl) | MCC | (Deprecated in favor of got) Tool to manage changes in TTLs |
 
 ## Collaborations
 
