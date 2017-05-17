@@ -72,12 +72,12 @@ func (s Info) NagiosCheck() *nagiosplugin.Check {
 
 	hostString := strings.Join(s.runningHosts()[:], ", ")
 	if s.Stats.Processes > 1 {
-		check.AddResult(nagiosplugin.CRITICAL, "Running in too many nodes. Nodes: "+hostString)
+		check.AddResult(nagiosplugin.CRITICAL, "Running sidekiq in too many nodes. Nodes: "+hostString)
 	}
 	if s.Stats.Processes == 0 {
 		check.AddResult(nagiosplugin.CRITICAL, "No sidekiq running")
 	}
-	check.AddResult(nagiosplugin.OK, "Running in node "+hostString)
+	check.AddResult(nagiosplugin.OK, "Running sidekiq in node "+hostString)
 	return check
 }
 
