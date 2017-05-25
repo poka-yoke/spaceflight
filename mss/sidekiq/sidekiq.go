@@ -16,15 +16,15 @@ func must(err error) {
 }
 
 type sidekiqStats struct {
-	Processed      int64 `json:"processed"`
-	Failed         int64 `json:"failed"`
-	Busy           int64 `json:"busy"`
-	Processes      int64 `json:"processes"`
-	Enqueued       int64 `json:"enqueued"`
-	Scheduled      int64 `json:"scheduled"`
-	Retries        int64 `json:"retries"`
-	Dead           int64 `json:"dead"`
-	DefaultLatency int64 `json:"default_latency"`
+	Processed      int64   `json:"processed"`
+	Failed         int64   `json:"failed"`
+	Busy           int64   `json:"busy"`
+	Processes      int64   `json:"processes"`
+	Enqueued       int64   `json:"enqueued"`
+	Scheduled      int64   `json:"scheduled"`
+	Retries        int64   `json:"retries"`
+	Dead           int64   `json:"dead"`
+	DefaultLatency float64 `json:"default_latency"`
 }
 
 type sidekiqProcess struct {
