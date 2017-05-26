@@ -82,28 +82,18 @@ func (s Info) NagiosCheck() *nagiosplugin.Check {
 }
 
 func (s Info) getSidekiqProcessList(url string) Info {
-	resp := getSidekiqData(url)
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	pl := []sidekiqProcess{}
+	body := getSidekiqData(url)
+	if err := json.Unmarshal(body, &pl); err != nil {
 		panic(err)
 	}
-	processList := []sidekiqProcess{}
-	if err := json.Unmarshal(body, &processList); err != nil {
-		panic(err)
-	}
-	s.Processes = processList
+	s.Processes = pl
 	return s
 }
 
 func (s Info) getSidekiqStats(url string) Info {
-	resp := getSidekiqData(url)
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
 	stats := sidekiqStats{}
+	body := getSidekiqData(url)
 	if err := json.Unmarshal(body, &stats); err != nil {
 		panic(err)
 	}
@@ -111,12 +101,17 @@ func (s Info) getSidekiqStats(url string) Info {
 	return s
 }
 
-func getSidekiqData(url string) *http.Response {
+func getSidekiqData(url string) []byte {
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}
-	return resp
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	return body
 }
 
 // ProcessGetResponse creates a sidekiqInfo object contining sidekiq's
