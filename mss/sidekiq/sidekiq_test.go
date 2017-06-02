@@ -148,14 +148,14 @@ func TestRunningHosts(t *testing.T) {
 	}
 }
 
-func TestGetSidekiqStats(t *testing.T) {
+func TestReadSidekiqStats(t *testing.T) {
 	for _, tt := range gsstable {
 		body, err := json.Marshal(tt.s.Stats)
 		if err != nil {
 			panic(err)
 		}
 		info := Info{}
-		info = info.getSidekiqStats(body)
+		info = info.readSidekiqStats(body)
 
 		if tt.s.Stats != info.Stats {
 			t.Error("Should have been equal")
@@ -163,14 +163,14 @@ func TestGetSidekiqStats(t *testing.T) {
 	}
 }
 
-func TestGetSidekiqProcessList(t *testing.T) {
+func TestReadSidekiqProcessList(t *testing.T) {
 	for _, tt := range gsstable {
 		body, err := json.Marshal(tt.s.Processes)
 		if err != nil {
 			panic(err)
 		}
 		info := Info{}
-		info = info.getSidekiqProcessList(body)
+		info = info.readSidekiqProcessList(body)
 
 		if !compareSidekiqProcess(info.Processes, tt.s.Processes) {
 			t.Error("Should have been equal")
