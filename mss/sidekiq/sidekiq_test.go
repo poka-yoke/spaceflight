@@ -10,6 +10,32 @@ var rhtable = []struct {
 		Info{},
 		[]string{},
 	},
+	{
+		Info{
+			Processes: []sidekiqProcess{
+				{
+					Attribs: sidekiqAttribs{
+						Hostname: "grape1",
+					},
+				},
+				{
+					Attribs: sidekiqAttribs{
+						Hostname: "grape2",
+					},
+				},
+				{
+					Attribs: sidekiqAttribs{
+						Hostname: "grape3",
+					},
+				},
+			},
+		},
+		[]string{
+			"grape1",
+			"grape2",
+			"grape3",
+		},
+	},
 }
 
 func TestRunningHosts(t *testing.T) {

@@ -27,19 +27,21 @@ type sidekiqStats struct {
 	DefaultLatency float64 `json:"default_latency"`
 }
 
+type sidekiqAttribs struct {
+	Hostname    string   `json:"hostname"`
+	StartedAt   float64  `json:"started_at"`
+	Pid         int64    `json:"pid"`
+	Tag         string   `json:"tag"`
+	Concurrency int64    `json:"concurrency"`
+	Queues      []string `json:"queues"`
+	Labels      []string `json:"labels"`
+	Identity    string   `json:"identity"`
+	Busy        int64    `jsno:"busy"`
+	Beat        float64  `json:"beat"`
+}
+
 type sidekiqProcess struct {
-	Attribs struct {
-		Hostname    string   `json:"hostname"`
-		StartedAt   float64  `json:"started_at"`
-		Pid         int64    `json:"pid"`
-		Tag         string   `json:"tag"`
-		Concurrency int64    `json:"concurrency"`
-		Queues      []string `json:"queues"`
-		Labels      []string `json:"labels"`
-		Identity    string   `json:"identity"`
-		Busy        int64    `jsno:"busy"`
-		Beat        float64  `json:"beat"`
-	} `json:"attribs"`
+	Attribs sidekiqAttribs `json:"attribs"`
 }
 
 // Info holds all the information obtained from the sidekiq
