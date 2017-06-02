@@ -83,9 +83,8 @@ func (s Info) NagiosCheck() *nagiosplugin.Check {
 	return check
 }
 
-func (s Info) getSidekiqProcessList(url string) Info {
+func (s Info) getSidekiqProcessList(body []byte) Info {
 	pl := []sidekiqProcess{}
-	body := getSidekiqData(url)
 	if err := json.Unmarshal(body, &pl); err != nil {
 		panic(err)
 	}
@@ -93,9 +92,8 @@ func (s Info) getSidekiqProcessList(url string) Info {
 	return s
 }
 
-func (s Info) getSidekiqStats(url string) Info {
+func (s Info) getSidekiqStats(body []byte) Info {
 	stats := sidekiqStats{}
-	body := getSidekiqData(url)
 	if err := json.Unmarshal(body, &stats); err != nil {
 		panic(err)
 	}
@@ -119,8 +117,11 @@ func getSidekiqData(url string) []byte {
 // ProcessGetResponse creates a sidekiqInfo object contining sidekiq's
 // exposed API information available
 func ProcessGetResponse(baseURL string) (info Info) {
+	stats := getSidekiqData(baseURL + "/system/sidekiq")
+	process := getSidekiqData(baseURL + "/system/sidekiq/processes")
+
 	info = Info{}
-	info = info.getSidekiqStats(baseURL + "/system/sidekiq")
-	info = info.getSidekiqProcessList(baseURL + "/system/sidekiq/processes")
+	info = info.getSidekiqStats(stats)
+	info = info.getSidekiqProcessList(process)
 	return
 }
