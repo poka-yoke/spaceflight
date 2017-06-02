@@ -5,10 +5,72 @@ import (
 	"log"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
-
-	"github.com/poka-yoke/spaceflight/mcc/ttl"
+	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
+
+// GetResourceRecordSet returns a slice containing all responses for specified
+// query. It may issue more than one request as each returns a fixed amount of
+// entries at most.
+func GetResourceRecordSet(
+	zoneID string,
+	svc route53iface.Route53API,
+) (resourceRecordSet []*route53.ResourceRecordSet) {
+	params := &route53.ListResourceRecordSetsInput{
+		HostedZoneId: aws.String(zoneID),
+	}
+	for respIsTruncated := true; respIsTruncated; {
+		resp, err := svc.ListResourceRecordSets(params)
+		if err != nil {
+			panic(err)
+		}
+		if *resp.IsTruncated {
+			params.StartRecordName = resp.NextRecordName
+			params.StartRecordType = resp.NextRecordType
+		}
+		respIsTruncated = *resp.IsTruncated
+
+		// Iterate over all entries and add changes to change_slice
+		for _, val := range resp.ResourceRecordSets {
+			resourceRecordSet = append(resourceRecordSet, val)
+		}
+	}
+	return
+}
+
+// GetZoneID returns a string containing the ZoneID for use in further API
+// actions
+func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
+	params := &route53.ListHostedZonesByNameInput{
+		DNSName:  aws.String(zoneName),
+		MaxItems: aws.String("100"),
+	}
+	resp, err := svc.ListHostedZonesByName(params)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	zoneID = *resp.HostedZones[0].Id
+	return
+}
+
+// FilterResourceRecords returns a slice containing only the entries that
+// pass the check performed by the function argument
+func FilterResourceRecords(
+	l []*route53.ResourceRecordSet,
+	f []string,
+	p func(*route53.ResourceRecordSet, string) *route53.ResourceRecordSet,
+) (result []*route53.ResourceRecordSet) {
+	for _, elem := range l {
+		for _, filter := range f {
+			res := p(elem, filter)
+			if res != nil {
+				result = append(result, res)
+			}
+		}
+	}
+	return
+}
 
 // ReferenceTreeList is a type representing the reference trees for a list of
 // DNS records, explicitly A, AAAA, and CNAME records.
@@ -29,7 +91,7 @@ func NewReferenceTreeList(
 	records []*route53.ResourceRecordSet,
 ) *ReferenceTreeList {
 	return &ReferenceTreeList{
-		records: ttl.FilterResourceRecords(
+		records: FilterResourceRecords(
 			records,
 			recordTypes,
 			func(elem *route53.ResourceRecordSet, filter string) *route53.ResourceRecordSet {
