@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"github.com/Devex/spaceflight/mss/sidekiq"
+	"github.com/poka-yoke/spaceflight/mss/sidekiq"
 )
 
 func main() {
