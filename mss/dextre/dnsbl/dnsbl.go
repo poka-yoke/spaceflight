@@ -26,9 +26,9 @@ func ReverseAddress(ipAddress string) (reversedIPAddress string) {
 	return
 }
 
-// DNSBLQuery queries a DNSBL and returns true if the argument gets a match
+// Query queries a DNSBL and returns true if the argument gets a match
 // in the BL.
-func DNSBLQuery(ipAddress, bl string, addresses chan int) {
+func Query(ipAddress, bl string, addresses chan int) {
 	reversedIPAddress := fmt.Sprintf(
 		"%v.%v",
 		ReverseAddress(ipAddress),

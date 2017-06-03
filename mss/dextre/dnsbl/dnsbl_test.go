@@ -49,11 +49,11 @@ func mockLookup(blacklist string) (addresses []string, err error) {
 	return
 }
 
-func TestDNSBLQuery(t *testing.T) {
+func TestQuery(t *testing.T) {
 	Lookup = mockLookup
 	results := make(chan int)
 	t.Log("Hola")
-	go DNSBLQuery("127.0.0.1", "positive.dnsbl.com", results)
+	go Query("127.0.0.1", "positive.dnsbl.com", results)
 	result := <-results
 	if result != 1 {
 		t.Errorf(
@@ -62,7 +62,7 @@ func TestDNSBLQuery(t *testing.T) {
 			result,
 		)
 	}
-	go DNSBLQuery("127.0.0.1", "negative.dnsbl.com", results)
+	go Query("127.0.0.1", "negative.dnsbl.com", results)
 	result = <-results
 	if result != 0 {
 		t.Errorf(

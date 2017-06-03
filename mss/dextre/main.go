@@ -56,7 +56,7 @@ func main() {
 	positive := 0
 	length := 0
 	for list := range blacklists {
-		go dnsbl.DNSBLQuery(*ipAddress, list, responses)
+		go dnsbl.Query(*ipAddress, list, responses)
 		length++
 	}
 
