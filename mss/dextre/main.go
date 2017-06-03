@@ -1,39 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"log"
 	"math"
-	"os"
-	"sync"
 
 	"github.com/olorin/nagiosplugin"
 	"github.com/poka-yoke/spaceflight/mss/dextre/dnsbl"
 )
-
-var length = 0
-var wg sync.WaitGroup
-
-func fromFile(path string) <-chan string {
-	out := make(chan string)
-	go func() {
-		blfile, err := os.Open(path)
-		if err != nil {
-			log.Fatal("Could't open file ", path, err)
-		}
-		defer blfile.Close()
-
-		scanner := bufio.NewScanner(blfile)
-		for scanner.Scan() {
-			wg.Add(1)
-			out <- scanner.Text()
-			length++
-		}
-		close(out)
-	}()
-	return out
-}
 
 func must(err error) {
 	if err != nil {
@@ -56,22 +30,12 @@ func main() {
 	)
 	flag.Parse()
 
-	list := fromFile(*blacklist)
-	responses := dnsbl.Queries(*ipAddress, list)
+	list := dnsbl.FromFile(*blacklist)
+	dnsbl.Queries(*ipAddress, list)
 
-	queried := 0
-	positive := 0
-	go func() {
-		for response := range responses {
-			if response > 0 {
-				positive += response
-			}
-			queried++
-			wg.Done()
-		}
-	}()
-	wg.Wait()
-	close(responses)
+	positive := dnsbl.Stats.Positive
+	queried := dnsbl.Stats.Queried
+	length := dnsbl.Stats.Length
 
 	check := nagiosplugin.NewCheck()
 	defer check.Finish()
