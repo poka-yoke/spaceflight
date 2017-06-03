@@ -21,13 +21,8 @@ var warning, critical int
 // blCmd represents the bl command
 var blCmd = &cobra.Command{
 	Use:   "bl",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Check for blacklist presence",
+	Long:  `Checks the supplied list of DNS-based blacklists for a specific IP presence. It returns the results in a Nagios compliat string. Thresholds for different Nagios states can be supplied as well.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		list := dnsbl.FromFile(blacklist)
 		dnsbl.Queries(ipAddress, list)
