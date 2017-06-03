@@ -6,28 +6,39 @@ import (
 	"log"
 	"math"
 	"os"
+	"sync"
 
 	"github.com/olorin/nagiosplugin"
 	"github.com/poka-yoke/spaceflight/mss/dextre/dnsbl"
 )
+
+var length = 0
+var wg sync.WaitGroup
 
 func fromFile(path string) <-chan string {
 	out := make(chan string)
 	go func() {
 		blfile, err := os.Open(path)
 		if err != nil {
-			log.Fatal("Could't open file ", path)
-			log.Fatal(err)
+			log.Fatal("Could't open file ", path, err)
 		}
 		defer blfile.Close()
 
 		scanner := bufio.NewScanner(blfile)
 		for scanner.Scan() {
+			wg.Add(1)
 			out <- scanner.Text()
+			length++
 		}
 		close(out)
 	}()
 	return out
+}
+
+func must(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -43,35 +54,29 @@ func main() {
 		"",
 		"Path to file containing black list addresses",
 	)
-
 	flag.Parse()
 
-	blacklists := fromFile(*blacklist)
-	responses := make(chan int)
+	list := fromFile(*blacklist)
+	responses := dnsbl.Queries(*ipAddress, list)
 
 	queried := 0
 	positive := 0
-	length := 0
-	for list := range blacklists {
-		go dnsbl.Query(*ipAddress, list, responses)
-		length++
-	}
-
-	for i := 0; i < length; i++ {
-		response := <-responses
-		if response > 0 {
-			positive += response
+	go func() {
+		for response := range responses {
+			if response > 0 {
+				positive += response
+			}
+			queried++
+			wg.Done()
 		}
-		queried++
-	}
-
-	warningAmount := length * (*warning) / 100
-	criticalAmount := length * (*critical) / 100
+	}()
+	wg.Wait()
+	close(responses)
 
 	check := nagiosplugin.NewCheck()
 	defer check.Finish()
-	check.AddPerfDatum("queried", "", float64(queried), 0.0, math.Inf(1))
-	check.AddPerfDatum("positive", "", float64(positive), 0.0, math.Inf(1))
+	must(check.AddPerfDatum("queried", "", float64(queried), 0.0, math.Inf(1)))
+	must(check.AddPerfDatum("positive", "", float64(positive), 0.0, math.Inf(1)))
 	check.AddResultf(
 		nagiosplugin.OK,
 		"%v present in %v(%v%%) out of %v BLs",
@@ -81,9 +86,9 @@ func main() {
 		length,
 	)
 	switch {
-	case positive > warningAmount:
+	case positive > length*(*warning)/100:
 		check.AddResult(nagiosplugin.WARNING, "")
-	case positive > criticalAmount:
+	case positive > length*(*critical)/100:
 		check.AddResultf(nagiosplugin.CRITICAL, "")
 	}
 }

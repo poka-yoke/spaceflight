@@ -28,7 +28,7 @@ func ReverseAddress(ipAddress string) (reversedIPAddress string) {
 
 // Query queries a DNSBL and returns true if the argument gets a match
 // in the BL.
-func Query(ipAddress, bl string, addresses chan int) {
+func Query(ipAddress, bl string, addresses chan<- int) {
 	reversedIPAddress := fmt.Sprintf(
 		"%v.%v",
 		ReverseAddress(ipAddress),
@@ -39,4 +39,13 @@ func Query(ipAddress, bl string, addresses chan int) {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
 	}
 	addresses <- len(result)
+}
+
+// Queries handles concurrency for Query
+func Queries(ipAddress string, list <-chan string) chan int {
+	responses := make(chan int)
+	for l := range list {
+		go Query(ipAddress, l, responses)
+	}
+	return responses
 }
