@@ -50,9 +50,23 @@ to quickly create a Cobra application.`,
 		)
 		switch {
 		case positive > length*warning/100:
-			check.AddResult(nagiosplugin.WARNING, "")
+			check.AddResultf(
+				nagiosplugin.WARNING,
+				"%v present in %v(%v%%) out of %v BLs",
+				ipAddress,
+				positive,
+				positive*100/length,
+				length,
+			)
 		case positive > length*critical/100:
-			check.AddResultf(nagiosplugin.CRITICAL, "")
+			check.AddResultf(
+				nagiosplugin.CRITICAL,
+				"%v present in %v(%v%%) out of %v BLs",
+				ipAddress,
+				positive,
+				positive*100/length,
+				length,
+			)
 		}
 	},
 }
