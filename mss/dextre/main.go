@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"log"
+	"math"
 	"os"
 
 	"github.com/olorin/nagiosplugin"
@@ -47,9 +47,6 @@ func main() {
 	flag.Parse()
 
 	blacklists := fromFile(*blacklist)
-
-	check := nagiosplugin.NewCheck()
-	defer check.Finish()
 	responses := make(chan int)
 
 	queried := 0
@@ -67,28 +64,26 @@ func main() {
 		}
 		queried++
 	}
+
 	warningAmount := length * (*warning) / 100
 	criticalAmount := length * (*critical) / 100
-	checkLevel := nagiosplugin.OK
-	if positive > warningAmount {
-		checkLevel = nagiosplugin.WARNING
-		if positive > criticalAmount {
-			checkLevel = nagiosplugin.CRITICAL
-		}
-	}
-	check.AddResult(
-		checkLevel,
-		fmt.Sprintf(
-			"%v present in %v(%v%%) out of %v BLs | %v",
-			*ipAddress,
-			positive,
-			positive*100/length,
-			length,
-			fmt.Sprintf(
-				"queried=%v positive=%v",
-				queried,
-				positive,
-			),
-		),
+
+	check := nagiosplugin.NewCheck()
+	defer check.Finish()
+	check.AddPerfDatum("queried", "", float64(queried), 0.0, math.Inf(1))
+	check.AddPerfDatum("positive", "", float64(positive), 0.0, math.Inf(1))
+	check.AddResultf(
+		nagiosplugin.OK,
+		"%v present in %v(%v%%) out of %v BLs",
+		*ipAddress,
+		positive,
+		positive*100/length,
+		length,
 	)
+	switch {
+	case positive > warningAmount:
+		check.AddResult(nagiosplugin.WARNING, "")
+	case positive > criticalAmount:
+		check.AddResultf(nagiosplugin.CRITICAL, "")
+	}
 }
