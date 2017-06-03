@@ -11,21 +11,23 @@ import (
 	"github.com/poka-yoke/spaceflight/mss/dextre"
 )
 
-func fromFile(path *string) []string {
-	var blacklists []string
+func fromFile(path string) <-chan string {
+	out := make(chan string)
+	go func() {
+		blfile, err := os.Open(path)
+		if err != nil {
+			log.Fatal("Could't open file ", path)
+			log.Fatal(err)
+		}
+		defer blfile.Close()
 
-	blfile, err := os.Open(*path)
-	if err != nil {
-		log.Fatal("Could't open file ", *path)
-		log.Fatal(err)
-	}
-	defer blfile.Close()
-
-	scanner := bufio.NewScanner(blfile)
-	for scanner.Scan() {
-		blacklists = append(blacklists, scanner.Text())
-	}
-	return blacklists
+		scanner := bufio.NewScanner(blfile)
+		for scanner.Scan() {
+			out <- scanner.Text()
+		}
+		close(out)
+	}()
+	return out
 }
 
 func main() {
@@ -44,26 +46,29 @@ func main() {
 
 	flag.Parse()
 
-	blacklists := fromFile(blacklist)
+	blacklists := fromFile(*blacklist)
 
 	check := nagiosplugin.NewCheck()
 	defer check.Finish()
-	responses := make(chan int, len(blacklists))
+	responses := make(chan int)
 
 	queried := 0
 	positive := 0
-	for _, list := range blacklists {
+	length := 0
+	for list := range blacklists {
 		go dextre.DNSBLQuery(*ipAddress, list, responses)
+		length++
 	}
-	for i := 0; i < len(blacklists); i++ {
+
+	for i := 0; i < length; i++ {
 		response := <-responses
 		if response > 0 {
 			positive += response
 		}
 		queried++
 	}
-	warningAmount := len(blacklists) * (*warning) / 100
-	criticalAmount := len(blacklists) * (*critical) / 100
+	warningAmount := length * (*warning) / 100
+	criticalAmount := length * (*critical) / 100
 	checkLevel := nagiosplugin.OK
 	if positive > warningAmount {
 		checkLevel = nagiosplugin.WARNING
@@ -77,8 +82,8 @@ func main() {
 			"%v present in %v(%v%%) out of %v BLs | %v",
 			*ipAddress,
 			positive,
-			positive*100/len(blacklists),
-			len(blacklists),
+			positive*100/length,
+			length,
 			fmt.Sprintf(
 				"queried=%v positive=%v",
 				queried,
