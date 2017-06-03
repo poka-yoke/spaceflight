@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/olorin/nagiosplugin"
-	"github.com/poka-yoke/spaceflight/mss/dextre"
+	"github.com/poka-yoke/spaceflight/mss/dextre/dnsbl"
 )
 
 func fromFile(path string) <-chan string {
@@ -56,7 +56,7 @@ func main() {
 	positive := 0
 	length := 0
 	for list := range blacklists {
-		go dextre.DNSBLQuery(*ipAddress, list, responses)
+		go dnsbl.DNSBLQuery(*ipAddress, list, responses)
 		length++
 	}
 
