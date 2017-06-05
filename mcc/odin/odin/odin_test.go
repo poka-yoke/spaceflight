@@ -14,6 +14,25 @@ import (
 type mockRDSClient struct {
 	rdsiface.RDSAPI
 	dbInstancesEndpoints map[string]rds.Endpoint
+	dbSnapshots          map[string][]*rds.DBSnapshot
+}
+
+// DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
+func (m mockRDSClient) DescribeDBSnapshots(
+	describeParams *rds.DescribeDBSnapshotsInput,
+) (
+	result *rds.DescribeDBSnapshotsOutput,
+	err error,
+) {
+	dbSnapshots := m.dbSnapshots[*describeParams.DBInstanceIdentifier]
+	if len(dbSnapshots) == 0 {
+		err = errors.New("Snapshot not found")
+		return
+	}
+	result = &rds.DescribeDBSnapshotsOutput{
+		DBSnapshots: dbSnapshots,
+	}
+	return
 }
 
 // DescribeDBInstances mocks rds.DescribeDBInstances.
@@ -191,6 +210,7 @@ var createDBInstanceCases = []createDBInstanceCase{
 func TestCreateDB(t *testing.T) {
 	svc := &mockRDSClient{
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
+		dbSnapshots:          map[string][]*rds.DBSnapshot{},
 	}
 	duration = time.Duration(0)
 	for _, useCase := range createDBInstanceCases {
@@ -218,6 +238,79 @@ func TestCreateDB(t *testing.T) {
 						"Unexpected output: %s should be %s",
 						endpoint,
 						useCase.endpoint,
+					)
+				}
+			},
+		)
+	}
+}
+
+type getLastSnapshotCase struct {
+	name          string
+	identifier    string
+	snapshots     []*rds.DBSnapshot
+	snapshot      *rds.DBSnapshot
+	expectedError string
+}
+
+var getLastSnapshotCases = []getLastSnapshotCase{
+	{
+		name:       "Get snapshot id by instance id",
+		identifier: "production",
+		snapshots: []*rds.DBSnapshot{
+			{
+				DBInstanceIdentifier: aws.String("production"),
+				DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+			},
+		},
+		snapshot: &rds.DBSnapshot{
+			DBInstanceIdentifier: aws.String("production"),
+			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+		},
+		expectedError: "",
+	},
+	{
+		name:          "Get non-existant snapshot id by instance id",
+		identifier:    "production",
+		snapshots:     []*rds.DBSnapshot{},
+		snapshot:      nil,
+		expectedError: "Snapshot not found",
+	},
+}
+
+func TestGetLastSnapshot(t *testing.T) {
+	svc := &mockRDSClient{
+		dbInstancesEndpoints: map[string]rds.Endpoint{},
+		dbSnapshots:          map[string][]*rds.DBSnapshot{},
+	}
+	for _, useCase := range getLastSnapshotCases {
+		t.Run(
+			useCase.name,
+			func(t *testing.T) {
+				svc.dbSnapshots[useCase.identifier] = useCase.snapshots
+				snapshot, err := GetLastSnapshot(
+					useCase.identifier,
+					svc,
+				)
+				if useCase.expectedError == "" {
+					if err != nil {
+						t.Errorf(
+							"Unexpected error %s",
+							err,
+						)
+					}
+					if *snapshot.DBInstanceIdentifier != *useCase.snapshot.DBInstanceIdentifier ||
+						*snapshot.DBSnapshotIdentifier != *useCase.snapshot.DBSnapshotIdentifier {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							snapshot,
+							useCase.snapshot,
+						)
+					}
+				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+					t.Errorf(
+						"Unexpected error %s",
+						err,
 					)
 				}
 			},

@@ -18,8 +18,8 @@ func Init() rdsiface.RDSAPI {
 
 var duration = time.Duration(5) * time.Second
 
-// CreateDBInstance creates a new RDS database instance. If a vpcid is specified the security
-// group will be in that VPC
+// CreateDBInstance creates a new RDS database instance. If a vpcid is
+// specified the security group will be in that VPC.
 func CreateDBInstance(
 	instanceName string,
 	instanceType string,
@@ -67,5 +67,22 @@ func CreateDBInstance(
 		time.Sleep(duration)
 	}
 	result = *instance.Endpoint.Address
+	return
+}
+
+// GetLastSnapshot queries AWS looking for a Snapshot ID, depending on
+// an instance ID.
+func GetLastSnapshot(
+	identifier string,
+	svc rdsiface.RDSAPI,
+) (result *rds.DBSnapshot, err error) {
+	params := &rds.DescribeDBSnapshotsInput{
+		DBInstanceIdentifier: &identifier,
+	}
+	results, err := svc.DescribeDBSnapshots(params)
+	if err != nil {
+		return
+	}
+	result = results.DBSnapshots[0]
 	return
 }
