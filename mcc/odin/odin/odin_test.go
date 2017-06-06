@@ -217,12 +217,15 @@ func TestCreateDB(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
+				params := CreateDBParams{
+					DBInstanceType: useCase.instanceType,
+					DBUser:         useCase.masterUser,
+					DBPassword:     useCase.masterUserPassword,
+					Size:           useCase.size,
+				}
 				endpoint, err := CreateDBInstance(
 					useCase.identifier,
-					useCase.instanceType,
-					useCase.masterUser,
-					useCase.masterUserPassword,
-					useCase.size,
+					params,
 					svc,
 				)
 				if err != nil {
