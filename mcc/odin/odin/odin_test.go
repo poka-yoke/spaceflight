@@ -364,6 +364,36 @@ var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
 		},
 		expectedError: "",
 	},
+	{
+		name:       "Params with Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType: "db.m1.medium",
+			DBUser:         "owner",
+			DBPassword:     "password",
+			Size:           5,
+		},
+		snapshot: exampleSnapshot1,
+		expectedCreateDBInstanceInput: &rds.CreateDBInstanceInput{
+			AllocatedStorage:     aws.Int64(10),
+			DBInstanceIdentifier: aws.String("production"),
+			DBInstanceClass:      aws.String("db.m1.medium"),
+			MasterUsername:       aws.String("owner"),
+			MasterUserPassword:   aws.String("password"),
+			Engine:               aws.String("postgres"),
+			EngineVersion:        aws.String("9.4.11"),
+			DBSecurityGroups: []*string{
+				aws.String("default"),
+			},
+			Tags: []*rds.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String("production"),
+				},
+			},
+		},
+		expectedError: "",
+	},
 }
 
 func TestGetCreateDBInstanceInput(t *testing.T) {

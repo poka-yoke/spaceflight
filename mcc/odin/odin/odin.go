@@ -121,5 +121,9 @@ func GetCreateDBInstanceInput(
 			},
 		},
 	}
+	if snapshot != nil {
+		createDBInstanceInput.AllocatedStorage = snapshot.AllocatedStorage
+		createDBInstanceInput.MasterUsername = snapshot.MasterUsername
+	}
 	return
 }
