@@ -91,3 +91,35 @@ func GetLastSnapshot(
 	result = results.DBSnapshots[0]
 	return
 }
+
+// GetCreateDBInstanceInput creates a new CreateDBInstanceInput from provided
+// CreateDBParams and rds.DBSnapshot.
+func GetCreateDBInstanceInput(
+	identifier string,
+	params CreateDBParams,
+	snapshot *rds.DBSnapshot,
+	svc rdsiface.RDSAPI,
+) (
+	createDBInstanceInput *rds.CreateDBInstanceInput,
+	err error,
+) {
+	createDBInstanceInput = &rds.CreateDBInstanceInput{
+		AllocatedStorage:     &params.Size,
+		DBInstanceIdentifier: &identifier,
+		DBInstanceClass:      &params.DBInstanceType,
+		DBSecurityGroups: []*string{
+			aws.String("default"),
+		},
+		Engine:             aws.String("postgres"),
+		EngineVersion:      aws.String("9.4.11"),
+		MasterUsername:     &params.DBUser,
+		MasterUserPassword: &params.DBPassword,
+		Tags: []*rds.Tag{
+			{
+				Key:   aws.String("Name"),
+				Value: &identifier,
+			},
+		},
+	}
+	return
+}

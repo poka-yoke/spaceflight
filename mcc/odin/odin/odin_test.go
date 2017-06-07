@@ -323,3 +323,89 @@ func TestGetLastSnapshot(t *testing.T) {
 		)
 	}
 }
+
+type getCreateDBInstanceInputCase struct {
+	name                          string
+	identifier                    string
+	createDBParams                CreateDBParams
+	snapshot                      *rds.DBSnapshot
+	expectedCreateDBInstanceInput *rds.CreateDBInstanceInput
+	expectedError                 string
+}
+
+var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
+	{
+		name:       "Params without Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType: "db.m1.medium",
+			DBUser:         "owner",
+			DBPassword:     "password",
+			Size:           5,
+		},
+		snapshot: nil,
+		expectedCreateDBInstanceInput: &rds.CreateDBInstanceInput{
+			AllocatedStorage:     aws.Int64(5),
+			DBInstanceIdentifier: aws.String("production"),
+			DBInstanceClass:      aws.String("db.m1.medium"),
+			MasterUsername:       aws.String("owner"),
+			MasterUserPassword:   aws.String("password"),
+			Engine:               aws.String("postgres"),
+			EngineVersion:        aws.String("9.4.11"),
+			DBSecurityGroups: []*string{
+				aws.String("default"),
+			},
+			Tags: []*rds.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String("production"),
+				},
+			},
+		},
+		expectedError: "",
+	},
+}
+
+func TestGetCreateDBInstanceInput(t *testing.T) {
+	svc := &mockRDSClient{
+		dbInstancesEndpoints: map[string]rds.Endpoint{},
+		dbSnapshots:          map[string][]*rds.DBSnapshot{},
+	}
+	for _, useCase := range getCreateDBInstanceInputCases {
+		t.Run(
+			useCase.name,
+			func(t *testing.T) {
+				createDBInstanceInput, err := GetCreateDBInstanceInput(
+					useCase.identifier,
+					useCase.createDBParams,
+					useCase.snapshot,
+					svc,
+				)
+				if useCase.expectedError == "" {
+					if err != nil {
+						t.Errorf(
+							"Unexpected error %s",
+							err,
+						)
+					}
+					if *createDBInstanceInput.DBInstanceIdentifier != *useCase.expectedCreateDBInstanceInput.DBInstanceIdentifier ||
+						*createDBInstanceInput.MasterUsername != *useCase.expectedCreateDBInstanceInput.MasterUsername ||
+						*createDBInstanceInput.MasterUserPassword != *useCase.expectedCreateDBInstanceInput.MasterUserPassword ||
+						*createDBInstanceInput.AllocatedStorage != *useCase.expectedCreateDBInstanceInput.AllocatedStorage ||
+						*createDBInstanceInput.DBInstanceClass != *useCase.expectedCreateDBInstanceInput.DBInstanceClass {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							createDBInstanceInput,
+							useCase.expectedCreateDBInstanceInput,
+						)
+					}
+				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+					t.Errorf(
+						"Unexpected error %s",
+						err,
+					)
+				}
+			},
+		)
+	}
+}
