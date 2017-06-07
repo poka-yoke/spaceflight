@@ -28,12 +28,15 @@ var createCmd = &cobra.Command{
 			log.Fatal("Password should be provided and not be blank")
 		}
 		svc := odin.Init()
+		params := odin.CreateDBParams{
+			DBInstanceType: instanceType,
+			DBUser:         user,
+			DBPassword:     password,
+			Size:           size,
+		}
 		endpoint, err := odin.CreateDBInstance(
 			args[0],
-			instanceType,
-			user,
-			password,
-			size,
+			params,
 			svc,
 		)
 		if err != nil {

@@ -18,27 +18,32 @@ func Init() rdsiface.RDSAPI {
 
 var duration = time.Duration(5) * time.Second
 
+// CreateDBParams represents CreateDBInstance parameters.
+type CreateDBParams struct {
+	DBInstanceType string
+	DBUser         string
+	DBPassword     string
+	Size           int64
+}
+
 // CreateDBInstance creates a new RDS database instance. If a vpcid is
 // specified the security group will be in that VPC.
 func CreateDBInstance(
 	instanceName string,
-	instanceType string,
-	masterUser string,
-	masterUserPassword string,
-	size int64,
+	params CreateDBParams,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	params := &rds.CreateDBInstanceInput{
-		AllocatedStorage:     &size,
-		DBInstanceClass:      &instanceType,
+	rdsParams := &rds.CreateDBInstanceInput{
+		AllocatedStorage:     &params.Size,
+		DBInstanceClass:      &params.DBInstanceType,
 		DBInstanceIdentifier: &instanceName,
 		Engine:               aws.String("postgres"),
 		EngineVersion:        aws.String("9.4.11"),
 		DBSecurityGroups: []*string{
 			aws.String("default"),
 		},
-		MasterUserPassword: &masterUserPassword,
-		MasterUsername:     &masterUser,
+		MasterUserPassword: &params.DBPassword,
+		MasterUsername:     &params.DBUser,
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String("Name"),
@@ -46,10 +51,10 @@ func CreateDBInstance(
 			},
 		},
 	}
-	if err = params.Validate(); err != nil {
+	if err = rdsParams.Validate(); err != nil {
 		return
 	}
-	res, err := svc.CreateDBInstance(params)
+	res, err := svc.CreateDBInstance(rdsParams)
 	if err != nil {
 		return
 	}
