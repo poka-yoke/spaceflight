@@ -256,20 +256,23 @@ type getLastSnapshotCase struct {
 	expectedError string
 }
 
+var exampleSnapshot1 = &rds.DBSnapshot{
+	AllocatedStorage:     aws.Int64(10),
+	AvailabilityZone:     aws.String("us-east-1c"),
+	DBInstanceIdentifier: aws.String("production"),
+	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+	MasterUsername:       aws.String("owner"),
+	Status:               aws.String("available"),
+}
+
 var getLastSnapshotCases = []getLastSnapshotCase{
 	{
 		name:       "Get snapshot id by instance id",
 		identifier: "production",
 		snapshots: []*rds.DBSnapshot{
-			{
-				DBInstanceIdentifier: aws.String("production"),
-				DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-			},
+			exampleSnapshot1,
 		},
-		snapshot: &rds.DBSnapshot{
-			DBInstanceIdentifier: aws.String("production"),
-			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-		},
+		snapshot:      exampleSnapshot1,
 		expectedError: "",
 	},
 	{
