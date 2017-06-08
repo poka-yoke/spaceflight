@@ -24,6 +24,8 @@ type CreateDBParams struct {
 	DBUser         string
 	DBPassword     string
 	Size           int64
+
+	OriginalInstanceName string
 }
 
 // CreateDBInstance creates a new RDS database instance. If a vpcid is
@@ -33,25 +35,14 @@ func CreateDBInstance(
 	params CreateDBParams,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	rdsParams := &rds.CreateDBInstanceInput{
-		AllocatedStorage:     &params.Size,
-		DBInstanceClass:      &params.DBInstanceType,
-		DBInstanceIdentifier: &instanceName,
-		Engine:               aws.String("postgres"),
-		EngineVersion:        aws.String("9.4.11"),
-		DBSecurityGroups: []*string{
-			aws.String("default"),
-		},
-		MasterUserPassword: &params.DBPassword,
-		MasterUsername:     &params.DBUser,
-		Tags: []*rds.Tag{
-			{
-				Key:   aws.String("Name"),
-				Value: &instanceName,
-			},
-		},
-	}
-	if err = rdsParams.Validate(); err != nil {
+	var snapshot *rds.DBSnapshot
+	rdsParams, err := GetCreateDBInstanceInput(
+		instanceName,
+		params,
+		snapshot,
+		svc,
+	)
+	if err != nil {
 		return
 	}
 	res, err := svc.CreateDBInstance(rdsParams)
@@ -124,6 +115,9 @@ func GetCreateDBInstanceInput(
 	if snapshot != nil {
 		createDBInstanceInput.AllocatedStorage = snapshot.AllocatedStorage
 		createDBInstanceInput.MasterUsername = snapshot.MasterUsername
+	}
+	if err = createDBInstanceInput.Validate(); err != nil {
+		return
 	}
 	return
 }

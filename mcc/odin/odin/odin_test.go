@@ -117,17 +117,20 @@ func (m mockRDSClient) CreateDBInstance(
 }
 
 type createDBInstanceCase struct {
-	name               string
-	identifier         string
-	instanceType       string
-	masterUserPassword string
-	masterUser         string
-	size               int64
-	endpoint           string
-	expectedError      string
+	name                 string
+	identifier           string
+	instanceType         string
+	masterUserPassword   string
+	masterUser           string
+	size                 int64
+	originalInstanceName string
+	endpoint             string
+	expectedError        string
+	snapshot             *rds.DBSnapshot
 }
 
 var createDBInstanceCases = []createDBInstanceCase{
+	// Creating simple instance
 	{
 		name:               "Creating simple instance",
 		identifier:         "test1",
@@ -137,16 +140,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "test1.0.us-east-1.rds.amazonaws.com",
 		expectedError:      "",
+		snapshot:           nil,
 	},
-	{
-		name:               "Fail because non-present user",
-		identifier:         "test1",
-		instanceType:       "db.m1.small",
-		masterUserPassword: "master",
-		size:               5,
-		endpoint:           "",
-		expectedError:      "Specify Master User",
-	},
+	// Fail because empty user
 	{
 		name:               "Fail because empty user",
 		identifier:         "test1",
@@ -156,16 +152,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User",
+		snapshot:           nil,
 	},
-	{
-		name:          "Fail because non-present password",
-		identifier:    "test1",
-		instanceType:  "db.m1.small",
-		masterUser:    "master",
-		size:          5,
-		endpoint:      "",
-		expectedError: "Specify Master User Password",
-	},
+	// Fail because empty password
 	{
 		name:               "Fail because empty password",
 		identifier:         "test1",
@@ -175,7 +164,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User Password",
+		snapshot:           nil,
 	},
+	// Fail because non-present size
 	{
 		name:               "Fail because non-present size",
 		identifier:         "test1",
@@ -184,17 +175,20 @@ var createDBInstanceCases = []createDBInstanceCase{
 		masterUserPassword: "master",
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
 	},
+	// Fail because too small size
 	{
 		name:               "Fail because too small size",
 		identifier:         "test1",
 		instanceType:       "db.m1.small",
 		masterUser:         "master",
 		masterUserPassword: "master",
-		size:               4,
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
 	},
+	// Fail because too big size
 	{
 		name:               "Fail because too big size",
 		identifier:         "test1",
@@ -204,6 +198,7 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               6145,
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
 	},
 }
 
@@ -217,11 +212,17 @@ func TestCreateDB(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
+				if useCase.originalInstanceName != "" {
+					svc.dbSnapshots[useCase.originalInstanceName] = []*rds.DBSnapshot{
+						useCase.snapshot,
+					}
+				}
 				params := CreateDBParams{
-					DBInstanceType: useCase.instanceType,
-					DBUser:         useCase.masterUser,
-					DBPassword:     useCase.masterUserPassword,
-					Size:           useCase.size,
+					DBInstanceType:       useCase.instanceType,
+					DBUser:               useCase.masterUser,
+					DBPassword:           useCase.masterUserPassword,
+					Size:                 useCase.size,
+					OriginalInstanceName: useCase.originalInstanceName,
 				}
 				endpoint, err := CreateDBInstance(
 					useCase.identifier,
