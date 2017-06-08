@@ -117,17 +117,20 @@ func (m mockRDSClient) CreateDBInstance(
 }
 
 type createDBInstanceCase struct {
-	name               string
-	identifier         string
-	instanceType       string
-	masterUserPassword string
-	masterUser         string
-	size               int64
-	endpoint           string
-	expectedError      string
+	name                 string
+	identifier           string
+	instanceType         string
+	masterUserPassword   string
+	masterUser           string
+	size                 int64
+	originalInstanceName string
+	endpoint             string
+	expectedError        string
+	snapshot             *rds.DBSnapshot
 }
 
 var createDBInstanceCases = []createDBInstanceCase{
+	// Creating simple instance
 	{
 		name:               "Creating simple instance",
 		identifier:         "test1",
@@ -137,16 +140,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "test1.0.us-east-1.rds.amazonaws.com",
 		expectedError:      "",
+		snapshot:           nil,
 	},
-	{
-		name:               "Fail because non-present user",
-		identifier:         "test1",
-		instanceType:       "db.m1.small",
-		masterUserPassword: "master",
-		size:               5,
-		endpoint:           "",
-		expectedError:      "Specify Master User",
-	},
+	// Fail because empty user
 	{
 		name:               "Fail because empty user",
 		identifier:         "test1",
@@ -156,16 +152,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User",
+		snapshot:           nil,
 	},
-	{
-		name:          "Fail because non-present password",
-		identifier:    "test1",
-		instanceType:  "db.m1.small",
-		masterUser:    "master",
-		size:          5,
-		endpoint:      "",
-		expectedError: "Specify Master User Password",
-	},
+	// Fail because empty password
 	{
 		name:               "Fail because empty password",
 		identifier:         "test1",
@@ -175,7 +164,9 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User Password",
+		snapshot:           nil,
 	},
+	// Fail because non-present size
 	{
 		name:               "Fail because non-present size",
 		identifier:         "test1",
@@ -184,17 +175,20 @@ var createDBInstanceCases = []createDBInstanceCase{
 		masterUserPassword: "master",
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
 	},
+	// Fail because too small size
 	{
 		name:               "Fail because too small size",
 		identifier:         "test1",
 		instanceType:       "db.m1.small",
 		masterUser:         "master",
 		masterUserPassword: "master",
-		size:               4,
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
 	},
+	// Fail because too big size
 	{
 		name:               "Fail because too big size",
 		identifier:         "test1",
@@ -204,6 +198,20 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               6145,
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
+		snapshot:           nil,
+	},
+	// Uses snapshot to restore from
+	{
+		name:                 "Uses snapshot to restore from",
+		identifier:           "test1",
+		instanceType:         "db.m1.small",
+		masterUser:           "master",
+		masterUserPassword:   "master",
+		size:                 6144,
+		originalInstanceName: "production",
+		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
+		expectedError:        "",
+		snapshot:             exampleSnapshot1,
 	},
 }
 
@@ -217,11 +225,17 @@ func TestCreateDB(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
+				if useCase.originalInstanceName != "" {
+					svc.dbSnapshots[useCase.originalInstanceName] = []*rds.DBSnapshot{
+						useCase.snapshot,
+					}
+				}
 				params := CreateDBParams{
-					DBInstanceType: useCase.instanceType,
-					DBUser:         useCase.masterUser,
-					DBPassword:     useCase.masterUserPassword,
-					Size:           useCase.size,
+					DBInstanceType:       useCase.instanceType,
+					DBUser:               useCase.masterUser,
+					DBPassword:           useCase.masterUserPassword,
+					Size:                 useCase.size,
+					OriginalInstanceName: useCase.originalInstanceName,
 				}
 				endpoint, err := CreateDBInstance(
 					useCase.identifier,
@@ -256,20 +270,23 @@ type getLastSnapshotCase struct {
 	expectedError string
 }
 
+var exampleSnapshot1 = &rds.DBSnapshot{
+	AllocatedStorage:     aws.Int64(10),
+	AvailabilityZone:     aws.String("us-east-1c"),
+	DBInstanceIdentifier: aws.String("production"),
+	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+	MasterUsername:       aws.String("owner"),
+	Status:               aws.String("available"),
+}
+
 var getLastSnapshotCases = []getLastSnapshotCase{
 	{
 		name:       "Get snapshot id by instance id",
 		identifier: "production",
 		snapshots: []*rds.DBSnapshot{
-			{
-				DBInstanceIdentifier: aws.String("production"),
-				DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-			},
+			exampleSnapshot1,
 		},
-		snapshot: &rds.DBSnapshot{
-			DBInstanceIdentifier: aws.String("production"),
-			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-		},
+		snapshot:      exampleSnapshot1,
 		expectedError: "",
 	},
 	{
@@ -308,6 +325,122 @@ func TestGetLastSnapshot(t *testing.T) {
 							"Unexpected output: %s should be %s",
 							snapshot,
 							useCase.snapshot,
+						)
+					}
+				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+					t.Errorf(
+						"Unexpected error %s",
+						err,
+					)
+				}
+			},
+		)
+	}
+}
+
+type getCreateDBInstanceInputCase struct {
+	name                          string
+	identifier                    string
+	createDBParams                CreateDBParams
+	snapshot                      *rds.DBSnapshot
+	expectedCreateDBInstanceInput *rds.CreateDBInstanceInput
+	expectedError                 string
+}
+
+var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
+	{
+		name:       "Params without Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType: "db.m1.medium",
+			DBUser:         "owner",
+			DBPassword:     "password",
+			Size:           5,
+		},
+		snapshot: nil,
+		expectedCreateDBInstanceInput: &rds.CreateDBInstanceInput{
+			AllocatedStorage:     aws.Int64(5),
+			DBInstanceIdentifier: aws.String("production"),
+			DBInstanceClass:      aws.String("db.m1.medium"),
+			MasterUsername:       aws.String("owner"),
+			MasterUserPassword:   aws.String("password"),
+			Engine:               aws.String("postgres"),
+			EngineVersion:        aws.String("9.4.11"),
+			DBSecurityGroups: []*string{
+				aws.String("default"),
+			},
+			Tags: []*rds.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String("production"),
+				},
+			},
+		},
+		expectedError: "",
+	},
+	{
+		name:       "Params with Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType: "db.m1.medium",
+			DBUser:         "owner",
+			DBPassword:     "password",
+			Size:           5,
+		},
+		snapshot: exampleSnapshot1,
+		expectedCreateDBInstanceInput: &rds.CreateDBInstanceInput{
+			AllocatedStorage:     aws.Int64(10),
+			DBInstanceIdentifier: aws.String("production"),
+			DBInstanceClass:      aws.String("db.m1.medium"),
+			MasterUsername:       aws.String("owner"),
+			MasterUserPassword:   aws.String("password"),
+			Engine:               aws.String("postgres"),
+			EngineVersion:        aws.String("9.4.11"),
+			DBSecurityGroups: []*string{
+				aws.String("default"),
+			},
+			Tags: []*rds.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String("production"),
+				},
+			},
+		},
+		expectedError: "",
+	},
+}
+
+func TestGetCreateDBInstanceInput(t *testing.T) {
+	svc := &mockRDSClient{
+		dbInstancesEndpoints: map[string]rds.Endpoint{},
+		dbSnapshots:          map[string][]*rds.DBSnapshot{},
+	}
+	for _, useCase := range getCreateDBInstanceInputCases {
+		t.Run(
+			useCase.name,
+			func(t *testing.T) {
+				createDBInstanceInput, err := GetCreateDBInstanceInput(
+					useCase.identifier,
+					useCase.createDBParams,
+					useCase.snapshot,
+					svc,
+				)
+				if useCase.expectedError == "" {
+					if err != nil {
+						t.Errorf(
+							"Unexpected error %s",
+							err,
+						)
+					}
+					if *createDBInstanceInput.DBInstanceIdentifier != *useCase.expectedCreateDBInstanceInput.DBInstanceIdentifier ||
+						*createDBInstanceInput.MasterUsername != *useCase.expectedCreateDBInstanceInput.MasterUsername ||
+						*createDBInstanceInput.MasterUserPassword != *useCase.expectedCreateDBInstanceInput.MasterUserPassword ||
+						*createDBInstanceInput.AllocatedStorage != *useCase.expectedCreateDBInstanceInput.AllocatedStorage ||
+						*createDBInstanceInput.DBInstanceClass != *useCase.expectedCreateDBInstanceInput.DBInstanceClass {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							createDBInstanceInput,
+							useCase.expectedCreateDBInstanceInput,
 						)
 					}
 				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
