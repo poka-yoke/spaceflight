@@ -36,6 +36,12 @@ func CreateDBInstance(
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
 	var snapshot *rds.DBSnapshot
+	if params.OriginalInstanceName != "" {
+		snapshot, err = GetLastSnapshot(params.OriginalInstanceName, svc)
+		if err != nil {
+			return
+		}
+	}
 	rdsParams, err := GetCreateDBInstanceInput(
 		instanceName,
 		params,

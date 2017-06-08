@@ -200,6 +200,19 @@ var createDBInstanceCases = []createDBInstanceCase{
 		expectedError:      "Specify size between 5 and 6144",
 		snapshot:           nil,
 	},
+	// Uses snapshot to restore from
+	{
+		name:                 "Uses snapshot to restore from",
+		identifier:           "test1",
+		instanceType:         "db.m1.small",
+		masterUser:           "master",
+		masterUserPassword:   "master",
+		size:                 6144,
+		originalInstanceName: "production",
+		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
+		expectedError:        "",
+		snapshot:             exampleSnapshot1,
+	},
 }
 
 func TestCreateDB(t *testing.T) {
