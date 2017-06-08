@@ -410,6 +410,22 @@ var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
 	},
 }
 
+func equalsCreateDBInstanceInput(input1, input2 *rds.CreateDBInstanceInput) bool {
+	switch {
+	case *input1.AllocatedStorage != *input2.AllocatedStorage:
+		return false
+	case *input1.DBInstanceIdentifier != *input2.DBInstanceIdentifier:
+		return false
+	case *input1.DBInstanceClass != *input2.DBInstanceClass:
+		return false
+	case *input1.MasterUsername != *input2.MasterUsername:
+		return false
+	case *input1.MasterUserPassword != *input2.MasterUserPassword:
+		return false
+	}
+	return true
+}
+
 func TestGetCreateDBInstanceInput(t *testing.T) {
 	svc := &mockRDSClient{
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
@@ -432,11 +448,7 @@ func TestGetCreateDBInstanceInput(t *testing.T) {
 							err,
 						)
 					}
-					if *createDBInstanceInput.DBInstanceIdentifier != *useCase.expectedCreateDBInstanceInput.DBInstanceIdentifier ||
-						*createDBInstanceInput.MasterUsername != *useCase.expectedCreateDBInstanceInput.MasterUsername ||
-						*createDBInstanceInput.MasterUserPassword != *useCase.expectedCreateDBInstanceInput.MasterUserPassword ||
-						*createDBInstanceInput.AllocatedStorage != *useCase.expectedCreateDBInstanceInput.AllocatedStorage ||
-						*createDBInstanceInput.DBInstanceClass != *useCase.expectedCreateDBInstanceInput.DBInstanceClass {
+					if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
 						t.Errorf(
 							"Unexpected output: %s should be %s",
 							createDBInstanceInput,
