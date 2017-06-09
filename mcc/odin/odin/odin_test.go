@@ -350,6 +350,7 @@ type getCreateDBInstanceInputCase struct {
 }
 
 var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
+	// Params without Snapshot
 	{
 		name:       "Params without Snapshot",
 		identifier: "production",
@@ -380,14 +381,16 @@ var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
 		},
 		expectedError: "",
 	},
+	// Params with Snapshot
 	{
 		name:       "Params with Snapshot",
 		identifier: "production",
 		createDBParams: CreateDBParams{
-			DBInstanceType: "db.m1.medium",
-			DBUser:         "owner",
-			DBPassword:     "password",
-			Size:           5,
+			DBInstanceType:       "db.m1.medium",
+			DBUser:               "owner",
+			DBPassword:           "password",
+			Size:                 5,
+			OriginalInstanceName: "production",
 		},
 		snapshot: exampleSnapshot1,
 		expectedCreateDBInstanceInput: &rds.CreateDBInstanceInput{
@@ -434,30 +437,18 @@ func TestGetCreateDBInstanceInput(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
-				createDBInstanceInput, err := GetCreateDBInstanceInput(
+				if useCase.snapshot != nil {
+					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
+				}
+				createDBInstanceInput := useCase.createDBParams.GetCreateDBInstanceInput(
 					useCase.identifier,
-					useCase.createDBParams,
-					useCase.snapshot,
 					svc,
 				)
-				if useCase.expectedError == "" {
-					if err != nil {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-					if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
-						t.Errorf(
-							"Unexpected output: %s should be %s",
-							createDBInstanceInput,
-							useCase.expectedCreateDBInstanceInput,
-						)
-					}
-				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+				if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
 					t.Errorf(
-						"Unexpected error %s",
-						err,
+						"Unexpected output: %s should be %s",
+						createDBInstanceInput,
+						useCase.expectedCreateDBInstanceInput,
 					)
 				}
 			},
