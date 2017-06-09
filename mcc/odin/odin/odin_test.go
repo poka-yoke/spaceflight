@@ -437,29 +437,18 @@ func TestGetCreateDBInstanceInput(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
-				svc.dbSnapshots[useCase.createDBParams.OriginalInstanceName] = []*rds.DBSnapshot{useCase.snapshot}
-				createDBInstanceInput, err := useCase.createDBParams.GetCreateDBInstanceInput(
+				if useCase.snapshot != nil {
+					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
+				}
+				createDBInstanceInput := useCase.createDBParams.GetCreateDBInstanceInput(
 					useCase.identifier,
 					svc,
 				)
-				if useCase.expectedError == "" {
-					if err != nil {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-					if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
-						t.Errorf(
-							"Unexpected output: %s should be %s",
-							createDBInstanceInput,
-							useCase.expectedCreateDBInstanceInput,
-						)
-					}
-				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+				if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
 					t.Errorf(
-						"Unexpected error %s",
-						err,
+						"Unexpected output: %s should be %s",
+						createDBInstanceInput,
+						useCase.expectedCreateDBInstanceInput,
 					)
 				}
 			},

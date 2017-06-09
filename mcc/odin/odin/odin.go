@@ -1,6 +1,7 @@
 package odin
 
 import (
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,13 +36,16 @@ func (params CreateDBParams) GetCreateDBInstanceInput(
 	svc rdsiface.RDSAPI,
 ) (
 	createDBInstanceInput *rds.CreateDBInstanceInput,
-	err error,
 ) {
 	var snapshot *rds.DBSnapshot
+	var err error
 	if params.OriginalInstanceName != "" {
 		snapshot, err = GetLastSnapshot(params.OriginalInstanceName, svc)
 		if err != nil {
-			return
+			log.Fatalf(
+				"Couldn't find snapshot for %s instance",
+				params.OriginalInstanceName,
+			)
 		}
 	}
 	createDBInstanceInput = &rds.CreateDBInstanceInput{
@@ -66,8 +70,11 @@ func (params CreateDBParams) GetCreateDBInstanceInput(
 		createDBInstanceInput.AllocatedStorage = snapshot.AllocatedStorage
 		createDBInstanceInput.MasterUsername = snapshot.MasterUsername
 	}
-	if err = createDBInstanceInput.Validate(); err != nil {
-		return
+	if err := createDBInstanceInput.Validate(); err != nil {
+		log.Fatalf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
 	}
 	return
 }
@@ -79,13 +86,10 @@ func CreateDBInstance(
 	params CreateDBParams,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	rdsParams, err := params.GetCreateDBInstanceInput(
+	rdsParams := params.GetCreateDBInstanceInput(
 		instanceName,
 		svc,
 	)
-	if err != nil {
-		return
-	}
 	res, err := svc.CreateDBInstance(rdsParams)
 	if err != nil {
 		return
