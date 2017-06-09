@@ -116,6 +116,14 @@ func (m mockRDSClient) CreateDBInstance(
 	return
 }
 
+// newMockRDSClient creates a mockRDSClient.
+func newMockRDSClient() *mockRDSClient {
+	return &mockRDSClient{
+		dbInstancesEndpoints: map[string]rds.Endpoint{},
+		dbSnapshots:          map[string][]*rds.DBSnapshot{},
+	}
+}
+
 type createDBInstanceCase struct {
 	name                 string
 	identifier           string
@@ -216,10 +224,7 @@ var createDBInstanceCases = []createDBInstanceCase{
 }
 
 func TestCreateDB(t *testing.T) {
-	svc := &mockRDSClient{
-		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbSnapshots:          map[string][]*rds.DBSnapshot{},
-	}
+	svc := newMockRDSClient()
 	duration = time.Duration(0)
 	for _, useCase := range createDBInstanceCases {
 		t.Run(
@@ -299,10 +304,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 }
 
 func TestGetLastSnapshot(t *testing.T) {
-	svc := &mockRDSClient{
-		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbSnapshots:          map[string][]*rds.DBSnapshot{},
-	}
+	svc := newMockRDSClient()
 	for _, useCase := range getLastSnapshotCases {
 		t.Run(
 			useCase.name,
@@ -427,10 +429,7 @@ func equalsCreateDBInstanceInput(input1, input2 *rds.CreateDBInstanceInput) bool
 }
 
 func TestGetCreateDBInstanceInput(t *testing.T) {
-	svc := &mockRDSClient{
-		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbSnapshots:          map[string][]*rds.DBSnapshot{},
-	}
+	svc := newMockRDSClient()
 	for _, useCase := range getCreateDBInstanceInputCases {
 		t.Run(
 			useCase.name,
