@@ -455,3 +455,75 @@ func TestGetCreateDBInstanceInput(t *testing.T) {
 		)
 	}
 }
+
+type getRestoreDBInstanceFromDBSnapshotInputCase struct {
+	name                                         string
+	identifier                                   string
+	createDBParams                               CreateDBParams
+	snapshot                                     *rds.DBSnapshot
+	expectedRestoreDBInstanceFromDBSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
+	expectedError                                string
+}
+
+var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBSnapshotInputCase{
+	// Params with Snapshot
+	{
+		name:       "Params with Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType:       "db.m1.medium",
+			DBUser:               "owner",
+			DBPassword:           "password",
+			Size:                 5,
+			OriginalInstanceName: "production",
+		},
+		snapshot: exampleSnapshot1,
+		expectedRestoreDBInstanceFromDBSnapshotInput: &rds.RestoreDBInstanceFromDBSnapshotInput{
+			DBInstanceClass:      aws.String("db.m1.medium"),
+			DBInstanceIdentifier: aws.String("production"),
+			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+			Engine:               aws.String("postgres"),
+		},
+		expectedError: "",
+	},
+}
+
+func equalsRestoreDBInstanceFromDBSnapshotInput(input1, input2 *rds.RestoreDBInstanceFromDBSnapshotInput) bool {
+	switch {
+	case *input1.DBInstanceIdentifier != *input2.DBInstanceIdentifier:
+		return false
+	case *input1.DBSnapshotIdentifier != *input2.DBSnapshotIdentifier:
+		return false
+	case *input1.DBInstanceClass != *input2.DBInstanceClass:
+		return false
+	case *input1.Engine != *input2.Engine:
+		return false
+	}
+	return true
+}
+
+func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
+	svc := newMockRDSClient()
+	for _, useCase := range getRestoreDBInstanceFromDBSnapshotInputCases {
+		t.Run(
+			useCase.name,
+			func(t *testing.T) {
+				if useCase.snapshot != nil {
+					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
+				}
+				restoreDBInstanceFromDBSnapshotInput := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
+					useCase.identifier,
+					svc,
+				)
+				// if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
+				if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
+					t.Errorf(
+						"Unexpected output: %s should be %s",
+						restoreDBInstanceFromDBSnapshotInput,
+						useCase.expectedRestoreDBInstanceFromDBSnapshotInput,
+					)
+				}
+			},
+		)
+	}
+}

@@ -29,6 +29,44 @@ type CreateDBParams struct {
 	OriginalInstanceName string
 }
 
+// GetRestoreDBInstanceFromDBSnapshotInput method creates a new
+// RestoreDBInstanceFromDBSnapshotInput from provided CreateDBParams and
+// rds.DBSnapshot.
+func (params CreateDBParams) GetRestoreDBInstanceFromDBSnapshotInput(
+	identifier string,
+	svc rdsiface.RDSAPI,
+) (
+	restoreDBInstanceFromDBSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput,
+) {
+	var snapshot *rds.DBSnapshot
+	var err error
+	if params.OriginalInstanceName == "" {
+		log.Fatalf(
+			"Original instance is required",
+		)
+	}
+	snapshot, err = GetLastSnapshot(params.OriginalInstanceName, svc)
+	if err != nil {
+		log.Fatalf(
+			"Couldn't find snapshot for %s instance",
+			params.OriginalInstanceName,
+		)
+	}
+	restoreDBInstanceFromDBSnapshotInput = &rds.RestoreDBInstanceFromDBSnapshotInput{
+		DBInstanceClass:      &params.DBInstanceType,
+		DBInstanceIdentifier: &identifier,
+		DBSnapshotIdentifier: snapshot.DBSnapshotIdentifier,
+		Engine:               aws.String("postgres"),
+	}
+	if err := restoreDBInstanceFromDBSnapshotInput.Validate(); err != nil {
+		log.Fatalf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
+	}
+	return
+}
+
 // GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
 // CreateDBParams and rds.DBSnapshot.
 func (params CreateDBParams) GetCreateDBInstanceInput(
