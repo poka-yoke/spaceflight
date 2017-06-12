@@ -27,6 +27,7 @@ type CreateDBParams struct {
 	Size           int64
 
 	OriginalInstanceName string
+	Restore              bool
 }
 
 // GetRestoreDBInstanceFromDBSnapshotInput method creates a new
@@ -124,15 +125,30 @@ func CreateDBInstance(
 	params CreateDBParams,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	rdsParams := params.GetCreateDBInstanceInput(
-		instanceName,
-		svc,
-	)
-	res, err := svc.CreateDBInstance(rdsParams)
-	if err != nil {
-		return
+	var instance rds.DBInstance
+	if params.Restore {
+		var res *rds.RestoreDBInstanceFromDBSnapshotOutput
+		rdsParams := params.GetRestoreDBInstanceFromDBSnapshotInput(
+			instanceName,
+			svc,
+		)
+		res, err = svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
+		if err != nil {
+			return
+		}
+		instance = *res.DBInstance
+	} else {
+		var res *rds.CreateDBInstanceOutput
+		rdsParams := params.GetCreateDBInstanceInput(
+			instanceName,
+			svc,
+		)
+		res, err = svc.CreateDBInstance(rdsParams)
+		if err != nil {
+			return
+		}
+		instance = *res.DBInstance
 	}
-	instance := *res.DBInstance
 	for *instance.DBInstanceStatus != "available" {
 		res2, err2 := svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: instance.DBInstanceIdentifier,
