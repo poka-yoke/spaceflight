@@ -116,12 +116,64 @@ func (m mockRDSClient) CreateDBInstance(
 	return
 }
 
+// RestoreDBInstanceFromDBSnapshot mocks rds.RestoreDBInstanceFromDBSnapshot.
+func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
+	inputParams *rds.RestoreDBInstanceFromDBSnapshotInput,
+) (
+	result *rds.RestoreDBInstanceFromDBSnapshotOutput,
+	err error,
+) {
+	if err = inputParams.Validate(); err != nil {
+		return
+	}
+	az := "us-east-1c"
+	if inputParams.AvailabilityZone != nil {
+		az = *inputParams.AvailabilityZone
+	}
+	region := az[:len(az)-1]
+	endpoint := fmt.Sprintf(
+		"%s.0.%s.rds.amazonaws.com",
+		*inputParams.DBInstanceIdentifier,
+		region,
+	)
+	port := int64(5432)
+	m.dbInstancesEndpoints[*inputParams.DBInstanceIdentifier] = rds.Endpoint{
+		Address: &endpoint,
+		Port:    &port,
+	}
+	status := "creating"
+	result = &rds.RestoreDBInstanceFromDBSnapshotOutput{
+		DBInstance: &rds.DBInstance{
+			DBInstanceArn: aws.String(
+				fmt.Sprintf(
+					"arn:aws:rds:%s:0:db:%s",
+					region,
+					inputParams.DBInstanceIdentifier,
+				),
+			),
+			DBInstanceIdentifier: inputParams.DBInstanceIdentifier,
+			DBInstanceStatus:     &status,
+			Engine:               inputParams.Engine,
+		},
+	}
+	return
+}
+
 // newMockRDSClient creates a mockRDSClient.
 func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
 		dbSnapshots:          map[string][]*rds.DBSnapshot{},
 	}
+}
+
+var exampleSnapshot1 = &rds.DBSnapshot{
+	AllocatedStorage:     aws.Int64(10),
+	AvailabilityZone:     aws.String("us-east-1c"),
+	DBInstanceIdentifier: aws.String("production"),
+	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+	MasterUsername:       aws.String("owner"),
+	Status:               aws.String("available"),
 }
 
 type createDBInstanceCase struct {
@@ -132,6 +184,7 @@ type createDBInstanceCase struct {
 	masterUser           string
 	size                 int64
 	originalInstanceName string
+	restore              bool
 	endpoint             string
 	expectedError        string
 	snapshot             *rds.DBSnapshot
@@ -208,6 +261,19 @@ var createDBInstanceCases = []createDBInstanceCase{
 		expectedError:      "Specify size between 5 and 6144",
 		snapshot:           nil,
 	},
+	// Uses snapshot to copy from
+	{
+		name:                 "Uses snapshot to copy from",
+		identifier:           "test1",
+		instanceType:         "db.m1.small",
+		masterUser:           "master",
+		masterUserPassword:   "master",
+		size:                 6144,
+		originalInstanceName: "production",
+		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
+		expectedError:        "",
+		snapshot:             exampleSnapshot1,
+	},
 	// Uses snapshot to restore from
 	{
 		name:                 "Uses snapshot to restore from",
@@ -217,6 +283,7 @@ var createDBInstanceCases = []createDBInstanceCase{
 		masterUserPassword:   "master",
 		size:                 6144,
 		originalInstanceName: "production",
+		restore:              true,
 		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
 		expectedError:        "",
 		snapshot:             exampleSnapshot1,
@@ -241,6 +308,7 @@ func TestCreateDB(t *testing.T) {
 					DBPassword:           useCase.masterUserPassword,
 					Size:                 useCase.size,
 					OriginalInstanceName: useCase.originalInstanceName,
+					Restore:              useCase.restore,
 				}
 				endpoint, err := CreateDBInstance(
 					useCase.identifier,
@@ -273,15 +341,6 @@ type getLastSnapshotCase struct {
 	snapshots     []*rds.DBSnapshot
 	snapshot      *rds.DBSnapshot
 	expectedError string
-}
-
-var exampleSnapshot1 = &rds.DBSnapshot{
-	AllocatedStorage:     aws.Int64(10),
-	AvailabilityZone:     aws.String("us-east-1c"),
-	DBInstanceIdentifier: aws.String("production"),
-	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-	MasterUsername:       aws.String("owner"),
-	Status:               aws.String("available"),
 }
 
 var getLastSnapshotCases = []getLastSnapshotCase{
