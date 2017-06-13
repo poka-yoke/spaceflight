@@ -9,8 +9,9 @@ import (
 	"github.com/Devex/spaceflight/mcc/odin/odin"
 )
 
-var instanceType, password, user string
+var instanceType, password, user, from string
 var size int64
+var restore bool
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -21,18 +22,20 @@ var createCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal("You must specify the instance identifier for the new instance")
 		}
-		if user == "" {
+		if user == "" && !restore {
 			log.Fatal("User should be provided and not be blank")
 		}
-		if password == "" {
+		if password == "" && !restore {
 			log.Fatal("Password should be provided and not be blank")
 		}
 		svc := odin.Init()
 		params := odin.CreateDBParams{
-			DBInstanceType: instanceType,
-			DBUser:         user,
-			DBPassword:     password,
-			Size:           size,
+			DBInstanceType:       instanceType,
+			DBUser:               user,
+			DBPassword:           password,
+			Size:                 size,
+			OriginalInstanceName: from,
+			Restore:              restore,
 		}
 		endpoint, err := odin.CreateDBInstance(
 			args[0],
@@ -81,6 +84,20 @@ func init() {
 		"s",
 		5,
 		"Size to use when creating DB Instance",
+	)
+	createCmd.PersistentFlags().StringVarP(
+		&from,
+		"from",
+		"f",
+		"",
+		"RDS Instance to look for snapshot",
+	)
+	createCmd.PersistentFlags().BoolVarP(
+		&restore,
+		"restore",
+		"r",
+		false,
+		"If true, restores; else, it just clones the parameters",
 	)
 
 	// Cobra supports local flags which will only run when this command
