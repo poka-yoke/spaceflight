@@ -4,7 +4,26 @@ go:
   - 1.8
   - 1.7
   - master
+  
+install:
+  - go get github.com/awalterschulze/gographviz
+  - go get github.com/aws/aws-sdk-go/aws
+  - go get github.com/aws/aws-sdk-go/aws/session
+  - go get github.com/aws/aws-sdk-go/service/ec2
+  - go get github.com/aws/aws-sdk-go/service/ec2/ec2iface
+  - go get github.com/spf13/cobra
+  - go get github.com/spf13/viper
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+
+script:
+  - go test -v -covermode=count -coverprofile=coverage-capcom.out github.com/poka-yoke/spaceflight/mcc/capcom
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage-capcom.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 addons:
-    code_climate:
-        repo_token: 26612c1ca9fe1abab4211bafa1c195800f9f34a76ac9aacdf81e4910c41b5f95
+  code_climate:
+    repo_token: 26612c1ca9fe1abab4211bafa1c195800f9f34a76ac9aacdf81e4910c41b5f95
+
+env:
+  global:
+    secure: WyBf64IqmXhhQUbUIymfsHa2FbiVh2k0HebM8wCliliYEvo9rklnfvaeHqyjf1KR+FM1n6JyQKTWC8JKVR7IWDPye2Wu420rqiByrKxEHHQdy2Wy8r5Cx0bfAZdKhXuv1LqfR0f2ytBp2pdOqvGdFeiAtWzoIpxw2MDDAl7+lmvuAHNCEkOq+08XvZq1aW6V04un6rGugtF6MkturIcYMh5I/g7Y9bJLBnPerLyNOl1pNNJ5UgKsPLFVuAUCTEDrAMDU95BTpwYB6Pmx5R114S/4Yth1x+iQZEDMqp46PBm4g+Ov/DHR5pexVBqYuw2TuBE7XWqlLjxW/nk4LJ42EXnV4nBlkow1CpakD1vgIWh//w3ZXR5WjpNWq/FG4QJtbEZPjX+DS2wc7jrejjzn8ZuNqw5Pdo6aJU+Wlsgud4O9tmk9Ddkq1pDwL8j3HffWzC3oBNXAlrIzmT+Hf/TebIaYhlvYsgsKYu4hbD3cOtGE2ptIBmMf8NVytDjv8U+0ZkfC4ObcglPIKn4gU7rYVL+brq8o4GpaxMMfmB5hoJ89F4ipd6efv527Hw2f7tntL+60eGd+GjLSgOIH6BgteMeRZPBIPVnwzvS/TqufMAEpMIeZ/0slHKZqMBWTEOYrrQMwlL1ThiKBZ1VhNdToidy5T+AEO6xanyK3nXS1riw=
