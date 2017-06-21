@@ -1,4 +1,4 @@
-# Spaceflight project
+# Spaceflight project [![Coverage Status](https://coveralls.io/repos/github/poka-yoke/spaceflight/badge.svg?branch=master)](https://coveralls.io/github/poka-yoke/spaceflight?branch=master)
 
 ## Aim
 
