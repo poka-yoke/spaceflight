@@ -23,6 +23,8 @@ script:
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
   - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/got/got
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/roosa
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 addons:
   code_climate:
