@@ -13,6 +13,9 @@ install:
   - go get github.com/aws/aws-sdk-go/service/ec2/ec2iface
   - go get github.com/aws/aws-sdk-go/service/route53
   - go get github.com/aws/aws-sdk-go/service/route53/route53iface
+  - go get github.com/aws/aws-sdk-go/service/opsworks
+  - go get github.com/aws/aws-sdk-go/service/opsworks/opsworksiface
+  - go get github.com/olorin/nagiosplugin
   - go get github.com/spf13/cobra
   - go get github.com/spf13/viper
   - go get golang.org/x/tools/cmd/cover
@@ -22,6 +25,16 @@ script:
   - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/capcom/capcom
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
   - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/got/got
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/roosa
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/fido/fido
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mcc/trek/trek
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mss/dextre/dnsbl
+  - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v -covermode=count -coverprofile=coverage.out github.com/poka-yoke/spaceflight/mss/sidekiq
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 addons:
