@@ -1,4 +1,4 @@
-# Spaceflight project [![Code Climate](https://codeclimate.com/github/poka-yoke/spaceflight/badges/gpa.svg)](https://codeclimate.com/github/poka-yoke/spaceflight) [![Coverage Status](https://coveralls.io/repos/github/poka-yoke/spaceflight/badge.svg?branch=master)](https://coveralls.io/github/poka-yoke/spaceflight?branch=master)
+# Spaceflight project [![Build Status](https://travis-ci.org/poka-yoke/spaceflight.svg?branch=master)](https://travis-ci.org/poka-yoke/spaceflight) [![Code Climate](https://codeclimate.com/github/poka-yoke/spaceflight/badges/gpa.svg)](https://codeclimate.com/github/poka-yoke/spaceflight) [![Coverage Status](https://coveralls.io/repos/github/poka-yoke/spaceflight/badge.svg?branch=master)](https://coveralls.io/github/poka-yoke/spaceflight?branch=master)
 
 ## Aim
 
