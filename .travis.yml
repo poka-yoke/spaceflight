@@ -16,6 +16,8 @@ install:
   - go get github.com/aws/aws-sdk-go/service/opsworks
   - go get github.com/aws/aws-sdk-go/service/opsworks/opsworksiface
   - go get github.com/olorin/nagiosplugin
+  - go get github.com/lib/pq
+  - go get gopkg.in/olivere/elastic.v1
   - go get github.com/spf13/cobra
   - go get github.com/spf13/viper
   - go get golang.org/x/tools/cmd/cover
