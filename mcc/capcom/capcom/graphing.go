@@ -94,7 +94,9 @@ func registerNodes(
 			nodesPresence[*sg.GroupId]["stopped"] == 0:
 			attrs["color"] = "red"
 		}
-		graph.AddNode("G", *sg.GroupId, attrs)
+		if err := graph.AddNode("G", *sg.GroupId, attrs); err != nil {
+			log.Println(err)
+		}
 		if nodesPresence[*sg.GroupId] == nil {
 			nodesPresence[*sg.GroupId] = nil
 		}
@@ -151,12 +153,14 @@ func registerEdges(
 						groupName,
 						*pair.GroupId,
 					)
-					graph.AddEdge(
+					if err := graph.AddEdge(
 						*sg.GroupId,
 						*pair.GroupId,
 						true,
 						edgeAttrs(perm),
-					)
+					); err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
@@ -169,8 +173,12 @@ func GraphSGRelations(svc ec2iface.EC2API) string {
 	sglist := getSecurityGroups(svc).SecurityGroups
 
 	g := gographviz.NewEscape()
-	g.SetName("G")
-	g.SetDir(true)
+	if err := g.SetName("G"); err != nil {
+		log.Println(err)
+	}
+	if err := g.SetDir(true); err != nil {
+		log.Println(err)
+	}
 	log.Println("Created graph")
 
 	nodesPresence := getInstancesStates(getInstances(svc))
