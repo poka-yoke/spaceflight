@@ -44,7 +44,6 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 		log.Panic(err.Error())
 	}
 	for _, res := range resp.Reservations {
-		groupID := []string{}
 		state := map[string]int{
 			"pending":       0,
 			"running":       0,
@@ -53,14 +52,11 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 			"stopping":      0,
 			"stopped":       0,
 		}
-		for _, group := range res.Groups {
-			groupID = append(groupID, *group.GroupId)
-		}
 		for _, instance := range res.Instances {
 			state[*instance.State.Name]++
 		}
-		for _, gid := range groupID {
-			iState[gid] = state
+		for _, group := range res.Groups {
+			iState[*group.GroupId] = state
 		}
 	}
 	return iState
