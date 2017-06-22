@@ -45,9 +45,9 @@ func getInstances(svc ec2iface.EC2API) *ec2.DescribeInstancesOutput {
 	return resp
 }
 
-func getInstancesStates(instances *ec2.DescribeInstancesOutput) sGInstanceState {
+func getInstancesStates(instances []*ec2.Reservation) sGInstanceState {
 	iState := make(sGInstanceState)
-	for _, res := range instances.Reservations {
+	for _, res := range instances {
 		state := map[string]int{
 			"pending":       0,
 			"running":       0,
@@ -181,7 +181,7 @@ func GraphSGRelations(svc ec2iface.EC2API) string {
 	}
 	log.Println("Created graph")
 
-	nodesPresence := getInstancesStates(getInstances(svc))
+	nodesPresence := getInstancesStates(getInstances(svc).Reservations)
 	registerNodes(sglist, g, nodesPresence)
 	registerEdges(sglist, g, nodesPresence)
 	return g.String()
