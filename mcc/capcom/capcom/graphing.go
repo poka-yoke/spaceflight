@@ -32,8 +32,7 @@ func (s sGInstanceState) has(key string) bool {
 	return false
 }
 
-func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
-	iState := make(sGInstanceState)
+func getInstances(svc ec2iface.EC2API) *ec2.DescribeInstancesOutput {
 	// TODO: Check for need of pagination and handle it
 	resp, err := svc.DescribeInstances(
 		&ec2.DescribeInstancesInput{
@@ -43,7 +42,12 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	for _, res := range resp.Reservations {
+	return resp
+}
+
+func getInstancesStates(instances *ec2.DescribeInstancesOutput) sGInstanceState {
+	iState := make(sGInstanceState)
+	for _, res := range instances.Reservations {
 		state := map[string]int{
 			"pending":       0,
 			"running":       0,
@@ -163,13 +167,13 @@ func registerEdges(
 // format of the relations between Security Groups in the service.
 func GraphSGRelations(svc ec2iface.EC2API) string {
 	sglist := getSecurityGroups(svc).SecurityGroups
-	nodesPresence := getInstancesPerSG(svc)
 
 	g := gographviz.NewEscape()
 	g.SetName("G")
 	g.SetDir(true)
 	log.Println("Created graph")
 
+	nodesPresence := getInstancesStates(getInstances(svc))
 	registerNodes(sglist, g, nodesPresence)
 	registerEdges(sglist, g, nodesPresence)
 	return g.String()
