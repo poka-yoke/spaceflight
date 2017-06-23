@@ -43,3 +43,17 @@ func TestGetInstances(t *testing.T) {
 		t.Error("Should be equal")
 	}
 }
+
+func TestGetInstancesStates(t *testing.T) {
+	res := getInstancesStates(describeInstancesOutput.Reservations)
+	if len(res) != 1 {
+		t.Error("Unexpected amount of results")
+	}
+	if state := res["sg-12345678"]; state != nil {
+		if state["pending"] != 1 {
+			t.Error("Unexpected values")
+		}
+	} else {
+		t.Error("Expected key missing")
+	}
+}
