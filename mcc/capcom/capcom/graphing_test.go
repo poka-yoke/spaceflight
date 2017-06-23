@@ -7,6 +7,26 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+func TestSGInstanceStateGetKeysAndHas(t *testing.T) {
+	sg := make(sGInstanceState)
+	empty := map[string]int{}
+
+	keyList := []string{"first", "second", "third"}
+	for _, v := range keyList {
+		sg[v] = empty
+	}
+
+	length := len(sg.getKeys())
+	if length != 3 {
+		t.Errorf("Expected length 3, found %d.\n", length)
+	}
+	for _, v := range keyList {
+		if !sg.has(v) {
+			t.Errorf("Expected value \"%s\" not found.", v)
+		}
+	}
+}
+
 var describeInstancesOutput = ec2.DescribeInstancesOutput{
 	Reservations: []*ec2.Reservation{
 		{
