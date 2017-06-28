@@ -32,8 +32,7 @@ func (s sGInstanceState) has(key string) bool {
 	return false
 }
 
-func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
-	iState := make(sGInstanceState)
+func getInstances(svc ec2iface.EC2API) *ec2.DescribeInstancesOutput {
 	// TODO: Check for need of pagination and handle it
 	resp, err := svc.DescribeInstances(
 		&ec2.DescribeInstancesInput{
@@ -43,8 +42,12 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	for _, res := range resp.Reservations {
-		groupID := []string{}
+	return resp
+}
+
+func getInstancesStates(instances []*ec2.Reservation) sGInstanceState {
+	iState := make(sGInstanceState)
+	for _, res := range instances {
 		state := map[string]int{
 			"pending":       0,
 			"running":       0,
@@ -53,14 +56,11 @@ func getInstancesPerSG(svc ec2iface.EC2API) sGInstanceState {
 			"stopping":      0,
 			"stopped":       0,
 		}
-		for _, group := range res.Groups {
-			groupID = append(groupID, *group.GroupId)
-		}
 		for _, instance := range res.Instances {
 			state[*instance.State.Name]++
 		}
-		for _, gid := range groupID {
-			iState[gid] = state
+		for _, group := range res.Groups {
+			iState[*group.GroupId] = state
 		}
 	}
 	return iState
@@ -94,7 +94,9 @@ func registerNodes(
 			nodesPresence[*sg.GroupId]["stopped"] == 0:
 			attrs["color"] = "red"
 		}
-		graph.AddNode("G", *sg.GroupId, attrs)
+		if err := graph.AddNode("G", *sg.GroupId, attrs); err != nil {
+			log.Println(err)
+		}
 		if nodesPresence[*sg.GroupId] == nil {
 			nodesPresence[*sg.GroupId] = nil
 		}
@@ -151,12 +153,14 @@ func registerEdges(
 						groupName,
 						*pair.GroupId,
 					)
-					graph.AddEdge(
+					if err := graph.AddEdge(
 						*sg.GroupId,
 						*pair.GroupId,
 						true,
 						edgeAttrs(perm),
-					)
+					); err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
@@ -167,13 +171,17 @@ func registerEdges(
 // format of the relations between Security Groups in the service.
 func GraphSGRelations(svc ec2iface.EC2API) string {
 	sglist := getSecurityGroups(svc).SecurityGroups
-	nodesPresence := getInstancesPerSG(svc)
 
 	g := gographviz.NewEscape()
-	g.SetName("G")
-	g.SetDir(true)
+	if err := g.SetName("G"); err != nil {
+		log.Println(err)
+	}
+	if err := g.SetDir(true); err != nil {
+		log.Println(err)
+	}
 	log.Println("Created graph")
 
+	nodesPresence := getInstancesStates(getInstances(svc).Reservations)
 	registerNodes(sglist, g, nodesPresence)
 	registerEdges(sglist, g, nodesPresence)
 	return g.String()
