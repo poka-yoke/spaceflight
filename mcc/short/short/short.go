@@ -8,15 +8,18 @@ import (
 	"net/http"
 )
 
+// NewService returns an empty Service
 func NewService() *Service {
 	return &Service{}
 }
 
+// Service holds identification and back-end methods
 type Service struct {
 	aPIKey            string
 	AddURL, UpdateURL string
 }
 
+// SetAPIKey Configures the API Key in the Service
 func (s *Service) SetAPIKey(key string) *Service {
 	s.aPIKey = key
 	return s
@@ -60,7 +63,7 @@ func (s Service) Body(domain, path, url string) (out io.Reader) {
 	return
 }
 
-// Request to add entry
+// Request to Service
 func (s Service) Request(method string, body io.Reader) (req *http.Request, err error) {
 	req, err = http.NewRequest(method, s.AddURL, body)
 	if err != nil {
@@ -71,7 +74,7 @@ func (s Service) Request(method string, body io.Reader) (req *http.Request, err 
 	return
 }
 
-// Do executes the request to add an entry
+// Do sends the request to the Service and returns the response for validation
 func (s Service) Do(req *http.Request) (res *http.Response, err error) {
 	res, err = http.DefaultClient.Do(req)
 	if err != nil {
