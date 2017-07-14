@@ -28,7 +28,7 @@ func (s *Service) SetAPIKey(key string) *Service {
 // Add an entry to the shortener with handle path and destination url
 func (s Service) Add(domain, path, url string) error {
 	body := s.Body(domain, path, url)
-	req, err := s.Request(http.MethodPost, body)
+	req, err := s.Request(http.MethodPost, s.AddURL, body)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s Service) Add(domain, path, url string) error {
 // Update modifies an existing short entry and changes where it points to
 func (s Service) Update(domain, path, url string) error {
 	body := s.Body(domain, path, url)
-	req, err := s.Request(http.MethodPut, body)
+	req, err := s.Request(http.MethodPut, s.UpdateURL, body)
 	if err != nil {
 		return fmt.Errorf("Failed building request: %s", err.Error())
 	}
@@ -87,8 +87,8 @@ func (s Service) Body(domain, path, url string) (out io.Reader) {
 }
 
 // Request to Service
-func (s Service) Request(method string, body io.Reader) (req *http.Request, err error) {
-	req, err = http.NewRequest(method, s.AddURL, body)
+func (s Service) Request(method, endpoint string, body io.Reader) (req *http.Request, err error) {
+	req, err = http.NewRequest(method, endpoint, body)
 	if err != nil {
 		return
 	}

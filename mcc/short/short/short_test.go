@@ -150,7 +150,7 @@ func TestAddShortEntryReq(t *testing.T) {
 			SetAPIKey(tt.apikey)
 
 		bod := service.Body(tt.domain, tt.path, tt.url)
-		r, err := service.Request(http.MethodPost, bod)
+		r, err := service.Request(http.MethodPost, service.AddURL, bod)
 		if err != nil {
 			t.Error(err)
 		}
