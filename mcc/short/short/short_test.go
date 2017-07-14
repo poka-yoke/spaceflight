@@ -42,7 +42,8 @@ func TestAddShortEntry(t *testing.T) {
 				"tag1",
 				"tag2",
 			},
-			status: http.StatusCreated,
+			status: http.StatusOK, // API docs are wrong,
+			// it retugrns a 200
 		},
 		{
 			domain:      "shrt.co",

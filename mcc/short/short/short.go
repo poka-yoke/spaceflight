@@ -36,7 +36,7 @@ func (s Service) Add(domain, path, url string) error {
 	if err != nil {
 		return err
 	}
-	if res.StatusCode != 201 {
+	if res.StatusCode != 200 {
 		return &shortenError{
 			fmt.Sprintf(
 				"Unexpected status, expected 201, received %d",
