@@ -48,6 +48,29 @@ func (s Service) Add(domain, path, url string) error {
 	return nil
 }
 
+// Update modifies an existing short entry and changes where it points to
+func (s Service) Update(domain, path, url string) error {
+	body := s.Body(domain, path, url)
+	req, err := s.Request(http.MethodPut, body)
+	if err != nil {
+		return fmt.Errorf("Failed building request: %s", err.Error())
+	}
+	res, err := s.Do(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return &shortenError{
+			fmt.Sprintf(
+				"Unexpected status, expected 200, received %d",
+				res.StatusCode,
+			),
+			res.StatusCode,
+		}
+	}
+	return nil
+}
+
 // Body renders the Request's body
 func (s Service) Body(domain, path, url string) (out io.Reader) {
 	message := make(map[string]string)

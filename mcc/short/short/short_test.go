@@ -18,6 +18,15 @@ func ExampleServiceAdd() {
 	}
 }
 
+func ExampleServiceUpdate() {
+	service := NewService().SetAPIKey("my-api-key")
+	service.UpdateURL = "https://example.com/shortener/add"
+	err := service.Update("xample.cm", "this", "https://example.com/very/long/url")
+	if err != nil {
+		// Handle error
+	}
+}
+
 func TestAddShortEntry(t *testing.T) {
 	data := []struct {
 		domain, originalURL, path, title string
@@ -198,5 +207,82 @@ func TestAddShortEntryReq(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestUpdateShortEntry(t *testing.T) {
+	data := []struct {
+		domain, originalURL, path, title string
+		tags                             []string
+		status                           int
+	}{
+		{
+			domain:      "shrt.co",
+			originalURL: "http://yourlongdomain.com/yourlonglink",
+			path:        "correct",
+			title:       "Some url title",
+			tags: []string{
+				"tag1",
+				"tag2",
+			},
+			status: http.StatusOK,
+		},
+		{
+			domain:      "shrt.co",
+			originalURL: "http://yourlongdomain.com/yourlonglink",
+			path:        "duplicated",
+			title:       "Some url title",
+			tags: []string{
+				"tag1",
+				"tag2",
+			},
+			status: http.StatusOK,
+		},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		// Process body
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Error()
+		}
+		s := make(map[string]string)
+		err = json.Unmarshal(body, &s)
+		if err != nil {
+			t.Error()
+		}
+		for _, d := range data {
+			if d.path == s["path"] {
+				w.Header().Set(
+					"Content-Type",
+					"application/json",
+				)
+				w.WriteHeader(d.status)
+				fmt.Fprintln(w, "")
+			}
+		}
+	}))
+	defer server.Close()
+
+	service := NewService()
+	service.UpdateURL = server.URL
+	for _, tt := range data {
+		err := service.Update(tt.domain, tt.path, tt.originalURL)
+		if err != nil {
+			if e, ok := err.(*shortenError); !ok {
+				t.Error(err)
+			} else {
+				if e.ErrorCode() != tt.status {
+					t.Errorf(
+						"Unexpected response status, expected %d but received %d",
+						tt.status,
+						e.ErrorCode(),
+					)
+				}
+			}
+		}
 	}
 }
