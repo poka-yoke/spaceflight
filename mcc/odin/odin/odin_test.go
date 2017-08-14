@@ -288,6 +288,20 @@ var createDBInstanceCases = []createDBInstanceCase{
 		expectedError:        "",
 		snapshot:             exampleSnapshot1,
 	},
+	// Uses non existing snapshot to restore from
+	{
+		name:                 "Uses non existing snapshot to restore from",
+		identifier:           "test1",
+		instanceType:         "db.m1.small",
+		masterUser:           "master",
+		masterUserPassword:   "master",
+		size:                 6144,
+		originalInstanceName: "develop",
+		restore:              true,
+		endpoint:             "",
+		expectedError:        "Couldn't find snapshot for develop instance",
+		snapshot:             exampleSnapshot1,
+	},
 }
 
 func TestCreateDB(t *testing.T) {
@@ -298,7 +312,7 @@ func TestCreateDB(t *testing.T) {
 			useCase.name,
 			func(t *testing.T) {
 				if useCase.originalInstanceName != "" {
-					svc.dbSnapshots[useCase.originalInstanceName] = []*rds.DBSnapshot{
+					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{
 						useCase.snapshot,
 					}
 				}
@@ -315,6 +329,8 @@ func TestCreateDB(t *testing.T) {
 					params,
 					svc,
 				)
+				fmt.Println(endpoint)
+				fmt.Println(err)
 				if err != nil {
 					if fmt.Sprintf("%s", err) != useCase.expectedError {
 						t.Errorf(
@@ -322,13 +338,19 @@ func TestCreateDB(t *testing.T) {
 							err,
 						)
 					}
-				}
-				if endpoint != useCase.endpoint {
+				} else if useCase.expectedError != "" {
 					t.Errorf(
-						"Unexpected output: %s should be %s",
-						endpoint,
-						useCase.endpoint,
+						"Expected error %s didn't happened",
+						useCase.expectedError,
 					)
+				} else {
+					if endpoint != useCase.endpoint {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							endpoint,
+							useCase.endpoint,
+						)
+					}
 				}
 			},
 		)
