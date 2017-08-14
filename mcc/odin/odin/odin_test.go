@@ -472,6 +472,21 @@ var getCreateDBInstanceInputCases = []getCreateDBInstanceInputCase{
 		},
 		expectedError: "",
 	},
+	// Params with non existing Snapshot
+	{
+		name:       "Params with non existing Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType:       "db.m1.medium",
+			DBUser:               "owner",
+			DBPassword:           "password",
+			Size:                 5,
+			OriginalInstanceName: "develop",
+		},
+		snapshot:                      exampleSnapshot1,
+		expectedCreateDBInstanceInput: nil,
+		expectedError:                 "Couldn't find snapshot for develop instance",
+	},
 }
 
 func equalsCreateDBInstanceInput(input1, input2 *rds.CreateDBInstanceInput) bool {
@@ -499,16 +514,26 @@ func TestGetCreateDBInstanceInput(t *testing.T) {
 				if useCase.snapshot != nil {
 					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
 				}
-				createDBInstanceInput := useCase.createDBParams.GetCreateDBInstanceInput(
+				createDBInstanceInput, err := useCase.createDBParams.GetCreateDBInstanceInput(
 					useCase.identifier,
 					svc,
 				)
-				if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
-					t.Errorf(
-						"Unexpected output: %s should be %s",
-						createDBInstanceInput,
-						useCase.expectedCreateDBInstanceInput,
-					)
+				if err != nil {
+					if useCase.expectedError == "" ||
+						fmt.Sprintf("%v", err) != useCase.expectedError {
+						t.Errorf(
+							"Unexpected error happened: %v",
+							err,
+						)
+					}
+				} else {
+					if !equalsCreateDBInstanceInput(createDBInstanceInput, useCase.expectedCreateDBInstanceInput) {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							createDBInstanceInput,
+							useCase.expectedCreateDBInstanceInput,
+						)
+					}
 				}
 			},
 		)

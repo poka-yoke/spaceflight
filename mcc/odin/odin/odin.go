@@ -74,13 +74,13 @@ func (params CreateDBParams) GetCreateDBInstanceInput(
 	svc rdsiface.RDSAPI,
 ) (
 	createDBInstanceInput *rds.CreateDBInstanceInput,
+	err error,
 ) {
 	var snapshot *rds.DBSnapshot
-	var err error
 	if params.OriginalInstanceName != "" {
 		snapshot, err = GetLastSnapshot(params.OriginalInstanceName, svc)
 		if err != nil {
-			log.Fatalf(
+			return nil, fmt.Errorf(
 				"Couldn't find snapshot for %s instance",
 				params.OriginalInstanceName,
 			)
@@ -141,11 +141,15 @@ func CreateDBInstance(
 		}
 		instance = *res.DBInstance
 	} else {
+		var rdsParams *rds.CreateDBInstanceInput
 		var res *rds.CreateDBInstanceOutput
-		rdsParams := params.GetCreateDBInstanceInput(
+		rdsParams, err = params.GetCreateDBInstanceInput(
 			instanceName,
 			svc,
 		)
+		if err != nil {
+			return
+		}
 		res, err = svc.CreateDBInstance(rdsParams)
 		if err != nil {
 			return
