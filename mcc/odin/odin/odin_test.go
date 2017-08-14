@@ -545,6 +545,35 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 		},
 		expectedError: "",
 	},
+	// Params with Snapshot without OriginalInstanceName
+	{
+		name:       "Params with Snapshot without OriginalInstanceName",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType: "db.m1.medium",
+			DBUser:         "owner",
+			DBPassword:     "password",
+			Size:           5,
+		},
+		snapshot: exampleSnapshot1,
+		expectedRestoreDBInstanceFromDBSnapshotInput: nil,
+		expectedError:                                "Original instance is required",
+	},
+	// Params with non existing Snapshot
+	{
+		name:       "Params with non existing Snapshot",
+		identifier: "production",
+		createDBParams: CreateDBParams{
+			DBInstanceType:       "db.m1.medium",
+			DBUser:               "owner",
+			DBPassword:           "password",
+			Size:                 5,
+			OriginalInstanceName: "develop",
+		},
+		snapshot: exampleSnapshot1,
+		expectedRestoreDBInstanceFromDBSnapshotInput: nil,
+		expectedError:                                "Couldn't find snapshot for develop instance",
+	},
 }
 
 func equalsRestoreDBInstanceFromDBSnapshotInput(input1, input2 *rds.RestoreDBInstanceFromDBSnapshotInput) bool {
@@ -570,17 +599,27 @@ func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 				if useCase.snapshot != nil {
 					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
 				}
-				restoreDBInstanceFromDBSnapshotInput := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
+				restoreDBInstanceFromDBSnapshotInput, err := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
 					useCase.identifier,
 					svc,
 				)
-				// if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
-				if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
-					t.Errorf(
-						"Unexpected output: %s should be %s",
-						restoreDBInstanceFromDBSnapshotInput,
-						useCase.expectedRestoreDBInstanceFromDBSnapshotInput,
-					)
+				if err != nil {
+					if useCase.expectedError == "" ||
+						fmt.Sprintf("%v", err) != useCase.expectedError {
+						t.Errorf(
+							"Unexpected error happened: %v",
+							err,
+						)
+					}
+				} else {
+					// if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
+					if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
+						t.Errorf(
+							"Unexpected output: %s should be %s",
+							restoreDBInstanceFromDBSnapshotInput,
+							useCase.expectedRestoreDBInstanceFromDBSnapshotInput,
+						)
+					}
 				}
 			},
 		)

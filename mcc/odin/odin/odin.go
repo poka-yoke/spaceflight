@@ -1,6 +1,7 @@
 package odin
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -38,17 +39,15 @@ func (params CreateDBParams) GetRestoreDBInstanceFromDBSnapshotInput(
 	svc rdsiface.RDSAPI,
 ) (
 	restoreDBInstanceFromDBSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput,
+	err error,
 ) {
 	var snapshot *rds.DBSnapshot
-	var err error
 	if params.OriginalInstanceName == "" {
-		log.Fatalf(
-			"Original instance is required",
-		)
+		return nil, fmt.Errorf("Original instance is required")
 	}
 	snapshot, err = GetLastSnapshot(params.OriginalInstanceName, svc)
 	if err != nil {
-		log.Fatalf(
+		return nil, fmt.Errorf(
 			"Couldn't find snapshot for %s instance",
 			params.OriginalInstanceName,
 		)
@@ -127,11 +126,15 @@ func CreateDBInstance(
 ) (result string, err error) {
 	var instance rds.DBInstance
 	if params.Restore {
+		var rdsParams *rds.RestoreDBInstanceFromDBSnapshotInput
 		var res *rds.RestoreDBInstanceFromDBSnapshotOutput
-		rdsParams := params.GetRestoreDBInstanceFromDBSnapshotInput(
+		rdsParams, err = params.GetRestoreDBInstanceFromDBSnapshotInput(
 			instanceName,
 			svc,
 		)
+		if err != nil {
+			return
+		}
 		res, err = svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
 		if err != nil {
 			return
