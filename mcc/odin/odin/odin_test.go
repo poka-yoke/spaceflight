@@ -274,6 +274,19 @@ var createDBInstanceCases = []createDBInstanceCase{
 		expectedError:        "",
 		snapshot:             exampleSnapshot1,
 	},
+	// Uses non existing snapshot to copy from
+	{
+		name:                 "Uses non existing snapshot to copy from",
+		identifier:           "test1",
+		instanceType:         "db.m1.small",
+		masterUser:           "master",
+		masterUserPassword:   "master",
+		size:                 6144,
+		originalInstanceName: "develop",
+		endpoint:             "",
+		expectedError:        "Couldn't find snapshot for develop instance",
+		snapshot:             exampleSnapshot1,
+	},
 	// Uses snapshot to restore from
 	{
 		name:                 "Uses snapshot to restore from",
@@ -329,8 +342,6 @@ func TestCreateDB(t *testing.T) {
 					params,
 					svc,
 				)
-				fmt.Println(endpoint)
-				fmt.Println(err)
 				if err != nil {
 					if fmt.Sprintf("%s", err) != useCase.expectedError {
 						t.Errorf(
