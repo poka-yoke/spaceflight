@@ -343,7 +343,7 @@ func TestCreateDB(t *testing.T) {
 					svc,
 				)
 				if err != nil {
-					if fmt.Sprintf("%s", err) != useCase.expectedError {
+					if err.Error() != useCase.expectedError {
 						t.Errorf(
 							"Unexpected error %s",
 							err,
@@ -421,7 +421,7 @@ func TestGetLastSnapshot(t *testing.T) {
 							useCase.snapshot,
 						)
 					}
-				} else if fmt.Sprintf("%s", err) != useCase.expectedError {
+				} else if err.Error() != useCase.expectedError {
 					t.Errorf(
 						"Unexpected error %s",
 						err,
@@ -433,12 +433,12 @@ func TestGetLastSnapshot(t *testing.T) {
 }
 
 type getRestoreDBInstanceFromDBSnapshotInputCase struct {
-	name                                         string
-	identifier                                   string
-	createDBParams                               CreateDBParams
-	snapshot                                     *rds.DBSnapshot
-	expectedRestoreDBInstanceFromDBSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
-	expectedError                                string
+	name                         string
+	identifier                   string
+	createDBParams               CreateDBParams
+	snapshot                     *rds.DBSnapshot
+	expectedRestoreSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
+	expectedError                string
 }
 
 var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBSnapshotInputCase{
@@ -454,7 +454,7 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 			OriginalInstanceName: "production",
 		},
 		snapshot: exampleSnapshot1,
-		expectedRestoreDBInstanceFromDBSnapshotInput: &rds.RestoreDBInstanceFromDBSnapshotInput{
+		expectedRestoreSnapshotInput: &rds.RestoreDBInstanceFromDBSnapshotInput{
 			DBInstanceClass:      aws.String("db.m1.medium"),
 			DBInstanceIdentifier: aws.String("production"),
 			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
@@ -472,9 +472,9 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 			DBPassword:     "password",
 			Size:           5,
 		},
-		snapshot: exampleSnapshot1,
-		expectedRestoreDBInstanceFromDBSnapshotInput: nil,
-		expectedError:                                "Original Instance Name was empty",
+		snapshot:                     exampleSnapshot1,
+		expectedRestoreSnapshotInput: nil,
+		expectedError:                "Original Instance Name was empty",
 	},
 	// Params with non existing Snapshot
 	{
@@ -487,9 +487,9 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 			Size:                 5,
 			OriginalInstanceName: "develop",
 		},
-		snapshot: exampleSnapshot1,
-		expectedRestoreDBInstanceFromDBSnapshotInput: nil,
-		expectedError:                                "Couldn't find snapshot for develop instance",
+		snapshot:                     exampleSnapshot1,
+		expectedRestoreSnapshotInput: nil,
+		expectedError:                "Couldn't find snapshot for develop instance",
 	},
 }
 
@@ -516,25 +516,27 @@ func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 				if useCase.snapshot != nil {
 					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
 				}
-				restoreDBInstanceFromDBSnapshotInput, err := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
+				restoreSnapshotInput, err := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
 					useCase.identifier,
 					svc,
 				)
 				if err != nil {
 					if useCase.expectedError == "" ||
-						fmt.Sprintf("%v", err) != useCase.expectedError {
+						err.Error() != useCase.expectedError {
 						t.Errorf(
 							"Unexpected error happened: %v",
 							err,
 						)
 					}
 				} else {
-					// if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
-					if !equalsRestoreDBInstanceFromDBSnapshotInput(restoreDBInstanceFromDBSnapshotInput, useCase.expectedRestoreDBInstanceFromDBSnapshotInput) {
+					if !equalsRestoreDBInstanceFromDBSnapshotInput(
+						restoreSnapshotInput,
+						useCase.expectedRestoreSnapshotInput,
+					) {
 						t.Errorf(
 							"Unexpected output: %s should be %s",
-							restoreDBInstanceFromDBSnapshotInput,
-							useCase.expectedRestoreDBInstanceFromDBSnapshotInput,
+							restoreSnapshotInput,
+							useCase.expectedRestoreSnapshotInput,
 						)
 					}
 				}
