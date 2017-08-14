@@ -219,7 +219,8 @@ func GetLastSnapshot(
 		DBInstanceIdentifier: &identifier,
 	}
 	results, err := svc.DescribeDBSnapshots(params)
-	if err != nil {
+	if err != nil || len(results.DBSnapshots) == 0 {
+		err = fmt.Errorf("There are no Snapshots for %s", identifier)
 		return
 	}
 	return results.DBSnapshots[0], nil

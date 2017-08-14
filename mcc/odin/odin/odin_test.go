@@ -25,10 +25,6 @@ func (m mockRDSClient) DescribeDBSnapshots(
 	err error,
 ) {
 	dbSnapshots := m.dbSnapshots[*describeParams.DBInstanceIdentifier]
-	if len(dbSnapshots) == 0 {
-		err = errors.New("Snapshot not found")
-		return
-	}
 	result = &rds.DescribeDBSnapshotsOutput{
 		DBSnapshots: dbSnapshots,
 	}
@@ -391,7 +387,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 		identifier:    "production",
 		snapshots:     []*rds.DBSnapshot{},
 		snapshot:      nil,
-		expectedError: "Snapshot not found",
+		expectedError: "There are no Snapshots for production",
 	},
 }
 
