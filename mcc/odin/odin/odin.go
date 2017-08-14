@@ -21,10 +21,11 @@ func Init() rdsiface.RDSAPI {
 
 // CreateDBParams represents CreateDBInstance parameters.
 type CreateDBParams struct {
-	DBInstanceType string
-	DBUser         string
-	DBPassword     string
-	Size           int64
+	DBInstanceType    string
+	DBUser            string
+	DBPassword        string
+	DBSubnetGroupName string
+	Size              int64
 
 	OriginalInstanceName string
 	Restore              bool
@@ -53,6 +54,7 @@ func (params CreateDBParams) GetRestoreDBInstanceFromDBSnapshotInput(
 		DBInstanceClass:      &params.DBInstanceType,
 		DBInstanceIdentifier: &identifier,
 		DBSnapshotIdentifier: snapshot.DBSnapshotIdentifier,
+		DBSubnetGroupName:    &params.DBSubnetGroupName,
 		Engine:               aws.String("postgres"),
 	}
 	return
@@ -67,6 +69,7 @@ func (params CreateDBParams) GetCreateDBInstanceInput(
 	return &rds.CreateDBInstanceInput{
 		AllocatedStorage:     &params.Size,
 		DBInstanceIdentifier: &identifier,
+		DBSubnetGroupName:    &params.DBSubnetGroupName,
 		DBInstanceClass:      &params.DBInstanceType,
 		DBSecurityGroups: []*string{
 			aws.String("default"),

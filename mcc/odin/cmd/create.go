@@ -9,7 +9,7 @@ import (
 	"github.com/Devex/spaceflight/mcc/odin/odin"
 )
 
-var instanceType, password, user, from string
+var instanceType, password, user, from, subnetName string
 var size int64
 var restore bool
 
@@ -33,6 +33,7 @@ var createCmd = &cobra.Command{
 			DBInstanceType:       instanceType,
 			DBUser:               user,
 			DBPassword:           password,
+			DBSubnetGroupName:    subnetName,
 			Size:                 size,
 			OriginalInstanceName: from,
 			Restore:              restore,
@@ -98,6 +99,13 @@ func init() {
 		"r",
 		false,
 		"If true, restores; else, it just clones the parameters",
+	)
+	createCmd.PersistentFlags().StringVarP(
+		&subnetName,
+		"subnet",
+		"n",
+		"",
+		"DB Subnet Name to attach to (effectively VPC)",
 	)
 
 	// Cobra supports local flags which will only run when this command
