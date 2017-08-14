@@ -43,7 +43,7 @@ var createCmd = &cobra.Command{
 			svc,
 		)
 		if err != nil {
-			log.Fatal("Error: %s", err)
+			log.Fatalf("Error: %s", err)
 		}
 		fmt.Println(endpoint)
 	},
