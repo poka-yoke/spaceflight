@@ -3,13 +3,14 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/Devex/spaceflight/mcc/odin/odin"
 )
 
-var instanceType, password, user, from, subnetName string
+var instanceType, password, user, from, subnetName, securityGroups string
 var size int64
 var restore bool
 
@@ -34,6 +35,7 @@ var createCmd = &cobra.Command{
 			DBUser:               user,
 			DBPassword:           password,
 			DBSubnetGroupName:    subnetName,
+			VpcSecurityGroupIds:  strings.Split(securityGroups, ","),
 			Size:                 size,
 			OriginalInstanceName: from,
 			Restore:              restore,
@@ -106,6 +108,13 @@ func init() {
 		"n",
 		"",
 		"DB Subnet Name to attach to (effectively VPC)",
+	)
+	createCmd.PersistentFlags().StringVarP(
+		&securityGroups,
+		"securityGroups",
+		"g",
+		"",
+		"VPC Security Groups IDs separated with , to attach to (effectively VPC)",
 	)
 
 	// Cobra supports local flags which will only run when this command

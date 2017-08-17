@@ -155,6 +155,24 @@ func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 	return
 }
 
+// ModifyDBInstance mocks rds.ModifyDBInstance.
+func (m mockRDSClient) ModifyDBInstance(
+	inputParams *rds.ModifyDBInstanceInput,
+) (
+	result *rds.ModifyDBInstanceOutput,
+	err error,
+) {
+	if err = inputParams.Validate(); err != nil {
+		return
+	}
+	result = &rds.ModifyDBInstanceOutput{
+		DBInstance: &rds.DBInstance{
+			DBInstanceIdentifier: inputParams.DBInstanceIdentifier,
+		},
+	}
+	return
+}
+
 // newMockRDSClient creates a mockRDSClient.
 func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
