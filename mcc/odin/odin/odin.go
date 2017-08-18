@@ -10,7 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
-var duration = time.Duration(5) * time.Second
+// Duration specified time to wait for instance to be available.
+var Duration = time.Duration(5) * time.Second
 
 // Init initializes connection to AWS API
 func Init() rdsiface.RDSAPI {
@@ -157,7 +158,7 @@ func CreateDBInstance(
 		instance = res.DBInstances[0]
 		// This is to avoid AWS API rate throttling.
 		// Should use configurable exponential back-off
-		time.Sleep(duration)
+		time.Sleep(Duration)
 	}
 	result = *instance.Endpoint.Address
 	err = modifyInstance(instanceName, params, svc)

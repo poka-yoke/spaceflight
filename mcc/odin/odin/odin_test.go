@@ -1,4 +1,4 @@
-package odin
+package odin_test
 
 import (
 	"errors"
@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
+
+	"github.com/Devex/spaceflight/mcc/odin/odin"
 )
 
 type mockRDSClient struct {
@@ -333,7 +335,7 @@ var createDBInstanceCases = []createDBInstanceCase{
 
 func TestCreateDB(t *testing.T) {
 	svc := newMockRDSClient()
-	duration = time.Duration(0)
+	odin.Duration = time.Duration(0)
 	for _, useCase := range createDBInstanceCases {
 		t.Run(
 			useCase.name,
@@ -343,7 +345,7 @@ func TestCreateDB(t *testing.T) {
 						useCase.snapshot,
 					}
 				}
-				params := CreateDBParams{
+				params := odin.CreateDBParams{
 					DBInstanceType:       useCase.instanceType,
 					DBUser:               useCase.masterUser,
 					DBPassword:           useCase.masterUserPassword,
@@ -351,7 +353,7 @@ func TestCreateDB(t *testing.T) {
 					OriginalInstanceName: useCase.originalInstanceName,
 					Restore:              useCase.restore,
 				}
-				endpoint, err := CreateDBInstance(
+				endpoint, err := odin.CreateDBInstance(
 					useCase.identifier,
 					params,
 					svc,
@@ -416,7 +418,7 @@ func TestGetLastSnapshot(t *testing.T) {
 			useCase.name,
 			func(t *testing.T) {
 				svc.dbSnapshots[useCase.identifier] = useCase.snapshots
-				snapshot, err := GetLastSnapshot(
+				snapshot, err := odin.GetLastSnapshot(
 					useCase.identifier,
 					svc,
 				)
@@ -449,7 +451,7 @@ func TestGetLastSnapshot(t *testing.T) {
 type getRestoreDBInstanceFromDBSnapshotInputCase struct {
 	name                         string
 	identifier                   string
-	createDBParams               CreateDBParams
+	createDBParams               odin.CreateDBParams
 	snapshot                     *rds.DBSnapshot
 	expectedRestoreSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
 	expectedError                string
@@ -460,7 +462,7 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	{
 		name:       "Params with Snapshot",
 		identifier: "production",
-		createDBParams: CreateDBParams{
+		createDBParams: odin.CreateDBParams{
 			DBInstanceType:       "db.m1.medium",
 			DBUser:               "owner",
 			DBPassword:           "password",
@@ -480,7 +482,7 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	{
 		name:       "Params with Snapshot without OriginalInstanceName",
 		identifier: "production",
-		createDBParams: CreateDBParams{
+		createDBParams: odin.CreateDBParams{
 			DBInstanceType: "db.m1.medium",
 			DBUser:         "owner",
 			DBPassword:     "password",
@@ -494,7 +496,7 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	{
 		name:       "Params with non existing Snapshot",
 		identifier: "production",
-		createDBParams: CreateDBParams{
+		createDBParams: odin.CreateDBParams{
 			DBInstanceType:       "db.m1.medium",
 			DBUser:               "owner",
 			DBPassword:           "password",
