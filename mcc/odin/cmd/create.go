@@ -12,7 +12,6 @@ import (
 
 var instanceType, password, user, from, subnetName, securityGroups string
 var size int64
-var restore bool
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -23,10 +22,10 @@ var createCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal("You must specify the instance identifier for the new instance")
 		}
-		if user == "" && !restore {
+		if user == "" {
 			log.Fatal("User should be provided and not be blank")
 		}
-		if password == "" && !restore {
+		if password == "" {
 			log.Fatal("Password should be provided and not be blank")
 		}
 		svc := odin.Init()
@@ -38,7 +37,6 @@ var createCmd = &cobra.Command{
 			VpcSecurityGroupIds:  strings.Split(securityGroups, ","),
 			Size:                 size,
 			OriginalInstanceName: from,
-			Restore:              restore,
 		}
 		endpoint, err := odin.CreateDBInstance(
 			args[0],
@@ -94,13 +92,6 @@ func init() {
 		"f",
 		"",
 		"RDS Instance to look for snapshot",
-	)
-	createCmd.PersistentFlags().BoolVarP(
-		&restore,
-		"restore",
-		"r",
-		false,
-		"If true, restores; else, it just clones the parameters",
 	)
 	createCmd.PersistentFlags().StringVarP(
 		&subnetName,
