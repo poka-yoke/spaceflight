@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Devex/spaceflight/mcc/odin/cmd"
+import "github.com/poka-yoke/spaceflight/mcc/odin/cmd"
 
 func main() {
 	cmd.Execute()

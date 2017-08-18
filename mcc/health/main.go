@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Devex/spaceflight/mcc/health/cmd"
+import "github.com/poka-yoke/spaceflight/mcc/health/cmd"
 
 func main() {
 	cmd.Execute()

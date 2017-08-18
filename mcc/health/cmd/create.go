@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/mcc/health/health"
+	"github.com/poka-yoke/spaceflight/mcc/health/health"
 )
 
 var apikey, endpoint, schedule, name, tags, sep string

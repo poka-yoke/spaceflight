@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 
-	"github.com/Devex/spaceflight/mcc/odin/odin"
+	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
 type mockRDSClient struct {
