@@ -12,7 +12,7 @@ import (
 type getRestoreDBInstanceFromDBSnapshotInputCase struct {
 	name                         string
 	identifier                   string
-	createDBParams               odin.CreateDBParams
+	restoreParams                odin.RestoreParams
 	snapshot                     *rds.DBSnapshot
 	expectedRestoreSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
 	expectedError                string
@@ -22,18 +22,15 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	// Params with Snapshot
 	{
 		name:       "Params with Snapshot",
-		identifier: "production",
-		createDBParams: odin.CreateDBParams{
-			DBInstanceType:       "db.m1.medium",
-			DBUser:               "owner",
-			DBPassword:           "password",
-			Size:                 5,
+		identifier: "production-rds",
+		restoreParams: odin.RestoreParams{
+			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "production",
 		},
 		snapshot: exampleSnapshot1,
 		expectedRestoreSnapshotInput: &rds.RestoreDBInstanceFromDBSnapshotInput{
 			DBInstanceClass:      aws.String("db.m1.medium"),
-			DBInstanceIdentifier: aws.String("production"),
+			DBInstanceIdentifier: aws.String("production-rds"),
 			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
 			Engine:               aws.String("postgres"),
 		},
@@ -42,12 +39,9 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	// Params with Snapshot without OriginalInstanceName
 	{
 		name:       "Params with Snapshot without OriginalInstanceName",
-		identifier: "production",
-		createDBParams: odin.CreateDBParams{
-			DBInstanceType: "db.m1.medium",
-			DBUser:         "owner",
-			DBPassword:     "password",
-			Size:           5,
+		identifier: "production-rds",
+		restoreParams: odin.RestoreParams{
+			InstanceType: "db.m1.medium",
 		},
 		snapshot:                     exampleSnapshot1,
 		expectedRestoreSnapshotInput: nil,
@@ -56,12 +50,9 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	// Params with non existing Snapshot
 	{
 		name:       "Params with non existing Snapshot",
-		identifier: "production",
-		createDBParams: odin.CreateDBParams{
-			DBInstanceType:       "db.m1.medium",
-			DBUser:               "owner",
-			DBPassword:           "password",
-			Size:                 5,
+		identifier: "production-rds",
+		restoreParams: odin.RestoreParams{
+			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "develop",
 		},
 		snapshot:                     exampleSnapshot1,
@@ -93,7 +84,7 @@ func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 				if useCase.snapshot != nil {
 					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
 				}
-				restoreSnapshotInput, err := useCase.createDBParams.GetRestoreDBInstanceFromDBSnapshotInput(
+				restoreSnapshotInput, err := useCase.restoreParams.GetRestoreDBInstanceFromDBSnapshotInput(
 					useCase.identifier,
 					svc,
 				)
