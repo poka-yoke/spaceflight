@@ -30,36 +30,6 @@ type CreateDBParams struct {
 	Size                int64
 
 	OriginalInstanceName string
-	Restore              bool
-}
-
-// GetRestoreDBInstanceFromDBSnapshotInput method creates a new
-// RestoreDBInstanceFromDBSnapshotInput from provided CreateDBParams and
-// rds.DBSnapshot.
-func (params CreateDBParams) GetRestoreDBInstanceFromDBSnapshotInput(
-	identifier string,
-	svc rdsiface.RDSAPI,
-) (out *rds.RestoreDBInstanceFromDBSnapshotInput, err error) {
-	if params.OriginalInstanceName == "" {
-		err = fmt.Errorf("Original Instance Name was empty")
-		return
-	}
-	snapshot, err := GetLastSnapshot(params.OriginalInstanceName, svc)
-	if err != nil {
-		err = fmt.Errorf(
-			"Couldn't find snapshot for %s instance",
-			params.OriginalInstanceName,
-		)
-		return
-	}
-	out = &rds.RestoreDBInstanceFromDBSnapshotInput{
-		DBInstanceClass:      &params.DBInstanceType,
-		DBInstanceIdentifier: &identifier,
-		DBSnapshotIdentifier: snapshot.DBSnapshotIdentifier,
-		DBSubnetGroupName:    &params.DBSubnetGroupName,
-		Engine:               aws.String("postgres"),
-	}
-	return
 }
 
 // GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
@@ -129,22 +99,15 @@ func CreateDBInstance(
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
 	var instance *rds.DBInstance
-	if params.Restore {
-		instance, err = getInstanceRestore(instanceName, params, svc)
+	if params.OriginalInstanceName == "" {
+		instance, err = getInstanceCreate(instanceName, params, svc)
 		if err != nil {
 			return
 		}
 	} else {
-		if params.OriginalInstanceName == "" {
-			instance, err = getInstanceCreate(instanceName, params, svc)
-			if err != nil {
-				return
-			}
-		} else {
-			instance, err = getInstanceClone(instanceName, params, svc)
-			if err != nil {
-				return
-			}
+		instance, err = getInstanceClone(instanceName, params, svc)
+		if err != nil {
+			return
 		}
 	}
 	var res *rds.DescribeDBInstancesOutput
@@ -183,30 +146,6 @@ func modifyInstance(instanceName string, params ModifiableParams, svc rdsiface.R
 		return
 	}
 	_, err = svc.ModifyDBInstance(rdsParams)
-	return
-}
-
-func getInstanceRestore(instanceName string, params CreateDBParams, svc rdsiface.RDSAPI) (instance *rds.DBInstance, err error) {
-	var res *rds.RestoreDBInstanceFromDBSnapshotOutput
-	rdsParams, err := params.GetRestoreDBInstanceFromDBSnapshotInput(
-		instanceName,
-		svc,
-	)
-	if err != nil {
-		return
-	}
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
-		return
-	}
-	res, err = svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
-	if err != nil {
-		return
-	}
-	instance = res.DBInstance
 	return
 }
 

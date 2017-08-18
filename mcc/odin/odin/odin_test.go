@@ -200,7 +200,6 @@ type createDBInstanceCase struct {
 	masterUser           string
 	size                 int64
 	originalInstanceName string
-	restore              bool
 	endpoint             string
 	expectedError        string
 	snapshot             *rds.DBSnapshot
@@ -303,34 +302,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		expectedError:        "Couldn't find snapshot for develop instance",
 		snapshot:             exampleSnapshot1,
 	},
-	// Uses snapshot to restore from
-	{
-		name:                 "Uses snapshot to restore from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "production",
-		restore:              true,
-		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError:        "",
-		snapshot:             exampleSnapshot1,
-	},
-	// Uses non existing snapshot to restore from
-	{
-		name:                 "Uses non existing snapshot to restore from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "develop",
-		restore:              true,
-		endpoint:             "",
-		expectedError:        "Couldn't find snapshot for develop instance",
-		snapshot:             exampleSnapshot1,
-	},
 }
 
 func TestCreateDB(t *testing.T) {
@@ -351,7 +322,6 @@ func TestCreateDB(t *testing.T) {
 					DBPassword:           useCase.masterUserPassword,
 					Size:                 useCase.size,
 					OriginalInstanceName: useCase.originalInstanceName,
-					Restore:              useCase.restore,
 				}
 				endpoint, err := odin.CreateDBInstance(
 					useCase.identifier,
