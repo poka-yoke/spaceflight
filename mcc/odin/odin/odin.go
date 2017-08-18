@@ -177,7 +177,6 @@ func modifyInstance(instanceName string, params CreateDBParams, svc rdsiface.RDS
 		)
 		return
 	}
-	fmt.Println(rdsParams)
 	_, err = svc.ModifyDBInstance(rdsParams)
 	return
 }
