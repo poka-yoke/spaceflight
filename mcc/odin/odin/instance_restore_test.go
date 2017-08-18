@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/go-test/deep"
 
 	"github.com/Devex/spaceflight/mcc/odin/odin"
 )
@@ -32,6 +33,7 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 			DBInstanceClass:      aws.String("db.m1.medium"),
 			DBInstanceIdentifier: aws.String("production-rds"),
 			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+			DBSubnetGroupName:    aws.String(""),
 			Engine:               aws.String("postgres"),
 		},
 		expectedError: "",
@@ -61,20 +63,6 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	},
 }
 
-func equalsRestoreDBInstanceFromDBSnapshotInput(input1, input2 *rds.RestoreDBInstanceFromDBSnapshotInput) bool {
-	switch {
-	case *input1.DBInstanceIdentifier != *input2.DBInstanceIdentifier:
-		return false
-	case *input1.DBSnapshotIdentifier != *input2.DBSnapshotIdentifier:
-		return false
-	case *input1.DBInstanceClass != *input2.DBInstanceClass:
-		return false
-	case *input1.Engine != *input2.Engine:
-		return false
-	}
-	return true
-}
-
 func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 	svc := newMockRDSClient()
 	for _, useCase := range getRestoreDBInstanceFromDBSnapshotInputCases {
@@ -97,10 +85,10 @@ func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 						)
 					}
 				} else {
-					if !equalsRestoreDBInstanceFromDBSnapshotInput(
+					if diff := deep.Equal(
 						restoreSnapshotInput,
 						useCase.expectedRestoreSnapshotInput,
-					) {
+					); diff != nil {
 						t.Errorf(
 							"Unexpected output: %s should be %s",
 							restoreSnapshotInput,
