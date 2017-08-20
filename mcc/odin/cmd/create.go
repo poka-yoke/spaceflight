@@ -30,13 +30,12 @@ var createCmd = &cobra.Command{
 		}
 		svc := odin.Init()
 		params := odin.CreateDBParams{
-			DBInstanceType:       instanceType,
-			DBUser:               user,
-			DBPassword:           password,
-			DBSubnetGroupName:    subnetName,
-			VpcSecurityGroupIds:  strings.Split(securityGroups, ","),
-			Size:                 size,
-			OriginalInstanceName: from,
+			DBInstanceType:      instanceType,
+			DBUser:              user,
+			DBPassword:          password,
+			DBSubnetGroupName:   subnetName,
+			VpcSecurityGroupIds: strings.Split(securityGroups, ","),
+			Size:                size,
 		}
 		endpoint, err := odin.CreateDBInstance(
 			args[0],
@@ -85,13 +84,6 @@ func init() {
 		"s",
 		5,
 		"Size to use when creating DB Instance",
-	)
-	createCmd.PersistentFlags().StringVarP(
-		&from,
-		"from",
-		"f",
-		"",
-		"RDS Instance to look for snapshot",
 	)
 	createCmd.PersistentFlags().StringVarP(
 		&subnetName,
