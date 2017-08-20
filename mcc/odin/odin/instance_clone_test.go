@@ -64,9 +64,9 @@ func TestCloneInstance(t *testing.T) {
 					}
 				}
 				params := odin.CloneParams{
-					DBInstanceType:       useCase.instanceType,
-					DBUser:               useCase.masterUser,
-					DBPassword:           useCase.masterUserPassword,
+					InstanceType:         useCase.instanceType,
+					User:                 useCase.masterUser,
+					Password:             useCase.masterUserPassword,
 					Size:                 useCase.size,
 					OriginalInstanceName: useCase.originalInstanceName,
 				}

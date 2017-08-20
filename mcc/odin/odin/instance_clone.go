@@ -11,12 +11,12 @@ import (
 
 // CloneParams represents CreateDBInstance parameters for cloning.
 type CloneParams struct {
-	DBInstanceType      string
-	DBUser              string
-	DBPassword          string
-	DBSubnetGroupName   string
-	VpcSecurityGroupIds []string
-	Size                int64
+	InstanceType    string
+	User            string
+	Password        string
+	SubnetGroupName string
+	SecurityGroups  []string
+	Size            int64
 
 	OriginalInstanceName string
 }
@@ -30,15 +30,15 @@ func (params CloneParams) GetCreateDBInstanceInput(
 	return &rds.CreateDBInstanceInput{
 		AllocatedStorage:     &params.Size,
 		DBInstanceIdentifier: &identifier,
-		DBSubnetGroupName:    &params.DBSubnetGroupName,
-		DBInstanceClass:      &params.DBInstanceType,
+		DBSubnetGroupName:    &params.SubnetGroupName,
+		DBInstanceClass:      &params.InstanceType,
 		DBSecurityGroups: []*string{
 			aws.String("default"),
 		},
 		Engine:             aws.String("postgres"),
 		EngineVersion:      aws.String("9.4.11"),
-		MasterUsername:     &params.DBUser,
-		MasterUserPassword: &params.DBPassword,
+		MasterUsername:     &params.User,
+		MasterUserPassword: &params.Password,
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String("Name"),
@@ -54,13 +54,13 @@ func (params CloneParams) GetModifyDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
-	VpcSecurityGroupIds := []*string{}
-	for _, sgid := range params.VpcSecurityGroupIds {
-		VpcSecurityGroupIds = append(VpcSecurityGroupIds, aws.String(sgid))
+	SecurityGroups := []*string{}
+	for _, sgid := range params.SecurityGroups {
+		SecurityGroups = append(SecurityGroups, aws.String(sgid))
 	}
 	return &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: &identifier,
-		VpcSecurityGroupIds:  VpcSecurityGroupIds,
+		VpcSecurityGroupIds:  SecurityGroups,
 	}
 }
 
