@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/go-test/deep"
 
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
@@ -86,28 +85,7 @@ func TestGetRestoreDBInput(t *testing.T) {
 					test.identifier,
 					svc,
 				)
-				switch {
-				case err != nil && test.expectingError(err):
-					t.Errorf(
-						"Unexpected error: %v",
-						err,
-					)
-				case err == nil && test.expectedError != "":
-					t.Errorf(
-						"Expected error: %v missing",
-						test.expectedError,
-					)
-				case err == nil:
-					if diff := deep.Equal(
-						actual,
-						test.expected,
-					); diff != nil {
-						t.Errorf(
-							"Unexpected output: %s",
-							diff,
-						)
-					}
-				}
+				test.check(actual, err, t)
 			},
 		)
 	}
@@ -180,28 +158,7 @@ func TestRestoreInstance(t *testing.T) {
 					params,
 					svc,
 				)
-				switch {
-				case err != nil && test.expectingError(err):
-					t.Errorf(
-						"Unexpected error: %v",
-						err,
-					)
-				case err == nil && test.expectedError != "":
-					t.Errorf(
-						"Expected error: %v missing",
-						test.expectedError,
-					)
-				case err == nil:
-					if diff := deep.Equal(
-						actual,
-						test.expected,
-					); diff != nil {
-						t.Errorf(
-							"Unexpected output: %s",
-							diff,
-						)
-					}
-				}
+				test.check(actual, err, t)
 			},
 		)
 	}
