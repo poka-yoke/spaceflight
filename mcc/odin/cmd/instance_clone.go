@@ -10,6 +10,8 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
+var from string
+
 // instanceCloneCmd represents the instance clone command
 var instanceCloneCmd = &cobra.Command{
 	Use:   "clone [flags] identifier",

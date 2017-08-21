@@ -20,60 +20,14 @@ func Init() rdsiface.RDSAPI {
 	return rds.New(sess)
 }
 
-// CreateDBParams represents CreateDBInstance parameters.
-type CreateDBParams struct {
-	DBInstanceType      string
-	DBUser              string
-	DBPassword          string
-	DBSubnetGroupName   string
-	VpcSecurityGroupIds []string
-	Size                int64
-}
-
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
-// CreateDBParams and rds.DBSnapshot.
-func (params CreateDBParams) GetCreateDBInstanceInput(
+func applySnapshotParams(
 	identifier string,
+	in *rds.CreateDBInstanceInput,
 	svc rdsiface.RDSAPI,
-) *rds.CreateDBInstanceInput {
-	return &rds.CreateDBInstanceInput{
-		AllocatedStorage:     &params.Size,
-		DBInstanceIdentifier: &identifier,
-		DBSubnetGroupName:    &params.DBSubnetGroupName,
-		DBInstanceClass:      &params.DBInstanceType,
-		DBSecurityGroups: []*string{
-			aws.String("default"),
-		},
-		Engine:             aws.String("postgres"),
-		EngineVersion:      aws.String("9.4.11"),
-		MasterUsername:     &params.DBUser,
-		MasterUserPassword: &params.DBPassword,
-		Tags: []*rds.Tag{
-			{
-				Key:   aws.String("Name"),
-				Value: &identifier,
-			},
-		},
-	}
-}
-
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from provided
-// ModifyDBParams and rds.DBSnapshot.
-func (params CreateDBParams) GetModifyDBInstanceInput(
-	identifier string,
-	svc rdsiface.RDSAPI,
-) *rds.ModifyDBInstanceInput {
-	VpcSecurityGroupIds := []*string{}
-	for _, sgid := range params.VpcSecurityGroupIds {
-		VpcSecurityGroupIds = append(VpcSecurityGroupIds, aws.String(sgid))
-	}
-	return &rds.ModifyDBInstanceInput{
-		DBInstanceIdentifier: &identifier,
-		VpcSecurityGroupIds:  VpcSecurityGroupIds,
-	}
-}
-
-func applySnapshotParams(identifier string, in *rds.CreateDBInstanceInput, svc rdsiface.RDSAPI) (out *rds.CreateDBInstanceInput, err error) {
+) (
+	out *rds.CreateDBInstanceInput,
+	err error,
+) {
 	var snapshot *rds.DBSnapshot
 	out = in
 	snapshot, err = GetLastSnapshot(identifier, svc)
@@ -89,42 +43,17 @@ func applySnapshotParams(identifier string, in *rds.CreateDBInstanceInput, svc r
 	return
 }
 
-// CreateDBInstance creates a new RDS database instance. If a vpcid is
-// specified the security group will be in that VPC.
-func CreateDBInstance(
-	instanceName string,
-	params CreateDBParams,
-	svc rdsiface.RDSAPI,
-) (result string, err error) {
-	var instance *rds.DBInstance
-	instance, err = getInstanceCreate(instanceName, params, svc)
-	if err != nil {
-		return
-	}
-	var res *rds.DescribeDBInstancesOutput
-	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: instance.DBInstanceIdentifier,
-		})
-		if err != nil {
-			return
-		}
-		instance = res.DBInstances[0]
-		// This is to avoid AWS API rate throttling.
-		// Should use configurable exponential back-off
-		time.Sleep(Duration)
-	}
-	result = *instance.Endpoint.Address
-	err = modifyInstance(instanceName, params, svc)
-	return
-}
-
-// ModifiableParams is interface for params structs supporting DBInstance modification.
+// ModifiableParams is interface for params structs supporting
+// DBInstance modification.
 type ModifiableParams interface {
 	GetModifyDBInstanceInput(string, rdsiface.RDSAPI) *rds.ModifyDBInstanceInput
 }
 
-func modifyInstance(instanceName string, params ModifiableParams, svc rdsiface.RDSAPI) (err error) {
+func modifyInstance(
+	instanceName string,
+	params ModifiableParams,
+	svc rdsiface.RDSAPI,
+) (err error) {
 	rdsParams := params.GetModifyDBInstanceInput(
 		instanceName,
 		svc,
@@ -140,31 +69,15 @@ func modifyInstance(instanceName string, params ModifiableParams, svc rdsiface.R
 	return
 }
 
-func getInstanceCreate(instanceName string, params CreateDBParams, svc rdsiface.RDSAPI) (instance *rds.DBInstance, err error) {
-	rdsParams := params.GetCreateDBInstanceInput(
-		instanceName,
-		svc,
-	)
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
-		return
-	}
-	res, err := svc.CreateDBInstance(rdsParams)
-	if err != nil {
-		return
-	}
-	return res.DBInstance, nil
-}
-
 // GetLastSnapshot queries AWS looking for a Snapshot ID, depending on
 // an instance ID.
 func GetLastSnapshot(
 	identifier string,
 	svc rdsiface.RDSAPI,
-) (result *rds.DBSnapshot, err error) {
+) (
+	result *rds.DBSnapshot,
+	err error,
+) {
 	params := &rds.DescribeDBSnapshotsInput{
 		DBInstanceIdentifier: &identifier,
 	}

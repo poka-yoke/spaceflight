@@ -9,21 +9,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
-// CloneParams represents CreateDBInstance parameters for cloning.
-type CloneParams struct {
+// CreateParams represents CreateInstance parameters.
+type CreateParams struct {
 	InstanceType    string
 	User            string
 	Password        string
 	SubnetGroupName string
 	SecurityGroups  []string
 	Size            int64
-
-	OriginalInstanceName string
 }
 
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput
-// from provided CreateDBParams and rds.DBSnapshot.
-func (params CloneParams) GetCreateDBInstanceInput(
+// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from
+// provided CreateParams and rds.DBSnapshot.
+func (params CreateParams) GetCreateDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.CreateDBInstanceInput {
@@ -48,9 +46,9 @@ func (params CloneParams) GetCreateDBInstanceInput(
 	}
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput
-// from provided ModifyDBParams and rds.DBSnapshot.
-func (params CloneParams) GetModifyDBInstanceInput(
+// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from
+// provided ModifyDBParams and rds.DBSnapshot.
+func (params CreateParams) GetModifyDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
@@ -64,22 +62,15 @@ func (params CloneParams) GetModifyDBInstanceInput(
 	}
 }
 
-// CloneInstance creates a new RDS database instance, copying parameters
-// from a snapshot. If a vpcid is specified the security group will be
-// in that VPC.
-func CloneInstance(
+// CreateInstance creates a new RDS database instance. If a vpcid is
+// specified the security group will be in that VPC.
+func CreateInstance(
 	instanceName string,
-	params CloneParams,
+	params CreateParams,
 	svc rdsiface.RDSAPI,
-) (
-	result string,
-	err error,
-) {
+) (result string, err error) {
 	var instance *rds.DBInstance
-	if params.OriginalInstanceName == "" {
-		return "", fmt.Errorf("Original instance name not provided")
-	}
-	instance, err = doClone(instanceName, params, svc)
+	instance, err = doCreate(instanceName, params, svc)
 	if err != nil {
 		return
 	}
@@ -103,9 +94,9 @@ func CloneInstance(
 	return
 }
 
-func doClone(
+func doCreate(
 	instanceName string,
-	params CloneParams,
+	params CreateParams,
 	svc rdsiface.RDSAPI,
 ) (
 	instance *rds.DBInstance,
@@ -115,14 +106,6 @@ func doClone(
 		instanceName,
 		svc,
 	)
-	rdsParams, err = applySnapshotParams(
-		params.OriginalInstanceName,
-		rdsParams,
-		svc,
-	)
-	if err != nil {
-		return
-	}
 	if err = rdsParams.Validate(); err != nil {
 		err = fmt.Errorf(
 			"DB instance parameters failed to validate: %s",
