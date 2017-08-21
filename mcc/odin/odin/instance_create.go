@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
-// CreateParams represents CreateDBInstance parameters.
+// CreateParams represents CreateInstance parameters.
 type CreateParams struct {
 	InstanceType    string
 	User            string
@@ -19,8 +19,8 @@ type CreateParams struct {
 	Size            int64
 }
 
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
-// CreateParams and rds.DBSnapshot.
+// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from
+// provided CreateParams and rds.DBSnapshot.
 func (params CreateParams) GetCreateDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
@@ -46,8 +46,8 @@ func (params CreateParams) GetCreateDBInstanceInput(
 	}
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from provided
-// ModifyDBParams and rds.DBSnapshot.
+// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from
+// provided ModifyDBParams and rds.DBSnapshot.
 func (params CreateParams) GetModifyDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
@@ -76,9 +76,11 @@ func CreateInstance(
 	}
 	var res *rds.DescribeDBInstancesOutput
 	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: instance.DBInstanceIdentifier,
-		})
+		res, err = svc.DescribeDBInstances(
+			&rds.DescribeDBInstancesInput{
+				DBInstanceIdentifier: instance.DBInstanceIdentifier,
+			},
+		)
 		if err != nil {
 			return
 		}
@@ -92,7 +94,14 @@ func CreateInstance(
 	return
 }
 
-func doCreate(instanceName string, params CreateParams, svc rdsiface.RDSAPI) (instance *rds.DBInstance, err error) {
+func doCreate(
+	instanceName string,
+	params CreateParams,
+	svc rdsiface.RDSAPI,
+) (
+	instance *rds.DBInstance,
+	err error,
+) {
 	rdsParams := params.GetCreateDBInstanceInput(
 		instanceName,
 		svc,

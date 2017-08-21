@@ -49,8 +49,8 @@ func (p RestoreParams) GetRestoreDBInstanceFromDBSnapshotInput(
 	return
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from provided
-// ModifyDBParams and rds.DBSnapshot.
+// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput
+// from provided ModifyDBParams and rds.DBSnapshot.
 func (p RestoreParams) GetModifyDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
@@ -65,7 +65,8 @@ func (p RestoreParams) GetModifyDBInstanceInput(
 	}
 }
 
-// RestoreInstance creates a new RDS database instance restoring from a snapshot.
+// RestoreInstance creates a new RDS database instance restoring
+// from a snapshot.
 func RestoreInstance(
 	instanceName string,
 	params RestoreParams,
@@ -78,9 +79,11 @@ func RestoreInstance(
 	}
 	var res *rds.DescribeDBInstancesOutput
 	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: instance.DBInstanceIdentifier,
-		})
+		res, err = svc.DescribeDBInstances(
+			&rds.DescribeDBInstancesInput{
+				DBInstanceIdentifier: instance.DBInstanceIdentifier,
+			},
+		)
 		if err != nil {
 			return
 		}
