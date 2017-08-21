@@ -25,6 +25,7 @@ Finally, here you can find a relation of tools:
 | [trek](mcc/trek) | MCC | Redirection management tool |
 | [fido](mcc/fido) | MCC | Configuration management tool |
 | [surgeon](mcc/surgeon) | MCC | (WIP) Service Diagnosing tool |
+| [odin](mcc/odin) | MCC | (WIP) Databases management tool |
 | [es](orbiter/es) | Orbiter | (WIP) ElasticSearch automatic tuning Lambda |
 
 ## Collaborations
