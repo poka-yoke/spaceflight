@@ -5,94 +5,101 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/go-test/deep"
 
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
 type cloneInstanceCase struct {
-	name                 string
-	identifier           string
-	instanceType         string
-	masterUserPassword   string
-	masterUser           string
-	size                 int64
-	originalInstanceName string
-	endpoint             string
-	expectedError        string
-	snapshot             *rds.DBSnapshot
+	name          string
+	identifier    string
+	instanceType  string
+	password      string
+	user          string
+	size          int64
+	from          string
+	expected      string
+	expectedError string
+	snapshot      *rds.DBSnapshot
+}
+
+func (t *cloneInstanceCase) expectingError(err error) bool {
+	return t.expectedError != "" && err.Error() != t.expectedError
 }
 
 var cloneInstanceCases = []cloneInstanceCase{
 	// Uses snapshot to copy from
 	{
-		name:                 "Uses snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "production",
-		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError:        "",
-		snapshot:             exampleSnapshot1,
+		name:          "Uses snapshot to copy from",
+		identifier:    "test1",
+		instanceType:  "db.m1.small",
+		user:          "master",
+		password:      "master",
+		size:          6144,
+		from:          "production",
+		expected:      "test1.0.us-east-1.rds.amazonaws.com",
+		expectedError: "",
+		snapshot:      exampleSnapshot1,
 	},
 	// Uses non existing snapshot to copy from
 	{
-		name:                 "Uses non existing snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "develop",
-		endpoint:             "",
-		expectedError:        "Couldn't find snapshot for develop instance",
-		snapshot:             exampleSnapshot1,
+		name:          "Uses non existing snapshot to copy from",
+		identifier:    "test1",
+		instanceType:  "db.m1.small",
+		user:          "master",
+		password:      "master",
+		size:          6144,
+		from:          "develop",
+		expected:      "",
+		expectedError: "Couldn't find snapshot for develop instance",
+		snapshot:      exampleSnapshot1,
 	},
 }
 
 func TestCloneInstance(t *testing.T) {
 	svc := newMockRDSClient()
 	odin.Duration = time.Duration(0)
-	for _, useCase := range cloneInstanceCases {
+	for _, test := range cloneInstanceCases {
 		t.Run(
-			useCase.name,
+			test.name,
 			func(t *testing.T) {
-				if useCase.originalInstanceName != "" {
-					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{
-						useCase.snapshot,
-					}
+				if test.from != "" {
+					snapshot := test.snapshot
+					id := test.snapshot.DBInstanceIdentifier
+					snapshots := []*rds.DBSnapshot{snapshot}
+					svc.dbSnapshots[*id] = snapshots
 				}
 				params := odin.CloneParams{
-					InstanceType:         useCase.instanceType,
-					User:                 useCase.masterUser,
-					Password:             useCase.masterUserPassword,
-					Size:                 useCase.size,
-					OriginalInstanceName: useCase.originalInstanceName,
+					InstanceType:         test.instanceType,
+					User:                 test.user,
+					Password:             test.password,
+					Size:                 test.size,
+					OriginalInstanceName: test.from,
 				}
-				endpoint, err := odin.CloneInstance(
-					useCase.identifier,
+				actual, err := odin.CloneInstance(
+					test.identifier,
 					params,
 					svc,
 				)
-				if err != nil {
-					if err.Error() != useCase.expectedError {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-				} else if useCase.expectedError != "" {
+				switch {
+				case err != nil && test.expectingError(err):
 					t.Errorf(
-						"Expected error %s didn't happened",
-						useCase.expectedError,
+						"Unexpected error: %v",
+						err,
 					)
-				} else {
-					if endpoint != useCase.endpoint {
+				case err == nil && test.expectedError != "":
+					t.Errorf(
+						"Expected error: %v missing",
+						test.expectedError,
+					)
+				case err == nil:
+					if diff := deep.Equal(
+						actual,
+						test.expected,
+					); diff != nil {
 						t.Errorf(
-							"Unexpected output: %s should be %s",
-							endpoint,
-							useCase.endpoint,
+							"Unexpected output: %s",
+							diff,
 						)
 					}
 				}
