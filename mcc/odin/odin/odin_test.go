@@ -234,33 +234,32 @@ var exampleSnapshot1 = &rds.DBSnapshot{
 }
 
 type getLastSnapshotCase struct {
-	name          string
-	identifier    string
-	snapshots     []*rds.DBSnapshot
-	expected      *rds.DBSnapshot
-	expectedError string
-}
-
-func (t *getLastSnapshotCase) expectingError(err error) bool {
-	return t.expectedError != "" && err.Error() == t.expectedError
+	testCase
+	name       string
+	identifier string
+	snapshots  []*rds.DBSnapshot
 }
 
 var getLastSnapshotCases = []getLastSnapshotCase{
 	{
+		testCase: testCase{
+			expected:      exampleSnapshot1,
+			expectedError: "",
+		},
 		name:       "Get snapshot id by instance id",
 		identifier: "production",
 		snapshots: []*rds.DBSnapshot{
 			exampleSnapshot1,
 		},
-		expected:      exampleSnapshot1,
-		expectedError: "",
 	},
 	{
-		name:          "Get non-existant snapshot id by instance id",
-		identifier:    "production",
-		snapshots:     []*rds.DBSnapshot{},
-		expected:      nil,
-		expectedError: "There are no Snapshots for production",
+		testCase: testCase{
+			expected:      nil,
+			expectedError: "There are no Snapshots for production",
+		},
+		name:       "Get non-existant snapshot id by instance id",
+		identifier: "production",
+		snapshots:  []*rds.DBSnapshot{},
 	},
 }
 
@@ -276,28 +275,7 @@ func TestGetLastSnapshot(t *testing.T) {
 					id,
 					svc,
 				)
-				switch {
-				case err != nil && !test.expectingError(err):
-					t.Errorf(
-						"Unexpected error: %v",
-						err,
-					)
-				case err == nil && test.expectedError != "":
-					t.Errorf(
-						"Expected error: %v missing",
-						test.expectedError,
-					)
-				case err == nil:
-					if diff := deep.Equal(
-						actual,
-						test.expected,
-					); diff != nil {
-						t.Errorf(
-							"Unexpected output: %s",
-							diff,
-						)
-					}
-				}
+				test.check(actual, err, t)
 			},
 		)
 	}
