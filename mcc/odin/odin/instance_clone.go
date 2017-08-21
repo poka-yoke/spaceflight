@@ -10,41 +10,9 @@ import (
 
 // CloneParams represents CreateDBInstance parameters for cloning.
 type CloneParams struct {
-	InstanceType    string
-	User            string
-	Password        string
-	SubnetGroupName string
-	SecurityGroups  []string
-	Size            int64
+	CreateParams
 
 	OriginalInstanceName string
-}
-
-// GetCreateDBInput method creates a new CreateDBInstanceInput
-// from provided CreateDBParams and rds.DBSnapshot.
-func (params CloneParams) GetCreateDBInput(
-	identifier string,
-	svc rdsiface.RDSAPI,
-) *rds.CreateDBInstanceInput {
-	return &rds.CreateDBInstanceInput{
-		AllocatedStorage:     &params.Size,
-		DBInstanceIdentifier: &identifier,
-		DBSubnetGroupName:    &params.SubnetGroupName,
-		DBInstanceClass:      &params.InstanceType,
-		DBSecurityGroups: []*string{
-			aws.String("default"),
-		},
-		Engine:             aws.String("postgres"),
-		EngineVersion:      aws.String("9.4.11"),
-		MasterUsername:     &params.User,
-		MasterUserPassword: &params.Password,
-		Tags: []*rds.Tag{
-			{
-				Key:   aws.String("Name"),
-				Value: &identifier,
-			},
-		},
-	}
 }
 
 // GetModifyDBInput method creates a new ModifyDBInstanceInput
