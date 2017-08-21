@@ -20,7 +20,14 @@ func Init() rdsiface.RDSAPI {
 	return rds.New(sess)
 }
 
-func applySnapshotParams(identifier string, in *rds.CreateDBInstanceInput, svc rdsiface.RDSAPI) (out *rds.CreateDBInstanceInput, err error) {
+func applySnapshotParams(
+	identifier string,
+	in *rds.CreateDBInstanceInput,
+	svc rdsiface.RDSAPI,
+) (
+	out *rds.CreateDBInstanceInput,
+	err error,
+) {
 	var snapshot *rds.DBSnapshot
 	out = in
 	snapshot, err = GetLastSnapshot(identifier, svc)
@@ -36,12 +43,17 @@ func applySnapshotParams(identifier string, in *rds.CreateDBInstanceInput, svc r
 	return
 }
 
-// ModifiableParams is interface for params structs supporting DBInstance modification.
+// ModifiableParams is interface for params structs supporting
+// DBInstance modification.
 type ModifiableParams interface {
 	GetModifyDBInstanceInput(string, rdsiface.RDSAPI) *rds.ModifyDBInstanceInput
 }
 
-func modifyInstance(instanceName string, params ModifiableParams, svc rdsiface.RDSAPI) (err error) {
+func modifyInstance(
+	instanceName string,
+	params ModifiableParams,
+	svc rdsiface.RDSAPI,
+) (err error) {
 	rdsParams := params.GetModifyDBInstanceInput(
 		instanceName,
 		svc,
@@ -62,7 +74,10 @@ func modifyInstance(instanceName string, params ModifiableParams, svc rdsiface.R
 func GetLastSnapshot(
 	identifier string,
 	svc rdsiface.RDSAPI,
-) (result *rds.DBSnapshot, err error) {
+) (
+	result *rds.DBSnapshot,
+	err error,
+) {
 	params := &rds.DescribeDBSnapshotsInput{
 		DBInstanceIdentifier: &identifier,
 	}

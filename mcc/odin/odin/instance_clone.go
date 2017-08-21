@@ -21,8 +21,8 @@ type CloneParams struct {
 	OriginalInstanceName string
 }
 
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
-// CreateDBParams and rds.DBSnapshot.
+// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput
+// from provided CreateDBParams and rds.DBSnapshot.
 func (params CloneParams) GetCreateDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
@@ -48,8 +48,8 @@ func (params CloneParams) GetCreateDBInstanceInput(
 	}
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from provided
-// ModifyDBParams and rds.DBSnapshot.
+// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput
+// from provided ModifyDBParams and rds.DBSnapshot.
 func (params CloneParams) GetModifyDBInstanceInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
@@ -85,9 +85,11 @@ func CloneInstance(
 	}
 	var res *rds.DescribeDBInstancesOutput
 	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(&rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: instance.DBInstanceIdentifier,
-		})
+		res, err = svc.DescribeDBInstances(
+			&rds.DescribeDBInstancesInput{
+				DBInstanceIdentifier: instance.DBInstanceIdentifier,
+			},
+		)
 		if err != nil {
 			return
 		}
@@ -113,7 +115,11 @@ func doClone(
 		instanceName,
 		svc,
 	)
-	rdsParams, err = applySnapshotParams(params.OriginalInstanceName, rdsParams, svc)
+	rdsParams, err = applySnapshotParams(
+		params.OriginalInstanceName,
+		rdsParams,
+		svc,
+	)
 	if err != nil {
 		return
 	}
