@@ -28,8 +28,6 @@ type CreateDBParams struct {
 	DBSubnetGroupName   string
 	VpcSecurityGroupIds []string
 	Size                int64
-
-	OriginalInstanceName string
 }
 
 // GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from provided
@@ -99,16 +97,9 @@ func CreateDBInstance(
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
 	var instance *rds.DBInstance
-	if params.OriginalInstanceName == "" {
-		instance, err = getInstanceCreate(instanceName, params, svc)
-		if err != nil {
-			return
-		}
-	} else {
-		instance, err = getInstanceClone(instanceName, params, svc)
-		if err != nil {
-			return
-		}
+	instance, err = getInstanceCreate(instanceName, params, svc)
+	if err != nil {
+		return
 	}
 	var res *rds.DescribeDBInstancesOutput
 	for *instance.DBInstanceStatus != "available" {
@@ -154,29 +145,6 @@ func getInstanceCreate(instanceName string, params CreateDBParams, svc rdsiface.
 		instanceName,
 		svc,
 	)
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
-		return
-	}
-	res, err := svc.CreateDBInstance(rdsParams)
-	if err != nil {
-		return
-	}
-	return res.DBInstance, nil
-}
-
-func getInstanceClone(instanceName string, params CreateDBParams, svc rdsiface.RDSAPI) (instance *rds.DBInstance, err error) {
-	rdsParams := params.GetCreateDBInstanceInput(
-		instanceName,
-		svc,
-	)
-	rdsParams, err = applySnapshotParams(params.OriginalInstanceName, rdsParams, svc)
-	if err != nil {
-		return
-	}
 	if err = rdsParams.Validate(); err != nil {
 		err = fmt.Errorf(
 			"DB instance parameters failed to validate: %s",

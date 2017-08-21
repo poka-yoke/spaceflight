@@ -10,34 +10,26 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
-var instanceType, password, user, from, subnetName, securityGroups string
-var size int64
-
-// createCmd represents the create command
-var createCmd = &cobra.Command{
-	Use:   "create [flags] identifier",
-	Short: "Creates a database",
-	Long:  `Creates a database, into RDS.`,
+// instanceCloneCmd represents the instance clone command
+var instanceCloneCmd = &cobra.Command{
+	Use:   "clone [flags] identifier",
+	Short: "Clones a database using params from a Snapshot",
+	Long:  `Clones a database using params from a Snapshot, in RDS.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			log.Fatal("You must specify the instance identifier for the new instance")
 		}
-		if user == "" {
-			log.Fatal("User should be provided and not be blank")
-		}
-		if password == "" {
-			log.Fatal("Password should be provided and not be blank")
-		}
 		svc := odin.Init()
-		params := odin.CreateDBParams{
-			DBInstanceType:      instanceType,
-			DBUser:              user,
-			DBPassword:          password,
-			DBSubnetGroupName:   subnetName,
-			VpcSecurityGroupIds: strings.Split(securityGroups, ","),
-			Size:                size,
+		params := odin.CloneParams{
+			InstanceType:         instanceType,
+			User:                 user,
+			Password:             password,
+			SubnetGroupName:      subnetName,
+			SecurityGroups:       strings.Split(securityGroups, ","),
+			Size:                 size,
+			OriginalInstanceName: from,
 		}
-		endpoint, err := odin.CreateDBInstance(
+		endpoint, err := odin.CloneInstance(
 			args[0],
 			params,
 			svc,
@@ -50,49 +42,56 @@ var createCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(createCmd)
+	InstanceCmd.AddCommand(instanceCloneCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
-	createCmd.PersistentFlags().StringVarP(
+	instanceCloneCmd.PersistentFlags().StringVarP(
 		&instanceType,
 		"instance-type",
 		"t",
 		"db.m1.small",
 		"Instance type to use when creating DB Instance",
 	)
-	createCmd.PersistentFlags().StringVarP(
+	instanceCloneCmd.PersistentFlags().StringVarP(
 		&user,
 		"user",
 		"u",
 		"",
 		"User to use when creating DB Instance",
 	)
-	createCmd.PersistentFlags().StringVarP(
+	instanceCloneCmd.PersistentFlags().StringVarP(
 		&password,
 		"password",
 		"p",
 		"",
 		"Password to use when creating DB Instance",
 	)
-	createCmd.PersistentFlags().Int64VarP(
+	instanceCloneCmd.PersistentFlags().Int64VarP(
 		&size,
 		"size",
 		"s",
 		5,
 		"Size to use when creating DB Instance",
 	)
-	createCmd.PersistentFlags().StringVarP(
+	instanceCloneCmd.PersistentFlags().StringVarP(
+		&from,
+		"from",
+		"f",
+		"",
+		"RDS Instance to look for snapshot",
+	)
+	instanceCloneCmd.PersistentFlags().StringVarP(
 		&subnetName,
 		"subnet",
 		"n",
 		"",
 		"DB Subnet Name to attach to (effectively VPC)",
 	)
-	createCmd.PersistentFlags().StringVarP(
+	instanceCloneCmd.PersistentFlags().StringVarP(
 		&securityGroups,
 		"securityGroups",
 		"g",

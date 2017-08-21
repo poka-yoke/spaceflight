@@ -193,16 +193,14 @@ var exampleSnapshot1 = &rds.DBSnapshot{
 }
 
 type createDBInstanceCase struct {
-	name                 string
-	identifier           string
-	instanceType         string
-	masterUserPassword   string
-	masterUser           string
-	size                 int64
-	originalInstanceName string
-	endpoint             string
-	expectedError        string
-	snapshot             *rds.DBSnapshot
+	name               string
+	identifier         string
+	instanceType       string
+	masterUserPassword string
+	masterUser         string
+	size               int64
+	endpoint           string
+	expectedError      string
 }
 
 var createDBInstanceCases = []createDBInstanceCase{
@@ -216,7 +214,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "test1.0.us-east-1.rds.amazonaws.com",
 		expectedError:      "",
-		snapshot:           nil,
 	},
 	// Fail because empty user
 	{
@@ -228,7 +225,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User",
-		snapshot:           nil,
 	},
 	// Fail because empty password
 	{
@@ -240,7 +236,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               5,
 		endpoint:           "",
 		expectedError:      "Specify Master User Password",
-		snapshot:           nil,
 	},
 	// Fail because non-present size
 	{
@@ -251,7 +246,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		masterUserPassword: "master",
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
-		snapshot:           nil,
 	},
 	// Fail because too small size
 	{
@@ -262,7 +256,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		masterUserPassword: "master",
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
-		snapshot:           nil,
 	},
 	// Fail because too big size
 	{
@@ -274,33 +267,6 @@ var createDBInstanceCases = []createDBInstanceCase{
 		size:               6145,
 		endpoint:           "",
 		expectedError:      "Specify size between 5 and 6144",
-		snapshot:           nil,
-	},
-	// Uses snapshot to copy from
-	{
-		name:                 "Uses snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "production",
-		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError:        "",
-		snapshot:             exampleSnapshot1,
-	},
-	// Uses non existing snapshot to copy from
-	{
-		name:                 "Uses non existing snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "develop",
-		endpoint:             "",
-		expectedError:        "Couldn't find snapshot for develop instance",
-		snapshot:             exampleSnapshot1,
 	},
 }
 
@@ -311,17 +277,11 @@ func TestCreateDB(t *testing.T) {
 		t.Run(
 			useCase.name,
 			func(t *testing.T) {
-				if useCase.originalInstanceName != "" {
-					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{
-						useCase.snapshot,
-					}
-				}
 				params := odin.CreateDBParams{
-					DBInstanceType:       useCase.instanceType,
-					DBUser:               useCase.masterUser,
-					DBPassword:           useCase.masterUserPassword,
-					Size:                 useCase.size,
-					OriginalInstanceName: useCase.originalInstanceName,
+					DBInstanceType: useCase.instanceType,
+					DBUser:         useCase.masterUser,
+					DBPassword:     useCase.masterUserPassword,
+					Size:           useCase.size,
 				}
 				endpoint, err := odin.CreateDBInstance(
 					useCase.identifier,
