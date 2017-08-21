@@ -17,10 +17,10 @@ type RestoreParams struct {
 	OriginalInstanceName string
 }
 
-// GetRestoreDBInstanceFromDBSnapshotInput method creates a new
+// GetRestoreDBInput method creates a new
 // RestoreDBInstanceFromDBSnapshotInput from provided CreateDBParams and
 // rds.DBSnapshot.
-func (p RestoreParams) GetRestoreDBInstanceFromDBSnapshotInput(
+func (p RestoreParams) GetRestoreDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) (
@@ -34,7 +34,7 @@ func (p RestoreParams) GetRestoreDBInstanceFromDBSnapshotInput(
 	snapshot, err := GetLastSnapshot(p.OriginalInstanceName, svc)
 	if err != nil {
 		err = fmt.Errorf(
-			"Couldn't find snapshot for %s instance",
+			"No snapshot found for %s instance",
 			p.OriginalInstanceName,
 		)
 		return
@@ -79,9 +79,10 @@ func RestoreInstance(
 	}
 	var res *rds.DescribeDBInstancesOutput
 	for *instance.DBInstanceStatus != "available" {
+		id := instance.DBInstanceIdentifier
 		res, err = svc.DescribeDBInstances(
 			&rds.DescribeDBInstancesInput{
-				DBInstanceIdentifier: instance.DBInstanceIdentifier,
+				DBInstanceIdentifier: id,
 			},
 		)
 		if err != nil {
@@ -106,7 +107,7 @@ func doRestore(
 	err error,
 ) {
 	var res *rds.RestoreDBInstanceFromDBSnapshotOutput
-	rdsParams, err := params.GetRestoreDBInstanceFromDBSnapshotInput(
+	rdsParams, err := params.GetRestoreDBInput(
 		instanceName,
 		svc,
 	)

@@ -11,29 +11,33 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
-type getRestoreDBInstanceFromDBSnapshotInputCase struct {
-	name                         string
-	identifier                   string
-	restoreParams                odin.RestoreParams
-	snapshot                     *rds.DBSnapshot
-	expectedRestoreSnapshotInput *rds.RestoreDBInstanceFromDBSnapshotInput
-	expectedError                string
+type getRestoreDBInputCase struct {
+	name          string
+	identifier    string
+	params        odin.RestoreParams
+	snapshot      *rds.DBSnapshot
+	expected      *rds.RestoreDBInstanceFromDBSnapshotInput
+	expectedError string
 }
 
-var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBSnapshotInputCase{
+func (t *getRestoreDBInputCase) expectingError(err error) bool {
+	return t.expectedError != "" && err.Error() != t.expectedError
+}
+
+var getRestoreDBInputCases = []getRestoreDBInputCase{
 	// Params with Snapshot
 	{
 		name:       "Params with Snapshot",
 		identifier: "production-rds",
-		restoreParams: odin.RestoreParams{
+		params: odin.RestoreParams{
 			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "production",
 		},
 		snapshot: exampleSnapshot1,
-		expectedRestoreSnapshotInput: &rds.RestoreDBInstanceFromDBSnapshotInput{
+		expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
 			DBInstanceClass:      aws.String("db.m1.medium"),
 			DBInstanceIdentifier: aws.String("production-rds"),
-			DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+			DBSnapshotIdentifier: exampleSnapshot1Id,
 			DBSubnetGroupName:    aws.String(""),
 			Engine:               aws.String("postgres"),
 		},
@@ -43,57 +47,63 @@ var getRestoreDBInstanceFromDBSnapshotInputCases = []getRestoreDBInstanceFromDBS
 	{
 		name:       "Params with Snapshot without OriginalInstanceName",
 		identifier: "production-rds",
-		restoreParams: odin.RestoreParams{
+		params: odin.RestoreParams{
 			InstanceType: "db.m1.medium",
 		},
-		snapshot:                     exampleSnapshot1,
-		expectedRestoreSnapshotInput: nil,
-		expectedError:                "Original Instance Name was empty",
+		snapshot:      exampleSnapshot1,
+		expected:      nil,
+		expectedError: "Original Instance Name was empty",
 	},
 	// Params with non existing Snapshot
 	{
 		name:       "Params with non existing Snapshot",
 		identifier: "production-rds",
-		restoreParams: odin.RestoreParams{
+		params: odin.RestoreParams{
 			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "develop",
 		},
-		snapshot:                     exampleSnapshot1,
-		expectedRestoreSnapshotInput: nil,
-		expectedError:                "Couldn't find snapshot for develop instance",
+		snapshot:      exampleSnapshot1,
+		expected:      nil,
+		expectedError: "No snapshot found for develop instance",
 	},
 }
 
-func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
+func TestGetRestoreDBInput(t *testing.T) {
 	svc := newMockRDSClient()
-	for _, useCase := range getRestoreDBInstanceFromDBSnapshotInputCases {
+	for _, test := range getRestoreDBInputCases {
 		t.Run(
-			useCase.name,
+			test.name,
 			func(t *testing.T) {
-				if useCase.snapshot != nil {
-					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{useCase.snapshot}
+				if test.snapshot != nil {
+					snapshot := test.snapshot
+					id := *snapshot.DBInstanceIdentifier
+					snapshots := []*rds.DBSnapshot{snapshot}
+					svc.dbSnapshots[id] = snapshots
 				}
-				restoreSnapshotInput, err := useCase.restoreParams.GetRestoreDBInstanceFromDBSnapshotInput(
-					useCase.identifier,
+				params := test.params
+				actual, err := params.GetRestoreDBInput(
+					test.identifier,
 					svc,
 				)
-				if err != nil {
-					if useCase.expectedError == "" ||
-						err.Error() != useCase.expectedError {
-						t.Errorf(
-							"Unexpected error happened: %v",
-							err,
-						)
-					}
-				} else {
+				switch {
+				case err != nil && test.expectingError(err):
+					t.Errorf(
+						"Unexpected error: %v",
+						err,
+					)
+				case err == nil && test.expectedError != "":
+					t.Errorf(
+						"Expected error: %v missing",
+						test.expectedError,
+					)
+				case err == nil:
 					if diff := deep.Equal(
-						restoreSnapshotInput,
-						useCase.expectedRestoreSnapshotInput,
+						actual,
+						test.expected,
 					); diff != nil {
 						t.Errorf(
-							"Unexpected output: %s should be %s",
-							restoreSnapshotInput,
-							useCase.expectedRestoreSnapshotInput,
+							"Unexpected output: %s",
+							diff,
 						)
 					}
 				}
@@ -103,86 +113,92 @@ func TestGetRestoreDBInstanceFromDBSnapshotInput(t *testing.T) {
 }
 
 type restoreInstanceCase struct {
-	name                 string
-	identifier           string
-	instanceType         string
-	masterUserPassword   string
-	masterUser           string
-	size                 int64
-	originalInstanceName string
-	endpoint             string
-	expectedError        string
-	snapshot             *rds.DBSnapshot
+	name          string
+	identifier    string
+	instanceType  string
+	password      string
+	user          string
+	size          int64
+	from          string
+	expected      string
+	expectedError string
+	snapshot      *rds.DBSnapshot
+}
+
+func (t *restoreInstanceCase) expectingError(err error) bool {
+	return t.expectedError != "" && err.Error() != t.expectedError
 }
 
 var restoreInstanceCases = []restoreInstanceCase{
 	// Uses snapshot to restore from
 	{
-		name:                 "Uses snapshot to restore from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "production",
-		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError:        "",
-		snapshot:             exampleSnapshot1,
+		name:          "Uses snapshot to restore from",
+		identifier:    "test1",
+		instanceType:  "db.m1.small",
+		user:          "master",
+		password:      "master",
+		size:          6144,
+		from:          "production",
+		expected:      "test1.0.us-east-1.rds.amazonaws.com",
+		expectedError: "",
+		snapshot:      exampleSnapshot1,
 	},
 	// Uses non existing snapshot to restore from
 	{
-		name:                 "Uses non existing snapshot to restore from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "develop",
-		endpoint:             "",
-		expectedError:        "Couldn't find snapshot for develop instance",
-		snapshot:             exampleSnapshot1,
+		name:          "Uses non existing snapshot to restore from",
+		identifier:    "test1",
+		instanceType:  "db.m1.small",
+		user:          "master",
+		password:      "master",
+		size:          6144,
+		from:          "develop",
+		expected:      "",
+		expectedError: "No snapshot found for develop instance",
+		snapshot:      exampleSnapshot1,
 	},
 }
 
 func TestRestoreInstance(t *testing.T) {
 	svc := newMockRDSClient()
 	odin.Duration = time.Duration(0)
-	for _, useCase := range restoreInstanceCases {
+	for _, test := range restoreInstanceCases {
 		t.Run(
-			useCase.name,
+			test.name,
 			func(t *testing.T) {
-				if useCase.originalInstanceName != "" {
-					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{
-						useCase.snapshot,
-					}
+				if test.from != "" {
+					snapshot := test.snapshot
+					id := *snapshot.DBInstanceIdentifier
+					snapshots := []*rds.DBSnapshot{snapshot}
+					svc.dbSnapshots[id] = snapshots
 				}
 				params := odin.RestoreParams{
-					InstanceType:         useCase.instanceType,
-					OriginalInstanceName: useCase.originalInstanceName,
+					InstanceType:         test.instanceType,
+					OriginalInstanceName: test.from,
 				}
-				endpoint, err := odin.RestoreInstance(
-					useCase.identifier,
+				actual, err := odin.RestoreInstance(
+					test.identifier,
 					params,
 					svc,
 				)
-				if err != nil {
-					if err.Error() != useCase.expectedError {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-				} else if useCase.expectedError != "" {
+				switch {
+				case err != nil && test.expectingError(err):
 					t.Errorf(
-						"Expected error %s didn't happened",
-						useCase.expectedError,
+						"Unexpected error: %v",
+						err,
 					)
-				} else {
-					if endpoint != useCase.endpoint {
+				case err == nil && test.expectedError != "":
+					t.Errorf(
+						"Expected error: %v missing",
+						test.expectedError,
+					)
+				case err == nil:
+					if diff := deep.Equal(
+						actual,
+						test.expected,
+					); diff != nil {
 						t.Errorf(
-							"Unexpected output: %s should be %s",
-							endpoint,
-							useCase.endpoint,
+							"Unexpected output: %s",
+							diff,
 						)
 					}
 				}
