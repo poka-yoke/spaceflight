@@ -2,7 +2,6 @@ package odin
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -21,9 +20,9 @@ type CloneParams struct {
 	OriginalInstanceName string
 }
 
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput
+// GetCreateDBInput method creates a new CreateDBInstanceInput
 // from provided CreateDBParams and rds.DBSnapshot.
-func (params CloneParams) GetCreateDBInstanceInput(
+func (params CloneParams) GetCreateDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.CreateDBInstanceInput {
@@ -48,9 +47,9 @@ func (params CloneParams) GetCreateDBInstanceInput(
 	}
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput
+// GetModifyDBInput method creates a new ModifyDBInstanceInput
 // from provided ModifyDBParams and rds.DBSnapshot.
-func (params CloneParams) GetModifyDBInstanceInput(
+func (params CloneParams) GetModifyDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
@@ -83,20 +82,9 @@ func CloneInstance(
 	if err != nil {
 		return
 	}
-	var res *rds.DescribeDBInstancesOutput
-	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(
-			&rds.DescribeDBInstancesInput{
-				DBInstanceIdentifier: instance.DBInstanceIdentifier,
-			},
-		)
-		if err != nil {
-			return
-		}
-		instance = res.DBInstances[0]
-		// This is to avoid AWS API rate throttling.
-		// Should use configurable exponential back-off
-		time.Sleep(Duration)
+	err = WaitForInstance(instance, svc)
+	if err != nil {
+		return
 	}
 	result = *instance.Endpoint.Address
 	err = modifyInstance(instanceName, params, svc)
@@ -111,7 +99,7 @@ func doClone(
 	instance *rds.DBInstance,
 	err error,
 ) {
-	rdsParams := params.GetCreateDBInstanceInput(
+	rdsParams := params.GetCreateDBInput(
 		instanceName,
 		svc,
 	)
