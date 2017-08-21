@@ -20,29 +20,6 @@ func Init() rdsiface.RDSAPI {
 	return rds.New(sess)
 }
 
-func applySnapshotParams(
-	identifier string,
-	in *rds.CreateDBInstanceInput,
-	svc rdsiface.RDSAPI,
-) (
-	out *rds.CreateDBInstanceInput,
-	err error,
-) {
-	var snapshot *rds.DBSnapshot
-	out = in
-	snapshot, err = GetLastSnapshot(identifier, svc)
-	if err != nil {
-		err = fmt.Errorf(
-			"Couldn't find snapshot for %s instance",
-			identifier,
-		)
-		return
-	}
-	out.AllocatedStorage = snapshot.AllocatedStorage
-	out.MasterUsername = snapshot.MasterUsername
-	return
-}
-
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
 type ModifiableParams interface {
