@@ -10,6 +10,9 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
+var instanceType, password, user, subnetName, securityGroups string
+var size int64
+
 // instanceCreateCmd represents the instance create command
 var instanceCreateCmd = &cobra.Command{
 	Use:   "create [flags] identifier",
