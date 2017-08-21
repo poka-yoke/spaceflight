@@ -12,21 +12,26 @@ import (
 )
 
 type getRestoreDBInputCase struct {
-	name          string
-	identifier    string
-	params        odin.RestoreParams
-	snapshot      *rds.DBSnapshot
-	expected      *rds.RestoreDBInstanceFromDBSnapshotInput
-	expectedError string
-}
-
-func (t *getRestoreDBInputCase) expectingError(err error) bool {
-	return t.expectedError != "" && err.Error() != t.expectedError
+	testCase
+	name       string
+	identifier string
+	params     odin.RestoreParams
+	snapshot   *rds.DBSnapshot
 }
 
 var getRestoreDBInputCases = []getRestoreDBInputCase{
 	// Params with Snapshot
 	{
+		testCase: testCase{
+			expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
+				DBInstanceClass:      exampleSnapshot1Type,
+				DBInstanceIdentifier: exampleSnapshot1DBID,
+				DBSnapshotIdentifier: exampleSnapshot1ID,
+				DBSubnetGroupName:    aws.String(""),
+				Engine:               aws.String("postgres"),
+			},
+			expectedError: "",
+		},
 		name:       "Params with Snapshot",
 		identifier: "production-rds",
 		params: odin.RestoreParams{
@@ -34,37 +39,33 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			OriginalInstanceName: "production",
 		},
 		snapshot: exampleSnapshot1,
-		expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
-			DBInstanceClass:      aws.String("db.m1.medium"),
-			DBInstanceIdentifier: aws.String("production-rds"),
-			DBSnapshotIdentifier: exampleSnapshot1Id,
-			DBSubnetGroupName:    aws.String(""),
-			Engine:               aws.String("postgres"),
-		},
-		expectedError: "",
 	},
 	// Params with Snapshot without OriginalInstanceName
 	{
+		testCase: testCase{
+			expected:      nil,
+			expectedError: "Original Instance Name was empty",
+		},
 		name:       "Params with Snapshot without OriginalInstanceName",
 		identifier: "production-rds",
 		params: odin.RestoreParams{
 			InstanceType: "db.m1.medium",
 		},
-		snapshot:      exampleSnapshot1,
-		expected:      nil,
-		expectedError: "Original Instance Name was empty",
+		snapshot: exampleSnapshot1,
 	},
 	// Params with non existing Snapshot
 	{
+		testCase: testCase{
+			expected:      nil,
+			expectedError: "No snapshot found for develop instance",
+		},
 		name:       "Params with non existing Snapshot",
 		identifier: "production-rds",
 		params: odin.RestoreParams{
 			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "develop",
 		},
-		snapshot:      exampleSnapshot1,
-		expected:      nil,
-		expectedError: "No snapshot found for develop instance",
+		snapshot: exampleSnapshot1,
 	},
 }
 
@@ -113,48 +114,47 @@ func TestGetRestoreDBInput(t *testing.T) {
 }
 
 type restoreInstanceCase struct {
-	name          string
-	identifier    string
-	instanceType  string
-	password      string
-	user          string
-	size          int64
-	from          string
-	expected      string
-	expectedError string
-	snapshot      *rds.DBSnapshot
-}
-
-func (t *restoreInstanceCase) expectingError(err error) bool {
-	return t.expectedError != "" && err.Error() != t.expectedError
+	testCase
+	name         string
+	identifier   string
+	instanceType string
+	password     string
+	user         string
+	size         int64
+	from         string
+	snapshot     *rds.DBSnapshot
 }
 
 var restoreInstanceCases = []restoreInstanceCase{
 	// Uses snapshot to restore from
 	{
-		name:          "Uses snapshot to restore from",
-		identifier:    "test1",
-		instanceType:  "db.m1.small",
-		user:          "master",
-		password:      "master",
-		size:          6144,
-		from:          "production",
-		expected:      "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError: "",
-		snapshot:      exampleSnapshot1,
+		testCase: testCase{
+			expected:      "test1.0.us-east-1.rds.amazonaws.com",
+			expectedError: "",
+		},
+		name:         "Uses snapshot to restore from",
+		identifier:   "test1",
+		instanceType: "db.m1.small",
+		user:         "master",
+		password:     "master",
+		size:         6144,
+		from:         "production",
+		snapshot:     exampleSnapshot1,
 	},
 	// Uses non existing snapshot to restore from
 	{
-		name:          "Uses non existing snapshot to restore from",
-		identifier:    "test1",
-		instanceType:  "db.m1.small",
-		user:          "master",
-		password:      "master",
-		size:          6144,
-		from:          "develop",
-		expected:      "",
-		expectedError: "No snapshot found for develop instance",
-		snapshot:      exampleSnapshot1,
+		testCase: testCase{
+			expected:      "",
+			expectedError: "No snapshot found for develop instance",
+		},
+		name:         "Uses non existing snapshot to restore from",
+		identifier:   "test1",
+		instanceType: "db.m1.small",
+		user:         "master",
+		password:     "master",
+		size:         6144,
+		from:         "develop",
+		snapshot:     exampleSnapshot1,
 	},
 }
 
