@@ -2,7 +2,6 @@ package odin
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -49,9 +48,9 @@ func (p RestoreParams) GetRestoreDBInput(
 	return
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput
+// GetModifyDBInput method creates a new ModifyDBInstanceInput
 // from provided ModifyDBParams and rds.DBSnapshot.
-func (p RestoreParams) GetModifyDBInstanceInput(
+func (p RestoreParams) GetModifyDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
@@ -77,21 +76,9 @@ func RestoreInstance(
 	if err != nil {
 		return
 	}
-	var res *rds.DescribeDBInstancesOutput
-	for *instance.DBInstanceStatus != "available" {
-		id := instance.DBInstanceIdentifier
-		res, err = svc.DescribeDBInstances(
-			&rds.DescribeDBInstancesInput{
-				DBInstanceIdentifier: id,
-			},
-		)
-		if err != nil {
-			return
-		}
-		instance = res.DBInstances[0]
-		// This is to avoid AWS API rate throttling.
-		// Should use configurable exponential back-off
-		time.Sleep(Duration)
+	err = WaitForInstance(instance, svc)
+	if err != nil {
+		return
 	}
 	result = *instance.Endpoint.Address
 	err = modifyInstance(instanceName, params, svc)

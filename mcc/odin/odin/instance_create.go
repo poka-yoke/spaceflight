@@ -2,7 +2,6 @@ package odin
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -19,9 +18,9 @@ type CreateParams struct {
 	Size            int64
 }
 
-// GetCreateDBInstanceInput method creates a new CreateDBInstanceInput from
+// GetCreateDBInput method creates a new CreateDBInstanceInput from
 // provided CreateParams and rds.DBSnapshot.
-func (params CreateParams) GetCreateDBInstanceInput(
+func (params CreateParams) GetCreateDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.CreateDBInstanceInput {
@@ -46,9 +45,9 @@ func (params CreateParams) GetCreateDBInstanceInput(
 	}
 }
 
-// GetModifyDBInstanceInput method creates a new ModifyDBInstanceInput from
+// GetModifyDBInput method creates a new ModifyDBInstanceInput from
 // provided ModifyDBParams and rds.DBSnapshot.
-func (params CreateParams) GetModifyDBInstanceInput(
+func (params CreateParams) GetModifyDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
@@ -74,20 +73,9 @@ func CreateInstance(
 	if err != nil {
 		return
 	}
-	var res *rds.DescribeDBInstancesOutput
-	for *instance.DBInstanceStatus != "available" {
-		res, err = svc.DescribeDBInstances(
-			&rds.DescribeDBInstancesInput{
-				DBInstanceIdentifier: instance.DBInstanceIdentifier,
-			},
-		)
-		if err != nil {
-			return
-		}
-		instance = res.DBInstances[0]
-		// This is to avoid AWS API rate throttling.
-		// Should use configurable exponential back-off
-		time.Sleep(Duration)
+	err = WaitForInstance(instance, svc)
+	if err != nil {
+		return
 	}
 	result = *instance.Endpoint.Address
 	err = modifyInstance(instanceName, params, svc)
@@ -102,7 +90,7 @@ func doCreate(
 	instance *rds.DBInstance,
 	err error,
 ) {
-	rdsParams := params.GetCreateDBInstanceInput(
+	rdsParams := params.GetCreateDBInput(
 		instanceName,
 		svc,
 	)

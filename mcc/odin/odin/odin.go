@@ -46,7 +46,7 @@ func applySnapshotParams(
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
 type ModifiableParams interface {
-	GetModifyDBInstanceInput(string, rdsiface.RDSAPI) *rds.ModifyDBInstanceInput
+	GetModifyDBInput(string, rdsiface.RDSAPI) *rds.ModifyDBInstanceInput
 }
 
 func modifyInstance(
@@ -54,7 +54,7 @@ func modifyInstance(
 	params ModifiableParams,
 	svc rdsiface.RDSAPI,
 ) (err error) {
-	rdsParams := params.GetModifyDBInstanceInput(
+	rdsParams := params.GetModifyDBInput(
 		instanceName,
 		svc,
 	)
@@ -87,4 +87,28 @@ func GetLastSnapshot(
 		return
 	}
 	return results.DBSnapshots[0], nil
+}
+
+// WaitForInstance waits until instance's status is "available".
+func WaitForInstance(
+	instance *rds.DBInstance,
+	svc rdsiface.RDSAPI,
+) (err error) {
+	var res *rds.DescribeDBInstancesOutput
+	for *instance.DBInstanceStatus != "available" {
+		id := instance.DBInstanceIdentifier
+		res, err = svc.DescribeDBInstances(
+			&rds.DescribeDBInstancesInput{
+				DBInstanceIdentifier: id,
+			},
+		)
+		if err != nil {
+			return
+		}
+		*instance = *res.DBInstances[0]
+		// This is to avoid AWS API rate throttling.
+		// Should use configurable exponential back-off
+		time.Sleep(Duration)
+	}
+	return
 }
