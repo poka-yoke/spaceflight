@@ -12,7 +12,6 @@ Currently, it is mostly usable for AWS RDS.
 ## Usage
 
     odin help
-    odin create my-instance
     odin instance restore -f original-instance -n subnet-group -g VPC-SG-ID new-instance
 
 ## Name reasoning
