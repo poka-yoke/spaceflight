@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
+	"github.com/go-test/deep"
 
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
@@ -40,11 +41,12 @@ func (m mockRDSClient) DescribeDBInstances(
 	err error,
 ) {
 	status := "available"
-	endpoint, _ := m.dbInstancesEndpoints[*describeParams.DBInstanceIdentifier]
+	id := describeParams.DBInstanceIdentifier
+	endpoint, _ := m.dbInstancesEndpoints[*id]
 	result = &rds.DescribeDBInstancesOutput{
 		DBInstances: []*rds.DBInstance{
 			{
-				DBInstanceIdentifier: describeParams.DBInstanceIdentifier,
+				DBInstanceIdentifier: id,
 				DBInstanceStatus:     &status,
 				Endpoint:             &endpoint,
 			},
@@ -84,13 +86,14 @@ func (m mockRDSClient) CreateDBInstance(
 		return
 	}
 	region := az[:len(az)-1]
+	id := inputParams.DBInstanceIdentifier
 	endpoint := fmt.Sprintf(
 		"%s.0.%s.rds.amazonaws.com",
-		*inputParams.DBInstanceIdentifier,
+		*id,
 		region,
 	)
 	port := int64(5432)
-	m.dbInstancesEndpoints[*inputParams.DBInstanceIdentifier] = rds.Endpoint{
+	m.dbInstancesEndpoints[*id] = rds.Endpoint{
 		Address: &endpoint,
 		Port:    &port,
 	}
@@ -102,10 +105,10 @@ func (m mockRDSClient) CreateDBInstance(
 				fmt.Sprintf(
 					"arn:aws:rds:%s:0:db:%s",
 					region,
-					inputParams.DBInstanceIdentifier,
+					id,
 				),
 			),
-			DBInstanceIdentifier: inputParams.DBInstanceIdentifier,
+			DBInstanceIdentifier: id,
 			DBInstanceStatus:     &status,
 			Engine:               inputParams.Engine,
 		},
@@ -128,13 +131,14 @@ func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 		az = *inputParams.AvailabilityZone
 	}
 	region := az[:len(az)-1]
+	id := inputParams.DBInstanceIdentifier
 	endpoint := fmt.Sprintf(
 		"%s.0.%s.rds.amazonaws.com",
-		*inputParams.DBInstanceIdentifier,
+		*id,
 		region,
 	)
 	port := int64(5432)
-	m.dbInstancesEndpoints[*inputParams.DBInstanceIdentifier] = rds.Endpoint{
+	m.dbInstancesEndpoints[*id] = rds.Endpoint{
 		Address: &endpoint,
 		Port:    &port,
 	}
@@ -145,10 +149,10 @@ func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 				fmt.Sprintf(
 					"arn:aws:rds:%s:0:db:%s",
 					region,
-					inputParams.DBInstanceIdentifier,
+					id,
 				),
 			),
-			DBInstanceIdentifier: inputParams.DBInstanceIdentifier,
+			DBInstanceIdentifier: id,
 			DBInstanceStatus:     &status,
 			Engine:               inputParams.Engine,
 		},
@@ -182,11 +186,13 @@ func newMockRDSClient() *mockRDSClient {
 	}
 }
 
+var exampleSnapshot1Id = aws.String("rds:production-2015-06-11")
+
 var exampleSnapshot1 = &rds.DBSnapshot{
 	AllocatedStorage:     aws.Int64(10),
 	AvailabilityZone:     aws.String("us-east-1c"),
 	DBInstanceIdentifier: aws.String("production"),
-	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+	DBSnapshotIdentifier: exampleSnapshot1Id,
 	MasterUsername:       aws.String("owner"),
 	Status:               aws.String("available"),
 }
@@ -195,8 +201,12 @@ type getLastSnapshotCase struct {
 	name          string
 	identifier    string
 	snapshots     []*rds.DBSnapshot
-	snapshot      *rds.DBSnapshot
+	expected      *rds.DBSnapshot
 	expectedError string
+}
+
+func (t *getLastSnapshotCase) expectingError(err error) bool {
+	return t.expectedError != "" && err.Error() == t.expectedError
 }
 
 var getLastSnapshotCases = []getLastSnapshotCase{
@@ -206,49 +216,51 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 		snapshots: []*rds.DBSnapshot{
 			exampleSnapshot1,
 		},
-		snapshot:      exampleSnapshot1,
+		expected:      exampleSnapshot1,
 		expectedError: "",
 	},
 	{
 		name:          "Get non-existant snapshot id by instance id",
 		identifier:    "production",
 		snapshots:     []*rds.DBSnapshot{},
-		snapshot:      nil,
+		expected:      nil,
 		expectedError: "There are no Snapshots for production",
 	},
 }
 
 func TestGetLastSnapshot(t *testing.T) {
 	svc := newMockRDSClient()
-	for _, useCase := range getLastSnapshotCases {
+	for _, test := range getLastSnapshotCases {
 		t.Run(
-			useCase.name,
+			test.name,
 			func(t *testing.T) {
-				svc.dbSnapshots[useCase.identifier] = useCase.snapshots
-				snapshot, err := odin.GetLastSnapshot(
-					useCase.identifier,
+				id := test.identifier
+				svc.dbSnapshots[id] = test.snapshots
+				actual, err := odin.GetLastSnapshot(
+					id,
 					svc,
 				)
-				if useCase.expectedError == "" {
-					if err != nil {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-					if *snapshot.DBInstanceIdentifier != *useCase.snapshot.DBInstanceIdentifier ||
-						*snapshot.DBSnapshotIdentifier != *useCase.snapshot.DBSnapshotIdentifier {
-						t.Errorf(
-							"Unexpected output: %s should be %s",
-							snapshot,
-							useCase.snapshot,
-						)
-					}
-				} else if err.Error() != useCase.expectedError {
+				switch {
+				case err != nil && !test.expectingError(err):
 					t.Errorf(
-						"Unexpected error %s",
+						"Unexpected error: %v",
 						err,
 					)
+				case err == nil && test.expectedError != "":
+					t.Errorf(
+						"Expected error: %v missing",
+						test.expectedError,
+					)
+				case err == nil:
+					if diff := deep.Equal(
+						actual,
+						test.expected,
+					); diff != nil {
+						t.Errorf(
+							"Unexpected output: %s",
+							diff,
+						)
+					}
 				}
 			},
 		)
