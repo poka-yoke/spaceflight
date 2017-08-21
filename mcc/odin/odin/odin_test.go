@@ -186,13 +186,24 @@ func newMockRDSClient() *mockRDSClient {
 	}
 }
 
-var exampleSnapshot1Id = aws.String("rds:production-2015-06-11")
+type testCase struct {
+	expected      interface{}
+	expectedError string
+}
+
+func (t *testCase) expectingError(err error) bool {
+	return t.expectedError != "" && err.Error() != t.expectedError
+}
+
+var exampleSnapshot1Type = aws.String("db.m1.medium")
+var exampleSnapshot1DBID = aws.String("production-rds")
+var exampleSnapshot1ID = aws.String("rds:production-2015-06-11")
 
 var exampleSnapshot1 = &rds.DBSnapshot{
 	AllocatedStorage:     aws.Int64(10),
 	AvailabilityZone:     aws.String("us-east-1c"),
-	DBInstanceIdentifier: aws.String("production"),
-	DBSnapshotIdentifier: exampleSnapshot1Id,
+	DBInstanceIdentifier: exampleSnapshot1DBID,
+	DBSnapshotIdentifier: exampleSnapshot1ID,
 	MasterUsername:       aws.String("owner"),
 	Status:               aws.String("available"),
 }
