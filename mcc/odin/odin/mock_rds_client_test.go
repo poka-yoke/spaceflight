@@ -22,9 +22,19 @@ func (m mockRDSClient) DescribeDBSnapshots(
 	result *rds.DescribeDBSnapshotsOutput,
 	err error,
 ) {
-	dbSnapshots := m.dbSnapshots[*describeParams.DBInstanceIdentifier]
+	var snapshots []*rds.DBSnapshot
+	if describeParams.DBInstanceIdentifier != nil {
+		snapshots = m.dbSnapshots[*describeParams.DBInstanceIdentifier]
+	} else {
+		snapshots = make([]*rds.DBSnapshot, len(m.dbSnapshots))
+		for _, l := range m.dbSnapshots {
+			for _, v := range l {
+				snapshots = append(snapshots, v)
+			}
+		}
+	}
 	result = &rds.DescribeDBSnapshotsOutput{
-		DBSnapshots: dbSnapshots,
+		DBSnapshots: snapshots,
 	}
 	return
 }
