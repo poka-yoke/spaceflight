@@ -3,7 +3,6 @@ package odin
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
@@ -13,22 +12,6 @@ type CloneParams struct {
 	CreateParams
 
 	OriginalInstanceName string
-}
-
-// GetModifyDBInput method creates a new ModifyDBInstanceInput
-// from provided ModifyDBParams and rds.DBSnapshot.
-func (params CloneParams) GetModifyDBInput(
-	identifier string,
-	svc rdsiface.RDSAPI,
-) *rds.ModifyDBInstanceInput {
-	SecurityGroups := []*string{}
-	for _, sgid := range params.SecurityGroups {
-		SecurityGroups = append(SecurityGroups, aws.String(sgid))
-	}
-	return &rds.ModifyDBInstanceInput{
-		DBInstanceIdentifier: &identifier,
-		VpcSecurityGroupIds:  SecurityGroups,
-	}
 }
 
 // CloneInstance creates a new RDS database instance, copying parameters
