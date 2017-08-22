@@ -29,6 +29,30 @@ type listSnapshotsCase struct {
 	instanceID string
 }
 
+// loadSnapshots method loads `snapshots` from current test case
+// to the instance of the mocked RDSAPI, passed as argument.
+// It returns nothing.
+func (c *listSnapshotsCase) loadSnapshots(
+	svc *mockRDSClient,
+) {
+	// For each snapshot in the test case
+	for _, snapshot := range c.snapshots {
+		instanceID := snapshot.DBInstanceIdentifier
+		var instanceSnapshots []*rds.DBSnapshot
+		// if this snapshot's instance is not in the mock,
+		if snapshotList, ok := svc.dbSnapshots[*instanceID]; !ok {
+			// create the list of snapshots
+			instanceSnapshots = make([]*rds.DBSnapshot, 0)
+		} else {
+			// or get the reference to the list
+			instanceSnapshots = snapshotList
+		}
+		// append the snapshot to the instance's snapshot list
+		instanceSnapshots = append(instanceSnapshots, snapshot)
+		svc.dbSnapshots[*instanceID] = instanceSnapshots
+	}
+}
+
 var listSnapshotsCases = []listSnapshotsCase{
 	// No snapshots for any instance
 	{
