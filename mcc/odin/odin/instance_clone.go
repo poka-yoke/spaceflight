@@ -104,7 +104,7 @@ func applySnapshotParams(
 	snapshot, err = GetLastSnapshot(identifier, svc)
 	if err != nil {
 		err = fmt.Errorf(
-			"Couldn't find snapshot for %s instance",
+			"No snapshot found for %s instance",
 			identifier,
 		)
 		return

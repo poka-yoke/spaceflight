@@ -10,92 +10,76 @@ import (
 )
 
 type cloneInstanceCase struct {
-	name                 string
-	identifier           string
-	instanceType         string
-	masterUserPassword   string
-	masterUser           string
-	size                 int64
-	originalInstanceName string
-	endpoint             string
-	expectedError        string
-	snapshot             *rds.DBSnapshot
+	testCase
+	name         string
+	identifier   string
+	instanceType string
+	password     string
+	user         string
+	size         int64
+	from         string
+	snapshot     *rds.DBSnapshot
 }
 
 var cloneInstanceCases = []cloneInstanceCase{
 	// Uses snapshot to copy from
 	{
-		name:                 "Uses snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "production",
-		endpoint:             "test1.0.us-east-1.rds.amazonaws.com",
-		expectedError:        "",
-		snapshot:             exampleSnapshot1,
+		testCase: testCase{
+			expected:      "test1.0.us-east-1.rds.amazonaws.com",
+			expectedError: "",
+		},
+		name:         "Uses snapshot to copy from",
+		identifier:   "test1",
+		instanceType: "db.m1.small",
+		user:         "master",
+		password:     "master",
+		size:         6144,
+		from:         "production",
+		snapshot:     exampleSnapshot1,
 	},
 	// Uses non existing snapshot to copy from
 	{
-		name:                 "Uses non existing snapshot to copy from",
-		identifier:           "test1",
-		instanceType:         "db.m1.small",
-		masterUser:           "master",
-		masterUserPassword:   "master",
-		size:                 6144,
-		originalInstanceName: "develop",
-		endpoint:             "",
-		expectedError:        "Couldn't find snapshot for develop instance",
-		snapshot:             exampleSnapshot1,
+		testCase: testCase{
+			expected:      "",
+			expectedError: "No snapshot found for develop instance",
+		},
+		name:         "Uses non existing snapshot to copy from",
+		identifier:   "test1",
+		instanceType: "db.m1.small",
+		user:         "master",
+		password:     "master",
+		size:         6144,
+		from:         "develop",
+		snapshot:     exampleSnapshot1,
 	},
 }
 
 func TestCloneInstance(t *testing.T) {
 	svc := newMockRDSClient()
 	odin.Duration = time.Duration(0)
-	for _, useCase := range cloneInstanceCases {
+	for _, test := range cloneInstanceCases {
 		t.Run(
-			useCase.name,
+			test.name,
 			func(t *testing.T) {
-				if useCase.originalInstanceName != "" {
-					svc.dbSnapshots[*useCase.snapshot.DBInstanceIdentifier] = []*rds.DBSnapshot{
-						useCase.snapshot,
-					}
+				if test.from != "" {
+					snapshot := test.snapshot
+					id := test.snapshot.DBInstanceIdentifier
+					snapshots := []*rds.DBSnapshot{snapshot}
+					svc.dbSnapshots[*id] = snapshots
 				}
 				params := odin.CloneParams{
-					InstanceType:         useCase.instanceType,
-					User:                 useCase.masterUser,
-					Password:             useCase.masterUserPassword,
-					Size:                 useCase.size,
-					OriginalInstanceName: useCase.originalInstanceName,
+					InstanceType:         test.instanceType,
+					User:                 test.user,
+					Password:             test.password,
+					Size:                 test.size,
+					OriginalInstanceName: test.from,
 				}
-				endpoint, err := odin.CloneInstance(
-					useCase.identifier,
+				actual, err := odin.CloneInstance(
+					test.identifier,
 					params,
 					svc,
 				)
-				if err != nil {
-					if err.Error() != useCase.expectedError {
-						t.Errorf(
-							"Unexpected error %s",
-							err,
-						)
-					}
-				} else if useCase.expectedError != "" {
-					t.Errorf(
-						"Expected error %s didn't happened",
-						useCase.expectedError,
-					)
-				} else {
-					if endpoint != useCase.endpoint {
-						t.Errorf(
-							"Unexpected output: %s should be %s",
-							endpoint,
-							useCase.endpoint,
-						)
-					}
-				}
+				test.check(actual, err, t)
 			},
 		)
 	}
