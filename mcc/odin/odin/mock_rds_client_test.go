@@ -26,7 +26,7 @@ func (m mockRDSClient) DescribeDBSnapshots(
 	if describeParams.DBInstanceIdentifier != nil {
 		snapshots = m.dbSnapshots[*describeParams.DBInstanceIdentifier]
 	} else {
-		snapshots = make([]*rds.DBSnapshot, len(m.dbSnapshots))
+		snapshots = make([]*rds.DBSnapshot, 0)
 		for _, l := range m.dbSnapshots {
 			for _, v := range l {
 				snapshots = append(snapshots, v)
