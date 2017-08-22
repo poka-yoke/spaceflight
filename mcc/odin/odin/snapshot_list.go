@@ -13,6 +13,11 @@ func ListSnapshots(
 	result []*rds.DBSnapshot,
 	err error,
 ) {
-	result = make([]*rds.DBSnapshot, 0)
+	input := &rds.DescribeDBSnapshotsInput{}
+	output, err := svc.DescribeDBSnapshots(input)
+	if err != nil {
+		return
+	}
+	result = output.DBSnapshots
 	return
 }

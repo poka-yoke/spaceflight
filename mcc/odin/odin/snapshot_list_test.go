@@ -64,6 +64,16 @@ var listSnapshotsCases = []listSnapshotsCase{
 		snapshots:  []*rds.DBSnapshot{},
 		instanceID: "",
 	},
+	// One instance, one snapshot
+	{
+		testCase: testCase{
+			expected:      []*rds.DBSnapshot{exampleSnapshot1},
+			expectedError: "",
+		},
+		name:       "One instance, one snapshot",
+		snapshots:  []*rds.DBSnapshot{exampleSnapshot1},
+		instanceID: "",
+	},
 }
 
 func TestListSnapshots(t *testing.T) {
@@ -72,6 +82,7 @@ func TestListSnapshots(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
+				test.loadSnapshots(svc)
 				actual, err := odin.ListSnapshots(
 					test.instanceID,
 					svc,
