@@ -78,7 +78,7 @@ func TestGetRestoreDBInput(t *testing.T) {
 					snapshot := test.snapshot
 					id := *snapshot.DBInstanceIdentifier
 					snapshots := []*rds.DBSnapshot{snapshot}
-					svc.dbSnapshots[id] = snapshots
+					svc.dbInstanceSnapshots[id] = snapshots
 				}
 				params := test.params
 				actual, err := params.GetRestoreDBInput(
@@ -147,7 +147,7 @@ func TestRestoreInstance(t *testing.T) {
 					snapshot := test.snapshot
 					id := *snapshot.DBInstanceIdentifier
 					snapshots := []*rds.DBSnapshot{snapshot}
-					svc.dbSnapshots[id] = snapshots
+					svc.dbInstanceSnapshots[id] = snapshots
 				}
 				params := odin.RestoreParams{
 					InstanceType:         test.instanceType,

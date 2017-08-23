@@ -80,7 +80,7 @@ func TestGetLastSnapshot(t *testing.T) {
 			test.name,
 			func(t *testing.T) {
 				id := test.identifier
-				svc.dbSnapshots[id] = test.snapshots
+				svc.dbInstanceSnapshots[id] = test.snapshots
 				actual, err := odin.GetLastSnapshot(
 					id,
 					svc,
