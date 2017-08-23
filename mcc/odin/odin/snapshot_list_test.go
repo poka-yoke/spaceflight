@@ -82,8 +82,8 @@ var listSnapshotsCases = []listSnapshotsCase{
 	{
 		testCase: testCase{
 			expected: []*rds.DBSnapshot{
-				exampleSnapshot1,
 				exampleSnapshot2,
+				exampleSnapshot1,
 			},
 			expectedError: "",
 		},
