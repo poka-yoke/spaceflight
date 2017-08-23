@@ -28,9 +28,7 @@ func (m mockRDSClient) DescribeDBSnapshots(
 	} else {
 		snapshots = make([]*rds.DBSnapshot, 0)
 		for _, l := range m.dbSnapshots {
-			for _, v := range l {
-				snapshots = append(snapshots, v)
-			}
+			snapshots = append(snapshots, l...)
 		}
 	}
 	result = &rds.DescribeDBSnapshotsOutput{
