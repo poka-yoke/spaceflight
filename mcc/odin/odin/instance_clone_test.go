@@ -65,7 +65,7 @@ func TestCloneInstance(t *testing.T) {
 					snapshot := test.snapshot
 					id := test.snapshot.DBInstanceIdentifier
 					snapshots := []*rds.DBSnapshot{snapshot}
-					svc.dbSnapshots[*id] = snapshots
+					svc.dbInstanceSnapshots[*id] = snapshots
 				}
 				createParams := odin.CreateParams{
 					InstanceType: test.instanceType,
