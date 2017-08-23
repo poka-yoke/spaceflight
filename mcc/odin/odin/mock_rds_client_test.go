@@ -12,7 +12,8 @@ import (
 type mockRDSClient struct {
 	rdsiface.RDSAPI
 	dbInstancesEndpoints map[string]rds.Endpoint
-	dbSnapshots          map[string][]*rds.DBSnapshot
+	dbInstanceSnapshots  map[string][]*rds.DBSnapshot
+	dbSnapshots          []*rds.DBSnapshot
 }
 
 // DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
@@ -24,12 +25,10 @@ func (m mockRDSClient) DescribeDBSnapshots(
 ) {
 	var snapshots []*rds.DBSnapshot
 	if describeParams.DBInstanceIdentifier != nil {
-		snapshots = m.dbSnapshots[*describeParams.DBInstanceIdentifier]
+		id := describeParams.DBInstanceIdentifier
+		snapshots = m.dbInstanceSnapshots[*id]
 	} else {
-		snapshots = make([]*rds.DBSnapshot, 0)
-		for _, l := range m.dbSnapshots {
-			snapshots = append(snapshots, l...)
-		}
+		snapshots = m.dbSnapshots
 	}
 	result = &rds.DescribeDBSnapshotsOutput{
 		DBSnapshots: snapshots,
@@ -186,6 +185,6 @@ func (m mockRDSClient) ModifyDBInstance(
 func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbSnapshots:          map[string][]*rds.DBSnapshot{},
+		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
 	}
 }
