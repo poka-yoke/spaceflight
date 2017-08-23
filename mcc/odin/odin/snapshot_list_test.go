@@ -12,12 +12,23 @@ import (
 var exampleSnapshot1Type = aws.String("db.m1.medium")
 var exampleSnapshot1DBID = aws.String("production-rds")
 var exampleSnapshot1ID = aws.String("rds:production-2015-06-11")
+var exampleSnapshot2DBID = aws.String("develop-rds")
+var exampleSnapshot2ID = aws.String("rds:develop-2016-06-11")
 
 var exampleSnapshot1 = &rds.DBSnapshot{
 	AllocatedStorage:     aws.Int64(10),
 	AvailabilityZone:     aws.String("us-east-1c"),
 	DBInstanceIdentifier: exampleSnapshot1DBID,
 	DBSnapshotIdentifier: exampleSnapshot1ID,
+	MasterUsername:       aws.String("owner"),
+	Status:               aws.String("available"),
+}
+
+var exampleSnapshot2 = &rds.DBSnapshot{
+	AllocatedStorage:     aws.Int64(10),
+	AvailabilityZone:     aws.String("us-east-1c"),
+	DBInstanceIdentifier: exampleSnapshot2DBID,
+	DBSnapshotIdentifier: exampleSnapshot2ID,
 	MasterUsername:       aws.String("owner"),
 	Status:               aws.String("available"),
 }
@@ -35,6 +46,7 @@ type listSnapshotsCase struct {
 func (c *listSnapshotsCase) loadSnapshots(
 	svc *mockRDSClient,
 ) {
+	svc.dbSnapshots = map[string][]*rds.DBSnapshot{}
 	// For each snapshot in the test case
 	for _, snapshot := range c.snapshots {
 		instanceID := snapshot.DBInstanceIdentifier
@@ -72,6 +84,22 @@ var listSnapshotsCases = []listSnapshotsCase{
 		},
 		name:       "One instance, one snapshot",
 		snapshots:  []*rds.DBSnapshot{exampleSnapshot1},
+		instanceID: "",
+	},
+	// Two instances, two snapshots
+	{
+		testCase: testCase{
+			expected: []*rds.DBSnapshot{
+				exampleSnapshot1,
+				exampleSnapshot2,
+			},
+			expectedError: "",
+		},
+		name: "Two instances two snapshots",
+		snapshots: []*rds.DBSnapshot{
+			exampleSnapshot1,
+			exampleSnapshot2,
+		},
 		instanceID: "",
 	},
 }
