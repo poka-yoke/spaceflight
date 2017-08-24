@@ -16,6 +16,30 @@ type mockRDSClient struct {
 	dbSnapshots          []*rds.DBSnapshot
 }
 
+// AddSnapshots add a list of snapshots to the mock, both in the full
+// list and in the per instance map.
+func (m *mockRDSClient) AddSnapshots(
+	snapshots []*rds.DBSnapshot,
+) {
+	m.dbSnapshots = []*rds.DBSnapshot{}
+	for _, snapshot := range snapshots {
+		m.AddSnapshot(snapshot)
+	}
+}
+
+// AddSnapshot add a new snapshot to the mock, both in the full list
+// and the in the per instance map.
+func (m *mockRDSClient) AddSnapshot(
+	snapshot *rds.DBSnapshot,
+) {
+	m.dbSnapshots = append(m.dbSnapshots, snapshot)
+	id := *snapshot.DBInstanceIdentifier
+	if _, ok := m.dbInstanceSnapshots[id]; !ok {
+		m.dbInstanceSnapshots[id] = []*rds.DBSnapshot{}
+	}
+	m.dbInstanceSnapshots[id] = append(m.dbInstanceSnapshots[id], snapshot)
+}
+
 // DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
 func (m mockRDSClient) DescribeDBSnapshots(
 	describeParams *rds.DescribeDBSnapshotsInput,
