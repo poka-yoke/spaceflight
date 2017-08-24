@@ -1,6 +1,8 @@
 package odin_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -8,10 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
-)
-
-const (
-	RFC8601 = "2006-01-02T15:04:05-07:00"
 )
 
 var exampleSnapshot1Type = aws.String("db.m1.medium")
@@ -24,7 +22,7 @@ var exampleSnapshot2Time = "2016-06-11T22:00:00+00:00"
 
 func getTime(original string) (parsed time.Time) {
 	parsed, _ = time.Parse(
-		RFC8601,
+		odin.RFC8601,
 		original,
 	)
 	return
@@ -48,6 +46,75 @@ var exampleSnapshot2 = &rds.DBSnapshot{
 	MasterUsername:       aws.String("owner"),
 	SnapshotCreateTime:   aws.Time(getTime(exampleSnapshot2Time)),
 	Status:               aws.String("available"),
+}
+
+var exampleSnapshot1Out = fmt.Sprintf(
+	"%v %v %v %v\n",
+	*exampleSnapshot1ID,
+	*exampleSnapshot1DBID,
+	exampleSnapshot1Time,
+	"available",
+)
+
+var exampleSnapshot2Out = fmt.Sprintf(
+	"%v %v %v %v\n",
+	*exampleSnapshot2ID,
+	*exampleSnapshot2DBID,
+	exampleSnapshot2Time,
+	"available",
+)
+
+var printSnapshotsCases = []listSnapshotsCase{
+	// No snapshots
+	{
+		testCase: testCase{
+			expected:      "",
+			expectedError: "",
+		},
+		name:      "No snapshots",
+		snapshots: []*rds.DBSnapshot{},
+	},
+	// One snapshot
+	{
+		testCase: testCase{
+			expected:      exampleSnapshot1Out,
+			expectedError: "",
+		},
+		name:      "One snapshot",
+		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
+	},
+	// Two snapshots
+	{
+		testCase: testCase{
+			expected: strings.Join(
+				[]string{
+					exampleSnapshot2Out,
+					exampleSnapshot1Out,
+				},
+				"",
+			),
+			expectedError: "",
+		},
+		name: "Two snapshots",
+		snapshots: []*rds.DBSnapshot{
+			exampleSnapshot2,
+			exampleSnapshot1,
+		},
+	},
+}
+
+func TestPrintSnapshot(t *testing.T) {
+	for _, test := range printSnapshotsCases {
+		t.Run(
+			test.name,
+			func(t *testing.T) {
+				actual := odin.PrintSnapshots(
+					test.snapshots,
+				)
+				test.check(actual, nil, t)
+			},
+		)
+	}
 }
 
 type listSnapshotsCase struct {

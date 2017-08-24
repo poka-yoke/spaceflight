@@ -26,7 +26,7 @@ var snapshotListCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Println(snapshots)
+		fmt.Println(odin.PrintSnapshots(snapshots))
 	},
 }
 
