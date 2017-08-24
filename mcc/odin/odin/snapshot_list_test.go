@@ -161,14 +161,29 @@ var listSnapshotsCases = []listSnapshotsCase{
 		},
 		instanceID: "",
 	},
+	// Instance selection
+	{
+		testCase: testCase{
+			expected: []*rds.DBSnapshot{
+				exampleSnapshot2,
+			},
+			expectedError: "",
+		},
+		name: "Two instances two snapshots",
+		snapshots: []*rds.DBSnapshot{
+			exampleSnapshot1,
+			exampleSnapshot2,
+		},
+		instanceID: "develop-rds",
+	},
 }
 
 func TestListSnapshots(t *testing.T) {
-	svc := newMockRDSClient()
 	for _, test := range listSnapshotsCases {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
+				svc := newMockRDSClient()
 				svc.AddSnapshots(test.snapshots)
 				actual, err := odin.ListSnapshots(
 					test.instanceID,

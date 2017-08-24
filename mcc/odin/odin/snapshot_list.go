@@ -41,6 +41,9 @@ func ListSnapshots(
 	err error,
 ) {
 	input := &rds.DescribeDBSnapshotsInput{}
+	if instanceName != "" {
+		input.SetDBInstanceIdentifier(instanceName)
+	}
 	output, err := svc.DescribeDBSnapshots(input)
 	if err != nil {
 		return
