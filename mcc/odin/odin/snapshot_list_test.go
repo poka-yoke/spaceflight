@@ -74,7 +74,7 @@ var listSnapshotsCases = []listSnapshotsCase{
 			expected:      []*rds.DBSnapshot{exampleSnapshot1},
 			expectedError: "",
 		},
-		name:       "One instance, one snapshot",
+		name:       "One instance one snapshot",
 		snapshots:  []*rds.DBSnapshot{exampleSnapshot1},
 		instanceID: "",
 	},
