@@ -186,5 +186,6 @@ func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
 		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
+		dbSnapshots:          []*rds.DBSnapshot{},
 	}
 }
