@@ -169,7 +169,7 @@ func TestListSnapshots(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				svc.dbSnapshots = test.snapshots
+				svc.AddSnapshots(test.snapshots)
 				actual, err := odin.ListSnapshots(
 					test.instanceID,
 					svc,
