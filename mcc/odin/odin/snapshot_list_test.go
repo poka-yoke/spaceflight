@@ -64,13 +64,7 @@ var exampleSnapshot2Out = fmt.Sprintf(
 	"available",
 )
 
-type printSnapshotsCase struct {
-	testCase
-	name      string
-	snapshots []*rds.DBSnapshot
-}
-
-var printSnapshotsCases = []printSnapshotsCase{
+var printSnapshotsCases = []listSnapshotsCase{
 	// No snapshots
 	{
 		testCase: testCase{
