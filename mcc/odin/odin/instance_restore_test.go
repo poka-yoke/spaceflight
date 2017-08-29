@@ -144,10 +144,7 @@ func TestRestoreInstance(t *testing.T) {
 			test.name,
 			func(t *testing.T) {
 				if test.from != "" {
-					snapshot := test.snapshot
-					id := *snapshot.DBInstanceIdentifier
-					snapshots := []*rds.DBSnapshot{snapshot}
-					svc.dbInstanceSnapshots[id] = snapshots
+					svc.AddSnapshot(test.snapshot)
 				}
 				params := odin.RestoreParams{
 					InstanceType:         test.instanceType,
