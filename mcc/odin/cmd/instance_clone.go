@@ -19,7 +19,7 @@ var instanceCloneCmd = &cobra.Command{
 	Long:  `Clones a database using params from a Snapshot, in RDS.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			log.Fatal("You must specify the instance identifier for the new instance")
+			log.Fatal(NewInstanceIDReq)
 		}
 		svc := odin.Init()
 		createParams := odin.CreateParams{
@@ -101,11 +101,11 @@ func init() {
 		"securityGroups",
 		"g",
 		"",
-		"VPC Security Groups IDs separated with , to attach to (effectively VPC)",
+		"VPC SG IDs separated with , to attach to (effectively VPC)",
 	)
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
 }

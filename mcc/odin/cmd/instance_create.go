@@ -17,10 +17,10 @@ var size int64
 var instanceCreateCmd = &cobra.Command{
 	Use:   "create [flags] identifier",
 	Short: "Creates a database",
-	Long:  `Creates a database, according to user defined attributes, in RDS.`,
+	Long:  `Creates a database, according to defined attributes, in RDS.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			log.Fatal("You must specify the instance identifier for the new instance")
+			log.Fatal(NewInstanceIDReq)
 		}
 		svc := odin.Init()
 		params := odin.CreateParams{
@@ -91,11 +91,11 @@ func init() {
 		"securityGroups",
 		"g",
 		"",
-		"VPC Security Groups IDs separated with , to attach to (effectively VPC)",
+		"VPC SG IDs separated with , to attach to (effectively VPC)",
 	)
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
 }

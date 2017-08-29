@@ -4,6 +4,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// NewInstanceIDReq is the message to show when a new instance is to be
+	// created and no Id was specified.
+	NewInstanceIDReq = "You must specify a identifier for the new instance"
+)
+
 // InstanceCmd represents the instance super command
 var InstanceCmd = &cobra.Command{
 	Use:   "instance",
