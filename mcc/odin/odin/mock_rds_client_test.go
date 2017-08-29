@@ -14,6 +14,36 @@ type mockRDSClient struct {
 	dbInstancesEndpoints map[string]rds.Endpoint
 	dbInstanceSnapshots  map[string][]*rds.DBSnapshot
 	dbSnapshots          []*rds.DBSnapshot
+	dbDeletedInstances   []string
+}
+
+// InstanceDeleted checks if instance ID was requested to be deleted.
+func (m *mockRDSClient) InstanceDeleted(id string) bool {
+	for _, deletedID := range m.dbDeletedInstances {
+		if id == deletedID {
+			return true
+		}
+	}
+	return false
+}
+
+// DeleteDBInstance mocks rds.DeleteDBInstance.
+func (m *mockRDSClient) DeleteDBInstance(
+	params *rds.DeleteDBInstanceInput,
+) (
+	result *rds.DeleteDBInstanceOutput,
+	err error,
+) {
+	m.dbDeletedInstances = append(
+		m.dbDeletedInstances,
+		*params.DBInstanceIdentifier,
+	)
+	result = &rds.DeleteDBInstanceOutput{
+		DBInstance: &rds.DBInstance{
+			DBInstanceIdentifier: params.DBInstanceIdentifier,
+		},
+	}
+	return
 }
 
 // AddSnapshots add a list of snapshots to the mock, both in the full
@@ -211,5 +241,6 @@ func newMockRDSClient() *mockRDSClient {
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
 		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
 		dbSnapshots:          []*rds.DBSnapshot{},
+		dbDeletedInstances:   []string{},
 	}
 }
