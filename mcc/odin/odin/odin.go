@@ -70,9 +70,10 @@ func GetLastSnapshot(
 func WaitForInstance(
 	instance *rds.DBInstance,
 	svc rdsiface.RDSAPI,
+	status string,
 ) (err error) {
 	var res *rds.DescribeDBInstancesOutput
-	for *instance.DBInstanceStatus != "available" {
+	for *instance.DBInstanceStatus != status {
 		id := instance.DBInstanceIdentifier
 		res, err = svc.DescribeDBInstances(
 			&rds.DescribeDBInstancesInput{

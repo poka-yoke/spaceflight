@@ -76,7 +76,7 @@ func RestoreInstance(
 	if err != nil {
 		return
 	}
-	err = WaitForInstance(instance, svc)
+	err = WaitForInstance(instance, svc, "available")
 	if err != nil {
 		return
 	}

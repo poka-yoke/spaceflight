@@ -14,10 +14,21 @@ type mockRDSClient struct {
 	dbInstancesEndpoints map[string]rds.Endpoint
 	dbInstanceSnapshots  map[string][]*rds.DBSnapshot
 	dbSnapshots          []*rds.DBSnapshot
+	dbDeletingInstances  []string
 	dbDeletedInstances   []string
 }
 
-// InstanceDeleted checks if instance ID was requested to be deleted.
+// InstanceDeleting checks if instance ID was requested to be deleted.
+func (m *mockRDSClient) InstanceDeleting(id string) bool {
+	for _, deletingID := range m.dbDeletingInstances {
+		if id == deletingID {
+			return true
+		}
+	}
+	return false
+}
+
+// InstanceDeleted checks if instance ID was effectively deleted.
 func (m *mockRDSClient) InstanceDeleted(id string) bool {
 	for _, deletedID := range m.dbDeletedInstances {
 		if id == deletedID {
@@ -34,13 +45,24 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
-	m.dbDeletedInstances = append(
-		m.dbDeletedInstances,
-		*params.DBInstanceIdentifier,
+	id := params.DBInstanceIdentifier
+	m.dbDeletingInstances = append(
+		m.dbDeletingInstances,
+		*id,
 	)
+	endpoint := fmt.Sprintf(
+		"%s.amazonaws.com",
+		id,
+	)
+	port := int64(5432)
+	m.dbInstancesEndpoints[*id] = rds.Endpoint{
+		Address: &endpoint,
+		Port:    &port,
+	}
 	result = &rds.DeleteDBInstanceOutput{
 		DBInstance: &rds.DBInstance{
 			DBInstanceIdentifier: params.DBInstanceIdentifier,
+			DBInstanceStatus:     aws.String("deleting"),
 		},
 	}
 	return
@@ -91,14 +113,28 @@ func (m mockRDSClient) DescribeDBSnapshots(
 }
 
 // DescribeDBInstances mocks rds.DescribeDBInstances.
-func (m mockRDSClient) DescribeDBInstances(
+func (m *mockRDSClient) DescribeDBInstances(
 	describeParams *rds.DescribeDBInstancesInput,
 ) (
 	result *rds.DescribeDBInstancesOutput,
 	err error,
 ) {
-	status := "available"
 	id := describeParams.DBInstanceIdentifier
+	if m.InstanceDeleted(*id) {
+		err = fmt.Errorf(
+			"No such instance %s",
+			id,
+		)
+		return
+	}
+	status := "available"
+	if m.InstanceDeleting(*id) {
+		status = "deleting"
+		m.dbDeletedInstances = append(
+			m.dbDeletedInstances,
+			*id,
+		)
+	}
 	endpoint, _ := m.dbInstancesEndpoints[*id]
 	result = &rds.DescribeDBInstancesOutput{
 		DBInstances: []*rds.DBInstance{
@@ -241,6 +277,7 @@ func newMockRDSClient() *mockRDSClient {
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
 		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
 		dbSnapshots:          []*rds.DBSnapshot{},
+		dbDeletingInstances:  []string{},
 		dbDeletedInstances:   []string{},
 	}
 }
