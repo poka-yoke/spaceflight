@@ -11,10 +11,14 @@ func DeleteInstance(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) error {
-	_, err := svc.DeleteDBInstance(
+	out, err := svc.DeleteDBInstance(
 		&rds.DeleteDBInstanceInput{
 			DBInstanceIdentifier: aws.String(identifier),
 		},
 	)
+	if err != nil {
+		return err
+	}
+	err = WaitForInstance(out.DBInstance, svc, "deleted")
 	return err
 }
