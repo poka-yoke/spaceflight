@@ -49,18 +49,18 @@ func modifyInstance(
 // GetLastSnapshot queries AWS looking for a Snapshot ID, depending on
 // an instance ID.
 func GetLastSnapshot(
-	identifier string,
+	id string,
 	svc rdsiface.RDSAPI,
 ) (
 	result *rds.DBSnapshot,
 	err error,
 ) {
 	params := &rds.DescribeDBSnapshotsInput{
-		DBInstanceIdentifier: &identifier,
+		DBInstanceIdentifier: &id,
 	}
 	results, err := svc.DescribeDBSnapshots(params)
 	if err != nil || len(results.DBSnapshots) == 0 {
-		err = fmt.Errorf("There are no Snapshots for %s", identifier)
+		err = fmt.Errorf("No snapshot found for %s instance", id)
 		return
 	}
 	return results.DBSnapshots[0], nil

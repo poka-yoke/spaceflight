@@ -169,7 +169,7 @@ var listSnapshotsCases = []listSnapshotsCase{
 			},
 			expectedError: "",
 		},
-		name: "Two instances two snapshots",
+		name: "Two instances two snapshots, one selected",
 		snapshots: []*rds.DBSnapshot{
 			exampleSnapshot1,
 			exampleSnapshot2,
