@@ -82,6 +82,7 @@ func (m mockRDSClient) FindInstance(id string) (
 			instance = obj
 			index = i
 			found = true
+			break
 		}
 	}
 	if !found {
