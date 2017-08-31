@@ -122,7 +122,7 @@ func (m *mockRDSClient) DescribeDBInstances(
 	} else {
 		err = fmt.Errorf(
 			"No such instance %s",
-			id,
+			*id,
 		)
 	}
 	return

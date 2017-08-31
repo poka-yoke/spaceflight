@@ -19,6 +19,6 @@ func DeleteInstance(
 	if err != nil {
 		return err
 	}
-	err = WaitForInstance(out.DBInstance, svc, "deleted")
-	return err
+	WaitForInstance(out.DBInstance, svc, "deleted")
+	return nil
 }
