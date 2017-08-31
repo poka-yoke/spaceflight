@@ -18,7 +18,7 @@ type cloneInstanceCase struct {
 	user         string
 	size         int64
 	from         string
-	snapshot     *rds.DBSnapshot
+	snapshots    []*rds.DBSnapshot
 }
 
 var cloneInstanceCases = []cloneInstanceCase{
@@ -35,7 +35,7 @@ var cloneInstanceCases = []cloneInstanceCase{
 		password:     "master",
 		size:         6144,
 		from:         "production",
-		snapshot:     exampleSnapshot1,
+		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Uses non existing snapshot to copy from
 	{
@@ -50,7 +50,7 @@ var cloneInstanceCases = []cloneInstanceCase{
 		password:     "master",
 		size:         6144,
 		from:         "develop",
-		snapshot:     exampleSnapshot1,
+		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 }
 
@@ -62,7 +62,7 @@ func TestCloneInstance(t *testing.T) {
 			test.name,
 			func(t *testing.T) {
 				if test.from != "" {
-					svc.AddSnapshot(test.snapshot)
+					svc.AddSnapshots(test.snapshots)
 				}
 				createParams := odin.CreateParams{
 					InstanceType: test.instanceType,

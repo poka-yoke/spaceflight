@@ -15,7 +15,7 @@ type getRestoreDBInputCase struct {
 	name       string
 	identifier string
 	params     odin.RestoreParams
-	snapshot   *rds.DBSnapshot
+	snapshots  []*rds.DBSnapshot
 }
 
 var getRestoreDBInputCases = []getRestoreDBInputCase{
@@ -37,7 +37,7 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "production",
 		},
-		snapshot: exampleSnapshot1,
+		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Params with Snapshot without OriginalInstanceName
 	{
@@ -50,7 +50,7 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 		params: odin.RestoreParams{
 			InstanceType: "db.m1.medium",
 		},
-		snapshot: exampleSnapshot1,
+		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Params with non existing Snapshot
 	{
@@ -64,7 +64,7 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			InstanceType:         "db.m1.medium",
 			OriginalInstanceName: "develop",
 		},
-		snapshot: exampleSnapshot1,
+		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
 }
 
@@ -74,12 +74,7 @@ func TestGetRestoreDBInput(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				if test.snapshot != nil {
-					snapshot := test.snapshot
-					id := *snapshot.DBInstanceIdentifier
-					snapshots := []*rds.DBSnapshot{snapshot}
-					svc.dbInstanceSnapshots[id] = snapshots
-				}
+				svc.AddSnapshots(test.snapshots)
 				params := test.params
 				actual, err := params.GetRestoreDBInput(
 					test.identifier,
@@ -91,19 +86,7 @@ func TestGetRestoreDBInput(t *testing.T) {
 	}
 }
 
-type restoreInstanceCase struct {
-	testCase
-	name         string
-	identifier   string
-	instanceType string
-	password     string
-	user         string
-	size         int64
-	from         string
-	snapshot     *rds.DBSnapshot
-}
-
-var restoreInstanceCases = []restoreInstanceCase{
+var restoreInstanceCases = []cloneInstanceCase{
 	// Uses snapshot to restore from
 	{
 		testCase: testCase{
@@ -117,7 +100,7 @@ var restoreInstanceCases = []restoreInstanceCase{
 		password:     "master",
 		size:         6144,
 		from:         "production",
-		snapshot:     exampleSnapshot1,
+		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Uses non existing snapshot to restore from
 	{
@@ -132,7 +115,7 @@ var restoreInstanceCases = []restoreInstanceCase{
 		password:     "master",
 		size:         6144,
 		from:         "develop",
-		snapshot:     exampleSnapshot1,
+		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 }
 
@@ -144,7 +127,7 @@ func TestRestoreInstance(t *testing.T) {
 			test.name,
 			func(t *testing.T) {
 				if test.from != "" {
-					svc.AddSnapshot(test.snapshot)
+					svc.AddSnapshots(test.snapshots)
 				}
 				params := odin.RestoreParams{
 					InstanceType:         test.instanceType,

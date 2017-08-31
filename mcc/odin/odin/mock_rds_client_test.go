@@ -13,7 +13,6 @@ type mockRDSClient struct {
 	rdsiface.RDSAPI
 	dbInstances          []*rds.DBInstance
 	dbInstancesEndpoints map[string]rds.Endpoint
-	dbInstanceSnapshots  map[string][]*rds.DBSnapshot
 	dbSnapshots          []*rds.DBSnapshot
 }
 
@@ -59,22 +58,10 @@ func (m *mockRDSClient) AddSnapshots(
 	snapshots []*rds.DBSnapshot,
 ) {
 	m.dbSnapshots = []*rds.DBSnapshot{}
-	for _, snapshot := range snapshots {
-		m.AddSnapshot(snapshot)
-	}
-}
-
-// AddSnapshot add a new snapshot to the mock, both in the full list
-// and the in the per instance map.
-func (m *mockRDSClient) AddSnapshot(
-	snapshot *rds.DBSnapshot,
-) {
-	m.dbSnapshots = append(m.dbSnapshots, snapshot)
-	id := *snapshot.DBInstanceIdentifier
-	if _, ok := m.dbInstanceSnapshots[id]; !ok {
-		m.dbInstanceSnapshots[id] = []*rds.DBSnapshot{}
-	}
-	m.dbInstanceSnapshots[id] = append(m.dbInstanceSnapshots[id], snapshot)
+	m.dbSnapshots = append(
+		m.dbSnapshots,
+		snapshots...,
+	)
 }
 
 // DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
@@ -86,8 +73,16 @@ func (m mockRDSClient) DescribeDBSnapshots(
 ) {
 	var snapshots []*rds.DBSnapshot
 	if describeParams.DBInstanceIdentifier != nil {
+		snapshots = []*rds.DBSnapshot{}
 		id := describeParams.DBInstanceIdentifier
-		snapshots = m.dbInstanceSnapshots[*id]
+		for _, snapshot := range m.dbSnapshots {
+			if *snapshot.DBInstanceIdentifier == *id {
+				snapshots = append(
+					snapshots,
+					snapshot,
+				)
+			}
+		}
 	} else {
 		snapshots = m.dbSnapshots
 	}
@@ -271,7 +266,6 @@ func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
 		dbInstances:          []*rds.DBInstance{},
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
 		dbSnapshots:          []*rds.DBSnapshot{},
 	}
 }
