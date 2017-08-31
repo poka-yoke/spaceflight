@@ -34,7 +34,7 @@ var cloneInstanceCases = []cloneInstanceCase{
 		user:         "master",
 		password:     "master",
 		size:         6144,
-		from:         "production",
+		from:         "production-rds",
 		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Uses non existing snapshot to copy from
