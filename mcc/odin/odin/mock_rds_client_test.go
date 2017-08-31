@@ -11,31 +11,10 @@ import (
 
 type mockRDSClient struct {
 	rdsiface.RDSAPI
+	dbInstances          []*rds.DBInstance
 	dbInstancesEndpoints map[string]rds.Endpoint
 	dbInstanceSnapshots  map[string][]*rds.DBSnapshot
 	dbSnapshots          []*rds.DBSnapshot
-	dbDeletingInstances  []string
-	dbDeletedInstances   []string
-}
-
-// InstanceDeleting checks if instance ID was requested to be deleted.
-func (m *mockRDSClient) InstanceDeleting(id string) bool {
-	for _, deletingID := range m.dbDeletingInstances {
-		if id == deletingID {
-			return true
-		}
-	}
-	return false
-}
-
-// InstanceDeleted checks if instance ID was effectively deleted.
-func (m *mockRDSClient) InstanceDeleted(id string) bool {
-	for _, deletedID := range m.dbDeletedInstances {
-		if id == deletedID {
-			return true
-		}
-	}
-	return false
 }
 
 // DeleteDBInstance mocks rds.DeleteDBInstance.
@@ -45,25 +24,31 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
-	id := params.DBInstanceIdentifier
-	m.dbDeletingInstances = append(
-		m.dbDeletingInstances,
-		*id,
-	)
-	endpoint := fmt.Sprintf(
-		"%s.amazonaws.com",
-		id,
-	)
-	port := int64(5432)
-	m.dbInstancesEndpoints[*id] = rds.Endpoint{
-		Address: &endpoint,
-		Port:    &port,
+	instance := rds.DBInstance{
+		DBInstanceIdentifier: params.DBInstanceIdentifier,
+		DBInstanceStatus:     aws.String("deleting"),
 	}
+	m.dbInstances = append(
+		m.dbInstances,
+		&instance,
+	)
 	result = &rds.DeleteDBInstanceOutput{
-		DBInstance: &rds.DBInstance{
-			DBInstanceIdentifier: params.DBInstanceIdentifier,
-			DBInstanceStatus:     aws.String("deleting"),
-		},
+		DBInstance: &instance,
+	}
+	return
+}
+
+// FindInstance return index and instance in mockRDSClient.dbInstances
+// for a specific id.
+func (m mockRDSClient) FindInstance(id string) (
+	index int,
+	instance *rds.DBInstance,
+) {
+	for i, obj := range m.dbInstances {
+		if *obj.DBInstanceIdentifier == id {
+			instance = obj
+			index = i
+		}
 	}
 	return
 }
@@ -120,36 +105,36 @@ func (m *mockRDSClient) DescribeDBInstances(
 	err error,
 ) {
 	id := describeParams.DBInstanceIdentifier
-	if m.InstanceDeleted(*id) {
+	index, instance := m.FindInstance(*id)
+	if instance != nil {
+		status := "available"
+		if *instance.DBInstanceStatus == "deleting" {
+			m.dbInstances = append(
+				m.dbInstances[:index],
+				m.dbInstances[index+1:]...,
+			)
+		}
+		endpoint, _ := m.dbInstancesEndpoints[*id]
+		result = &rds.DescribeDBInstancesOutput{
+			DBInstances: []*rds.DBInstance{
+				{
+					DBInstanceIdentifier: id,
+					DBInstanceStatus:     &status,
+					Endpoint:             &endpoint,
+				},
+			},
+		}
+	} else {
 		err = fmt.Errorf(
 			"No such instance %s",
 			id,
 		)
-		return
-	}
-	status := "available"
-	if m.InstanceDeleting(*id) {
-		status = "deleting"
-		m.dbDeletedInstances = append(
-			m.dbDeletedInstances,
-			*id,
-		)
-	}
-	endpoint, _ := m.dbInstancesEndpoints[*id]
-	result = &rds.DescribeDBInstancesOutput{
-		DBInstances: []*rds.DBInstance{
-			{
-				DBInstanceIdentifier: id,
-				DBInstanceStatus:     &status,
-				Endpoint:             &endpoint,
-			},
-		},
 	}
 	return
 }
 
 // CreateDBInstance mocks rds.CreateDBInstance.
-func (m mockRDSClient) CreateDBInstance(
+func (m *mockRDSClient) CreateDBInstance(
 	inputParams *rds.CreateDBInstanceInput,
 ) (
 	result *rds.CreateDBInstanceOutput,
@@ -191,26 +176,31 @@ func (m mockRDSClient) CreateDBInstance(
 		Port:    &port,
 	}
 	status := "creating"
-	result = &rds.CreateDBInstanceOutput{
-		DBInstance: &rds.DBInstance{
-			AllocatedStorage: inputParams.AllocatedStorage,
-			DBInstanceArn: aws.String(
-				fmt.Sprintf(
-					"arn:aws:rds:%s:0:db:%s",
-					region,
-					id,
-				),
+	instance := rds.DBInstance{
+		AllocatedStorage: inputParams.AllocatedStorage,
+		DBInstanceArn: aws.String(
+			fmt.Sprintf(
+				"arn:aws:rds:%s:0:db:%s",
+				region,
+				id,
 			),
-			DBInstanceIdentifier: id,
-			DBInstanceStatus:     &status,
-			Engine:               inputParams.Engine,
-		},
+		),
+		DBInstanceIdentifier: id,
+		DBInstanceStatus:     &status,
+		Engine:               inputParams.Engine,
+	}
+	m.dbInstances = append(
+		m.dbInstances,
+		&instance,
+	)
+	result = &rds.CreateDBInstanceOutput{
+		DBInstance: &instance,
 	}
 	return
 }
 
 // RestoreDBInstanceFromDBSnapshot mocks rds.RestoreDBInstanceFromDBSnapshot.
-func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
+func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 	inputParams *rds.RestoreDBInstanceFromDBSnapshotInput,
 ) (
 	result *rds.RestoreDBInstanceFromDBSnapshotOutput,
@@ -236,19 +226,24 @@ func (m mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 		Port:    &port,
 	}
 	status := "creating"
-	result = &rds.RestoreDBInstanceFromDBSnapshotOutput{
-		DBInstance: &rds.DBInstance{
-			DBInstanceArn: aws.String(
-				fmt.Sprintf(
-					"arn:aws:rds:%s:0:db:%s",
-					region,
-					id,
-				),
+	instance := rds.DBInstance{
+		DBInstanceArn: aws.String(
+			fmt.Sprintf(
+				"arn:aws:rds:%s:0:db:%s",
+				region,
+				id,
 			),
-			DBInstanceIdentifier: id,
-			DBInstanceStatus:     &status,
-			Engine:               inputParams.Engine,
-		},
+		),
+		DBInstanceIdentifier: id,
+		DBInstanceStatus:     &status,
+		Engine:               inputParams.Engine,
+	}
+	m.dbInstances = append(
+		m.dbInstances,
+		&instance,
+	)
+	result = &rds.RestoreDBInstanceFromDBSnapshotOutput{
+		DBInstance: &instance,
 	}
 	return
 }
@@ -274,10 +269,9 @@ func (m mockRDSClient) ModifyDBInstance(
 // newMockRDSClient creates a mockRDSClient.
 func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
+		dbInstances:          []*rds.DBInstance{},
 		dbInstancesEndpoints: map[string]rds.Endpoint{},
 		dbInstanceSnapshots:  map[string][]*rds.DBSnapshot{},
 		dbSnapshots:          []*rds.DBSnapshot{},
-		dbDeletingInstances:  []string{},
-		dbDeletedInstances:   []string{},
 	}
 }
