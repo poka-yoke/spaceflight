@@ -51,6 +51,7 @@ type getLastSnapshotCase struct {
 }
 
 var getLastSnapshotCases = []getLastSnapshotCase{
+	// Get snapshot id by instance id
 	{
 		testCase: testCase{
 			expected:      exampleSnapshot1,
@@ -62,13 +63,14 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 			exampleSnapshot1,
 		},
 	},
+	// Get non-existing snapshot id by instance id
 	{
 		testCase: testCase{
 			expected:      nil,
-			expectedError: "There are no Snapshots for production",
+			expectedError: "No snapshot found for develop instance",
 		},
-		name:       "Get non-existant snapshot id by instance id",
-		identifier: "production",
+		name:       "Get non-existing snapshot id by instance id",
+		identifier: "develop",
 		snapshots:  []*rds.DBSnapshot{},
 	},
 }
