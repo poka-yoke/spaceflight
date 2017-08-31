@@ -15,6 +15,36 @@ type mockRDSClient struct {
 	dbSnapshots []*rds.DBSnapshot
 }
 
+// TakeFinalSnapshot emulates taking the final snapshot, if specified,
+// validating params.
+func (m *mockRDSClient) TakeFinalSnapshot(
+	params *rds.DeleteDBInstanceInput,
+) (err error) {
+	if params.SkipFinalSnapshot == nil {
+		params.SkipFinalSnapshot = aws.Bool(false)
+	}
+	if !*params.SkipFinalSnapshot {
+		if params.FinalDBSnapshotIdentifier == nil {
+			err = fmt.Errorf("Final Snapshot ID not specified")
+			return
+		}
+		if *params.FinalDBSnapshotIdentifier == "" {
+			err = fmt.Errorf("Final Snapshot ID not specified")
+			return
+		}
+		identifier := params.DBInstanceIdentifier
+		snapshotID := params.FinalDBSnapshotIdentifier
+		m.AddSnapshots([]*rds.DBSnapshot{
+			{
+				DBInstanceIdentifier: identifier,
+				DBSnapshotIdentifier: snapshotID,
+				Status:               aws.String("available"),
+			},
+		})
+	}
+	return
+}
+
 // DeleteDBInstance mocks rds.DeleteDBInstance.
 func (m *mockRDSClient) DeleteDBInstance(
 	params *rds.DeleteDBInstanceInput,
@@ -22,8 +52,14 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
+	if err = params.Validate(); err != nil {
+		return
+	}
 	_, instance, err := m.FindInstance(*params.DBInstanceIdentifier)
 	if err != nil {
+		return
+	}
+	if err = m.TakeFinalSnapshot(params); err != nil {
 		return
 	}
 	instance.DBInstanceStatus = aws.String("deleting")
