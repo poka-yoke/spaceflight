@@ -22,17 +22,13 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
-	_, instance := m.FindInstance(*params.DBInstanceIdentifier)
-	if instance != nil {
-		instance.DBInstanceStatus = aws.String("deleting")
-		result = &rds.DeleteDBInstanceOutput{
-			DBInstance: instance,
-		}
-	} else {
-		err = fmt.Errorf(
-			"No such instance %s",
-			*params.DBInstanceIdentifier,
-		)
+	_, instance, err := m.FindInstance(*params.DBInstanceIdentifier)
+	if err != nil {
+		return
+	}
+	instance.DBInstanceStatus = aws.String("deleting")
+	result = &rds.DeleteDBInstanceOutput{
+		DBInstance: instance,
 	}
 	return
 }
@@ -42,12 +38,21 @@ func (m *mockRDSClient) DeleteDBInstance(
 func (m mockRDSClient) FindInstance(id string) (
 	index int,
 	instance *rds.DBInstance,
+	err error,
 ) {
+	found := false
 	for i, obj := range m.dbInstances {
 		if *obj.DBInstanceIdentifier == id {
 			instance = obj
 			index = i
+			found = true
 		}
+	}
+	if !found {
+		err = fmt.Errorf(
+			"No such instance %s",
+			id,
+		)
 	}
 	return
 }
@@ -110,39 +115,35 @@ func (m *mockRDSClient) DescribeDBInstances(
 	err error,
 ) {
 	id := describeParams.DBInstanceIdentifier
-	index, instance := m.FindInstance(*id)
-	if instance != nil {
-		if *instance.DBInstanceStatus == "deleting" {
-			m.dbInstances = append(
-				m.dbInstances[:index],
-				m.dbInstances[index+1:]...,
-			)
-		}
-		if *instance.DBInstanceStatus == "creating" {
-			az := *instance.AvailabilityZone
-			region := az[:len(az)-1]
-			endpoint := fmt.Sprintf(
-				"%s.0.%s.rds.amazonaws.com",
-				*id,
-				region,
-			)
-			port := int64(5432)
-			instance.Endpoint = &rds.Endpoint{
-				Address: &endpoint,
-				Port:    &port,
-			}
-			*instance.DBInstanceStatus = "available"
-		}
-		result = &rds.DescribeDBInstancesOutput{
-			DBInstances: []*rds.DBInstance{
-				instance,
-			},
-		}
-	} else {
-		err = fmt.Errorf(
-			"No such instance %s",
-			*id,
+	index, instance, err := m.FindInstance(*id)
+	if err != nil {
+		return
+	}
+	if *instance.DBInstanceStatus == "deleting" {
+		m.dbInstances = append(
+			m.dbInstances[:index],
+			m.dbInstances[index+1:]...,
 		)
+	}
+	if *instance.DBInstanceStatus == "creating" {
+		az := *instance.AvailabilityZone
+		region := az[:len(az)-1]
+		endpoint := fmt.Sprintf(
+			"%s.0.%s.rds.amazonaws.com",
+			*id,
+			region,
+		)
+		port := int64(5432)
+		instance.Endpoint = &rds.Endpoint{
+			Address: &endpoint,
+			Port:    &port,
+		}
+		*instance.DBInstanceStatus = "available"
+	}
+	result = &rds.DescribeDBInstancesOutput{
+		DBInstances: []*rds.DBInstance{
+			instance,
+		},
 	}
 	return
 }

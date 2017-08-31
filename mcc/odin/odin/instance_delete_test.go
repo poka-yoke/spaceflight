@@ -50,7 +50,7 @@ func TestDeleteInstance(t *testing.T) {
 					svc,
 				)
 				test.check("", err, t)
-				_, instance := svc.FindInstance(test.identifier)
+				_, instance, _ := svc.FindInstance(test.identifier)
 				if instance != nil {
 					t.Errorf(
 						"%s instance should be deleted",
