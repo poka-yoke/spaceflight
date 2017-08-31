@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/rds"
+
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
@@ -16,6 +19,21 @@ var deleteInstanceCases = []createInstanceCase{
 		},
 		name:       "Deleting simple instance",
 		identifier: "test1",
+		instances: []*rds.DBInstance{
+			{
+				DBInstanceIdentifier: aws.String("test1"),
+				DBInstanceStatus:     aws.String("available"),
+			},
+		},
+	},
+	// Deleting non existing instance
+	{
+		testCase: testCase{
+			expected:      "",
+			expectedError: "No such instance test2",
+		},
+		name:       "Deleting non existing instance",
+		identifier: "test2",
 	},
 }
 
@@ -26,6 +44,7 @@ func TestDeleteInstance(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
+				svc.AddInstances(test.instances)
 				err := odin.DeleteInstance(
 					test.identifier,
 					svc,

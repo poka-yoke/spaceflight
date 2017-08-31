@@ -22,16 +22,17 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
-	instance := rds.DBInstance{
-		DBInstanceIdentifier: params.DBInstanceIdentifier,
-		DBInstanceStatus:     aws.String("deleting"),
-	}
-	m.dbInstances = append(
-		m.dbInstances,
-		&instance,
-	)
-	result = &rds.DeleteDBInstanceOutput{
-		DBInstance: &instance,
+	_, instance := m.FindInstance(*params.DBInstanceIdentifier)
+	if instance != nil {
+		instance.DBInstanceStatus = aws.String("deleting")
+		result = &rds.DeleteDBInstanceOutput{
+			DBInstance: instance,
+		}
+	} else {
+		err = fmt.Errorf(
+			"No such instance %s",
+			*params.DBInstanceIdentifier,
+		)
 	}
 	return
 }
@@ -51,8 +52,18 @@ func (m mockRDSClient) FindInstance(id string) (
 	return
 }
 
-// AddSnapshots add a list of snapshots to the mock, both in the full
-// list and in the per instance map.
+// AddInstances add a list of instances to the mock
+func (m *mockRDSClient) AddInstances(
+	instances []*rds.DBInstance,
+) {
+	m.dbInstances = []*rds.DBInstance{}
+	m.dbInstances = append(
+		m.dbInstances,
+		instances...,
+	)
+}
+
+// AddSnapshots add a list of snapshots to the mock
 func (m *mockRDSClient) AddSnapshots(
 	snapshots []*rds.DBSnapshot,
 ) {
