@@ -15,16 +15,17 @@ type testCase struct {
 }
 
 func (tc *testCase) expectingError(err error) bool {
-	return tc.expectedError != "" && err.Error() != tc.expectedError
+	return tc.expectedError != "" && err.Error() == tc.expectedError
 }
 
 func (tc *testCase) check(actual interface{}, err error, t *testing.T) {
 	switch {
-	case err != nil && tc.expectingError(err):
+	case err != nil && !tc.expectingError(err):
 		t.Errorf(
 			"Unexpected error: %v",
 			err,
 		)
+	case err != nil && tc.expectingError(err):
 	case err == nil && tc.expectedError != "":
 		t.Errorf(
 			"Expected error: %v missing",
@@ -58,7 +59,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 			expectedError: "",
 		},
 		name:       "Get snapshot id by instance id",
-		identifier: "production",
+		identifier: "production-rds",
 		snapshots: []*rds.DBSnapshot{
 			exampleSnapshot1,
 		},

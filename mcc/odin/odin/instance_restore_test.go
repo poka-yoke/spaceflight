@@ -24,7 +24,7 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 		testCase: testCase{
 			expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
 				DBInstanceClass:      exampleSnapshot1Type,
-				DBInstanceIdentifier: exampleSnapshot1DBID,
+				DBInstanceIdentifier: aws.String("develop"),
 				DBSnapshotIdentifier: exampleSnapshot1ID,
 				DBSubnetGroupName:    aws.String(""),
 				Engine:               aws.String("postgres"),
@@ -32,10 +32,10 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			expectedError: "",
 		},
 		name:       "Params with Snapshot",
-		identifier: "production-rds",
+		identifier: "develop",
 		params: odin.RestoreParams{
 			InstanceType:         "db.m1.medium",
-			OriginalInstanceName: "production",
+			OriginalInstanceName: "production-rds",
 		},
 		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
@@ -99,7 +99,7 @@ var restoreInstanceCases = []cloneInstanceCase{
 		user:         "master",
 		password:     "master",
 		size:         6144,
-		from:         "production",
+		from:         "production-rds",
 		snapshots:    []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Uses non existing snapshot to restore from
