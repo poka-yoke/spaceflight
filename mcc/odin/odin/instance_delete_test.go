@@ -10,7 +10,15 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
-var deleteInstanceCases = []createInstanceCase{
+type deleteInstanceCase struct {
+	testCase
+	name       string
+	identifier string
+	snapshotID string
+	instances  []*rds.DBInstance
+}
+
+var deleteInstanceCases = []deleteInstanceCase{
 	// Deleting simple instance
 	{
 		testCase: testCase{
@@ -19,9 +27,26 @@ var deleteInstanceCases = []createInstanceCase{
 		},
 		name:       "Deleting simple instance",
 		identifier: "test1",
+		snapshotID: "",
 		instances: []*rds.DBInstance{
 			{
 				DBInstanceIdentifier: aws.String("test1"),
+				DBInstanceStatus:     aws.String("available"),
+			},
+		},
+	},
+	// Deleting simple instance with final snapshot
+	{
+		testCase: testCase{
+			expected:      "",
+			expectedError: "",
+		},
+		name:       "Deleting simple instance with final snapshot",
+		identifier: "test3",
+		snapshotID: "test3-final",
+		instances: []*rds.DBInstance{
+			{
+				DBInstanceIdentifier: aws.String("test3"),
 				DBInstanceStatus:     aws.String("available"),
 			},
 		},
@@ -34,6 +59,7 @@ var deleteInstanceCases = []createInstanceCase{
 		},
 		name:       "Deleting non existing instance",
 		identifier: "test2",
+		snapshotID: "",
 	},
 }
 
@@ -47,15 +73,39 @@ func TestDeleteInstance(t *testing.T) {
 				svc.AddInstances(test.instances)
 				err := odin.DeleteInstance(
 					test.identifier,
+					test.snapshotID,
 					svc,
 				)
 				test.check("", err, t)
-				_, instance, _ := svc.FindInstance(test.identifier)
+				_, instance, _ := svc.FindInstance(
+					test.identifier,
+				)
 				if instance != nil {
 					t.Errorf(
 						"%s instance should be deleted",
 						test.identifier,
 					)
+				}
+				if test.snapshotID == "" {
+					_, s, _ := svc.FindSnapshotInstance(
+						test.identifier,
+					)
+					if s != nil {
+						t.Errorf(
+							"%s should not exist",
+							*s.DBSnapshotIdentifier,
+						)
+					}
+				} else {
+					_, _, err = svc.FindSnapshot(
+						test.snapshotID,
+					)
+					if err != nil {
+						t.Errorf(
+							"%s should be created",
+							test.snapshotID,
+						)
+					}
 				}
 			},
 		)
