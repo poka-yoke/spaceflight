@@ -69,6 +69,56 @@ func (m *mockRDSClient) DeleteDBInstance(
 	return
 }
 
+// FindSnapshotInstance return index and snapshot in mockRDSClient.dbSnapshots
+// for a specific instance id.
+func (m mockRDSClient) FindSnapshotInstance(instanceID string) (
+	index int,
+	snapshot *rds.DBSnapshot,
+	err error,
+) {
+	found := false
+	for i, obj := range m.dbSnapshots {
+		if *obj.DBInstanceIdentifier == instanceID {
+			snapshot = obj
+			index = i
+			found = true
+			break
+		}
+	}
+	if !found {
+		err = fmt.Errorf(
+			"No snapshot for instance %s",
+			instanceID,
+		)
+	}
+	return
+}
+
+// FindSnapshot return index and snapshot in mockRDSClient.dbSnapshots
+// for a specific id.
+func (m mockRDSClient) FindSnapshot(id string) (
+	index int,
+	snapshot *rds.DBSnapshot,
+	err error,
+) {
+	found := false
+	for i, obj := range m.dbSnapshots {
+		if *obj.DBSnapshotIdentifier == id {
+			snapshot = obj
+			index = i
+			found = true
+			break
+		}
+	}
+	if !found {
+		err = fmt.Errorf(
+			"No such snapshot %s",
+			id,
+		)
+	}
+	return
+}
+
 // FindInstance return index and instance in mockRDSClient.dbInstances
 // for a specific id.
 func (m mockRDSClient) FindInstance(id string) (
