@@ -9,6 +9,8 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
+var finalSnapshotID string
+
 // instanceDeleteCmd represents the instance delete command
 var instanceDeleteCmd = &cobra.Command{
 	Use:   "delete [flags] identifier",
@@ -21,12 +23,13 @@ var instanceDeleteCmd = &cobra.Command{
 		svc := odin.Init()
 		err := odin.DeleteInstance(
 			args[0],
+			finalSnapshotID,
 			svc,
 		)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Printf("%s instance was deleted", args[0])
+		fmt.Printf("%s instance was deleted\n", args[0])
 	},
 }
 
@@ -42,5 +45,12 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
+	instanceDeleteCmd.PersistentFlags().StringVarP(
+		&finalSnapshotID,
+		"final-snapshot-id",
+		"s",
+		"",
+		"Final snapshot ID, if desired. If missing, no snapshot",
+	)
 
 }
