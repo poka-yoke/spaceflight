@@ -11,9 +11,8 @@ import (
 
 type mockRDSClient struct {
 	rdsiface.RDSAPI
-	dbInstances          []*rds.DBInstance
-	dbInstancesEndpoints map[string]rds.Endpoint
-	dbSnapshots          []*rds.DBSnapshot
+	dbInstances []*rds.DBInstance
+	dbSnapshots []*rds.DBSnapshot
 }
 
 // DeleteDBInstance mocks rds.DeleteDBInstance.
@@ -102,21 +101,30 @@ func (m *mockRDSClient) DescribeDBInstances(
 	id := describeParams.DBInstanceIdentifier
 	index, instance := m.FindInstance(*id)
 	if instance != nil {
-		status := "available"
 		if *instance.DBInstanceStatus == "deleting" {
 			m.dbInstances = append(
 				m.dbInstances[:index],
 				m.dbInstances[index+1:]...,
 			)
 		}
-		endpoint, _ := m.dbInstancesEndpoints[*id]
+		if *instance.DBInstanceStatus == "creating" {
+			az := *instance.AvailabilityZone
+			region := az[:len(az)-1]
+			endpoint := fmt.Sprintf(
+				"%s.0.%s.rds.amazonaws.com",
+				*id,
+				region,
+			)
+			port := int64(5432)
+			instance.Endpoint = &rds.Endpoint{
+				Address: &endpoint,
+				Port:    &port,
+			}
+			*instance.DBInstanceStatus = "available"
+		}
 		result = &rds.DescribeDBInstancesOutput{
 			DBInstances: []*rds.DBInstance{
-				{
-					DBInstanceIdentifier: id,
-					DBInstanceStatus:     &status,
-					Endpoint:             &endpoint,
-				},
+				instance,
 			},
 		}
 	} else {
@@ -138,9 +146,9 @@ func (m *mockRDSClient) CreateDBInstance(
 	if err = inputParams.Validate(); err != nil {
 		return
 	}
-	az := "us-east-1c"
+	az := aws.String("us-east-1c")
 	if inputParams.AvailabilityZone != nil {
-		az = *inputParams.AvailabilityZone
+		az = inputParams.AvailabilityZone
 	}
 	if inputParams.MasterUsername == nil ||
 		*inputParams.MasterUsername == "" {
@@ -158,21 +166,11 @@ func (m *mockRDSClient) CreateDBInstance(
 		err = errors.New("Specify size between 5 and 6144")
 		return
 	}
-	region := az[:len(az)-1]
+	region := (*az)[:len(*az)-1]
 	id := inputParams.DBInstanceIdentifier
-	endpoint := fmt.Sprintf(
-		"%s.0.%s.rds.amazonaws.com",
-		*id,
-		region,
-	)
-	port := int64(5432)
-	m.dbInstancesEndpoints[*id] = rds.Endpoint{
-		Address: &endpoint,
-		Port:    &port,
-	}
-	status := "creating"
 	instance := rds.DBInstance{
 		AllocatedStorage: inputParams.AllocatedStorage,
+		AvailabilityZone: az,
 		DBInstanceArn: aws.String(
 			fmt.Sprintf(
 				"arn:aws:rds:%s:0:db:%s",
@@ -181,7 +179,7 @@ func (m *mockRDSClient) CreateDBInstance(
 			),
 		),
 		DBInstanceIdentifier: id,
-		DBInstanceStatus:     &status,
+		DBInstanceStatus:     aws.String("creating"),
 		Engine:               inputParams.Engine,
 	}
 	m.dbInstances = append(
@@ -204,24 +202,14 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 	if err = inputParams.Validate(); err != nil {
 		return
 	}
-	az := "us-east-1c"
+	az := aws.String("us-east-1c")
 	if inputParams.AvailabilityZone != nil {
-		az = *inputParams.AvailabilityZone
+		az = inputParams.AvailabilityZone
 	}
-	region := az[:len(az)-1]
+	region := (*az)[:len(*az)-1]
 	id := inputParams.DBInstanceIdentifier
-	endpoint := fmt.Sprintf(
-		"%s.0.%s.rds.amazonaws.com",
-		*id,
-		region,
-	)
-	port := int64(5432)
-	m.dbInstancesEndpoints[*id] = rds.Endpoint{
-		Address: &endpoint,
-		Port:    &port,
-	}
-	status := "creating"
 	instance := rds.DBInstance{
+		AvailabilityZone: az,
 		DBInstanceArn: aws.String(
 			fmt.Sprintf(
 				"arn:aws:rds:%s:0:db:%s",
@@ -230,7 +218,7 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 			),
 		),
 		DBInstanceIdentifier: id,
-		DBInstanceStatus:     &status,
+		DBInstanceStatus:     aws.String("creating"),
 		Engine:               inputParams.Engine,
 	}
 	m.dbInstances = append(
@@ -264,8 +252,7 @@ func (m mockRDSClient) ModifyDBInstance(
 // newMockRDSClient creates a mockRDSClient.
 func newMockRDSClient() *mockRDSClient {
 	return &mockRDSClient{
-		dbInstances:          []*rds.DBInstance{},
-		dbInstancesEndpoints: map[string]rds.Endpoint{},
-		dbSnapshots:          []*rds.DBSnapshot{},
+		dbInstances: []*rds.DBInstance{},
+		dbSnapshots: []*rds.DBSnapshot{},
 	}
 }
