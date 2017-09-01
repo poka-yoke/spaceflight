@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/rds"
+
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
@@ -15,6 +17,7 @@ type createInstanceCase struct {
 	password     string
 	user         string
 	size         int64
+	instances    []*rds.DBInstance
 }
 
 var createInstanceCases = []createInstanceCase{

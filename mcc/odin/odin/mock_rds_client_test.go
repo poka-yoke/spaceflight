@@ -22,16 +22,13 @@ func (m *mockRDSClient) DeleteDBInstance(
 	result *rds.DeleteDBInstanceOutput,
 	err error,
 ) {
-	instance := rds.DBInstance{
-		DBInstanceIdentifier: params.DBInstanceIdentifier,
-		DBInstanceStatus:     aws.String("deleting"),
+	_, instance, err := m.FindInstance(*params.DBInstanceIdentifier)
+	if err != nil {
+		return
 	}
-	m.dbInstances = append(
-		m.dbInstances,
-		&instance,
-	)
+	instance.DBInstanceStatus = aws.String("deleting")
 	result = &rds.DeleteDBInstanceOutput{
-		DBInstance: &instance,
+		DBInstance: instance,
 	}
 	return
 }
@@ -41,18 +38,37 @@ func (m *mockRDSClient) DeleteDBInstance(
 func (m mockRDSClient) FindInstance(id string) (
 	index int,
 	instance *rds.DBInstance,
+	err error,
 ) {
+	found := false
 	for i, obj := range m.dbInstances {
 		if *obj.DBInstanceIdentifier == id {
 			instance = obj
 			index = i
+			found = true
 		}
+	}
+	if !found {
+		err = fmt.Errorf(
+			"No such instance %s",
+			id,
+		)
 	}
 	return
 }
 
-// AddSnapshots add a list of snapshots to the mock, both in the full
-// list and in the per instance map.
+// AddInstances add a list of instances to the mock
+func (m *mockRDSClient) AddInstances(
+	instances []*rds.DBInstance,
+) {
+	m.dbInstances = []*rds.DBInstance{}
+	m.dbInstances = append(
+		m.dbInstances,
+		instances...,
+	)
+}
+
+// AddSnapshots add a list of snapshots to the mock
 func (m *mockRDSClient) AddSnapshots(
 	snapshots []*rds.DBSnapshot,
 ) {
@@ -99,39 +115,35 @@ func (m *mockRDSClient) DescribeDBInstances(
 	err error,
 ) {
 	id := describeParams.DBInstanceIdentifier
-	index, instance := m.FindInstance(*id)
-	if instance != nil {
-		if *instance.DBInstanceStatus == "deleting" {
-			m.dbInstances = append(
-				m.dbInstances[:index],
-				m.dbInstances[index+1:]...,
-			)
-		}
-		if *instance.DBInstanceStatus == "creating" {
-			az := *instance.AvailabilityZone
-			region := az[:len(az)-1]
-			endpoint := fmt.Sprintf(
-				"%s.0.%s.rds.amazonaws.com",
-				*id,
-				region,
-			)
-			port := int64(5432)
-			instance.Endpoint = &rds.Endpoint{
-				Address: &endpoint,
-				Port:    &port,
-			}
-			*instance.DBInstanceStatus = "available"
-		}
-		result = &rds.DescribeDBInstancesOutput{
-			DBInstances: []*rds.DBInstance{
-				instance,
-			},
-		}
-	} else {
-		err = fmt.Errorf(
-			"No such instance %s",
-			*id,
+	index, instance, err := m.FindInstance(*id)
+	if err != nil {
+		return
+	}
+	if *instance.DBInstanceStatus == "deleting" {
+		m.dbInstances = append(
+			m.dbInstances[:index],
+			m.dbInstances[index+1:]...,
 		)
+	}
+	if *instance.DBInstanceStatus == "creating" {
+		az := *instance.AvailabilityZone
+		region := az[:len(az)-1]
+		endpoint := fmt.Sprintf(
+			"%s.0.%s.rds.amazonaws.com",
+			*id,
+			region,
+		)
+		port := int64(5432)
+		instance.Endpoint = &rds.Endpoint{
+			Address: &endpoint,
+			Port:    &port,
+		}
+		*instance.DBInstanceStatus = "available"
+	}
+	result = &rds.DescribeDBInstancesOutput{
+		DBInstances: []*rds.DBInstance{
+			instance,
+		},
 	}
 	return
 }
