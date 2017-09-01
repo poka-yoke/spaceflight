@@ -1,8 +1,6 @@
 package odin
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
@@ -11,17 +9,19 @@ import (
 // DeleteInstance deletes an existing RDS database instance.
 func DeleteInstance(
 	identifier string,
+	snapshotID string,
 	svc rdsiface.RDSAPI,
 ) error {
-	snapshotID := fmt.Sprintf(
-		"%s-final",
-		identifier,
-	)
+	params := &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier: aws.String(identifier),
+	}
+	if snapshotID == "" {
+		params.SkipFinalSnapshot = aws.Bool(true)
+	} else {
+		params.FinalDBSnapshotIdentifier = aws.String(snapshotID)
+	}
 	out, err := svc.DeleteDBInstance(
-		&rds.DeleteDBInstanceInput{
-			DBInstanceIdentifier:      aws.String(identifier),
-			FinalDBSnapshotIdentifier: aws.String(snapshotID),
-		},
+		params,
 	)
 	if err != nil {
 		return err
