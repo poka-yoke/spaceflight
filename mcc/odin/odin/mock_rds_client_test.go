@@ -9,6 +9,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
+// trimLast trims last character from a given string and returns the trimmed
+// one.
+func trimLast(in string) string {
+	if in == "" {
+		return in
+	}
+	return in[:len(in)-1]
+}
+
 type mockRDSClient struct {
 	rdsiface.RDSAPI
 	dbInstances []*rds.DBInstance
@@ -214,7 +223,7 @@ func (m *mockRDSClient) DescribeDBInstances(
 	}
 	if *instance.DBInstanceStatus == "creating" {
 		az := *instance.AvailabilityZone
-		region := az[:len(az)-1]
+		region := trimLast(az)
 		endpoint := fmt.Sprintf(
 			"%s.0.%s.rds.amazonaws.com",
 			*id,
@@ -265,7 +274,7 @@ func (m *mockRDSClient) CreateDBInstance(
 		err = errors.New("Specify size between 5 and 6144")
 		return
 	}
-	region := (*az)[:len(*az)-1]
+	region := trimLast(*az)
 	id := inputParams.DBInstanceIdentifier
 	instance := rds.DBInstance{
 		AllocatedStorage: inputParams.AllocatedStorage,
@@ -305,7 +314,7 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 	if inputParams.AvailabilityZone != nil {
 		az = inputParams.AvailabilityZone
 	}
-	region := (*az)[:len(*az)-1]
+	region := trimLast(*az)
 	id := inputParams.DBInstanceIdentifier
 	instance := rds.DBInstance{
 		AvailabilityZone: az,
