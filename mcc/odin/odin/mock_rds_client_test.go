@@ -190,7 +190,7 @@ func (m *mockRDSClient) CreateDBSnapshot(
 	if *instance.DBInstanceStatus != "available" {
 		err = fmt.Errorf(
 			"%s instance state is not available",
-			instanceID,
+			*instanceID,
 		)
 	}
 	id := params.DBSnapshotIdentifier
@@ -198,7 +198,7 @@ func (m *mockRDSClient) CreateDBSnapshot(
 	if snapshot != nil {
 		err = fmt.Errorf(
 			"Snapshot %s already exists",
-			id,
+			*id,
 		)
 		return
 	}
