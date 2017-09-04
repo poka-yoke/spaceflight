@@ -4,6 +4,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// CreateParamsReq is the message to show when arguments for
+	// snapshot create are not satisfied.
+	CreateParamsReq = `An existing available instance ID and
+a non existing snapshot ID are expected`
+)
+
 // SnapshotCmd represents the snapshot super command
 var SnapshotCmd = &cobra.Command{
 	Use:   "snapshot",
