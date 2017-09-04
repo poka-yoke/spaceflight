@@ -175,6 +175,43 @@ func (m *mockRDSClient) AddSnapshots(
 	)
 }
 
+// CreateDBSnapshot mocks rds.CreateDBSnapshot.
+func (m *mockRDSClient) CreateDBSnapshot(
+	params *rds.CreateDBSnapshotInput,
+) (
+	output *rds.CreateDBSnapshotOutput,
+	err error,
+) {
+	instanceID := params.DBInstanceIdentifier
+	_, instance, err := m.FindInstance(*instanceID)
+	if err != nil {
+		return
+	}
+	if *instance.DBInstanceStatus != "available" {
+		err = fmt.Errorf(
+			"%s instance state is not available",
+			instanceID,
+		)
+	}
+	id := params.DBSnapshotIdentifier
+	_, snapshot, _ := m.FindSnapshot(*id)
+	if snapshot != nil {
+		err = fmt.Errorf(
+			"Snapshot %s already exists",
+			id,
+		)
+		return
+	}
+	createdSnapshot := &rds.DBSnapshot{
+		DBInstanceIdentifier: instanceID,
+		DBSnapshotIdentifier: id,
+	}
+	output = &rds.CreateDBSnapshotOutput{
+		DBSnapshot: createdSnapshot,
+	}
+	return
+}
+
 // DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
 func (m mockRDSClient) DescribeDBSnapshots(
 	describeParams *rds.DescribeDBSnapshotsInput,
