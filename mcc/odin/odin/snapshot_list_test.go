@@ -19,6 +19,8 @@ var exampleSnapshot1Time = "2015-06-11T22:00:00+00:00"
 var exampleSnapshot2DBID = aws.String("develop-rds")
 var exampleSnapshot2ID = aws.String("rds:develop-2016-06-11")
 var exampleSnapshot2Time = "2016-06-11T22:00:00+00:00"
+var exampleSnapshot3DBID = aws.String("develop-rds")
+var exampleSnapshot3ID = aws.String("rds:develop-2017-06-11")
 
 func getTime(original string) (parsed time.Time) {
 	parsed, _ = time.Parse(
@@ -46,6 +48,11 @@ var exampleSnapshot2 = &rds.DBSnapshot{
 	MasterUsername:       aws.String("owner"),
 	SnapshotCreateTime:   aws.Time(getTime(exampleSnapshot2Time)),
 	Status:               aws.String("available"),
+}
+
+var exampleSnapshot3 = &rds.DBSnapshot{
+	DBInstanceIdentifier: exampleSnapshot3DBID,
+	DBSnapshotIdentifier: exampleSnapshot3ID,
 }
 
 var exampleSnapshot1Out = fmt.Sprintf(
