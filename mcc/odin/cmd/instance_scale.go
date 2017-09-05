@@ -9,7 +9,10 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
 )
 
-// instanceScaleCmd represents the instance scale command
+var delay bool
+
+// instanceScaleCmd invokes the ScaleInstance function with defined
+// parameter's from user's input.
 var instanceScaleCmd = &cobra.Command{
 	Use:   "scale [flags] identifier",
 	Short: "Scales a database",
@@ -22,6 +25,7 @@ var instanceScaleCmd = &cobra.Command{
 		result, err := odin.ScaleInstance(
 			args[0],
 			instanceType,
+			delay,
 			svc,
 		)
 		if err != nil {
@@ -45,6 +49,13 @@ func init() {
 		"t",
 		"db.m1.small",
 		"Instance type to use when creating DB Instance",
+	)
+	instanceScaleCmd.PersistentFlags().BoolVarP(
+		&delay,
+		"delay",
+		"d",
+		false,
+		"Scales on next reboot or during maintenance",
 	)
 
 	// Cobra supports local flags which will only run when this command
