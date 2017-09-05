@@ -271,7 +271,11 @@ func (m *mockRDSClient) DescribeDBInstances(
 			Address: &endpoint,
 			Port:    &port,
 		}
+	}
+	if *instance.DBInstanceStatus == "creating" ||
+		*instance.DBInstanceStatus == "modifying" {
 		*instance.DBInstanceStatus = "available"
+		m.dbInstances[index] = instance
 	}
 	result = &rds.DescribeDBInstancesOutput{
 		DBInstances: []*rds.DBInstance{
@@ -377,7 +381,7 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 }
 
 // ModifyDBInstance mocks rds.ModifyDBInstance.
-func (m mockRDSClient) ModifyDBInstance(
+func (m *mockRDSClient) ModifyDBInstance(
 	params *rds.ModifyDBInstanceInput,
 ) (
 	out *rds.ModifyDBInstanceOutput,
@@ -386,10 +390,24 @@ func (m mockRDSClient) ModifyDBInstance(
 	if err = params.Validate(); err != nil {
 		return
 	}
+	index, instance, err := m.findInstance(*params.DBInstanceIdentifier)
+	if err != nil {
+		return
+	}
+	if *instance.DBInstanceStatus != "available" {
+		err = fmt.Errorf(
+			"%s instance state is not available",
+			*params.DBInstanceIdentifier,
+		)
+	}
+	if params.DBInstanceClass != nil &&
+		params.DBInstanceClass != instance.DBInstanceClass {
+		instance.DBInstanceClass = params.DBInstanceClass
+	}
+	instance.DBInstanceStatus = aws.String("modifying")
+	m.dbInstances[index] = instance
 	out = &rds.ModifyDBInstanceOutput{
-		DBInstance: &rds.DBInstance{
-			DBInstanceIdentifier: params.DBInstanceIdentifier,
-		},
+		DBInstance: instance,
 	}
 	return
 }
