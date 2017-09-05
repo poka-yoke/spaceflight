@@ -153,8 +153,8 @@ func (m mockRDSClient) findInstance(id string) (
 	return
 }
 
-// AddInstances add a list of instances to the mock
-func (m *mockRDSClient) AddInstances(
+// addInstances add a list of instances to the mock
+func (m *mockRDSClient) addInstances(
 	instances []*rds.DBInstance,
 ) {
 	m.dbInstances = []*rds.DBInstance{}
