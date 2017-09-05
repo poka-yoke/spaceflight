@@ -64,7 +64,7 @@ func (m *mockRDSClient) DeleteDBInstance(
 	if err = params.Validate(); err != nil {
 		return
 	}
-	_, instance, err := m.FindInstance(*params.DBInstanceIdentifier)
+	_, instance, err := m.findInstance(*params.DBInstanceIdentifier)
 	if err != nil {
 		return
 	}
@@ -128,9 +128,9 @@ func (m mockRDSClient) FindSnapshot(id string) (
 	return
 }
 
-// FindInstance return index and instance in mockRDSClient.dbInstances
+// findInstance return index and instance in mockRDSClient.dbInstances
 // for a specific id.
-func (m mockRDSClient) FindInstance(id string) (
+func (m mockRDSClient) findInstance(id string) (
 	index int,
 	instance *rds.DBInstance,
 	err error,
@@ -183,7 +183,7 @@ func (m *mockRDSClient) CreateDBSnapshot(
 	err error,
 ) {
 	instanceID := params.DBInstanceIdentifier
-	_, instance, err := m.FindInstance(*instanceID)
+	_, instance, err := m.findInstance(*instanceID)
 	if err != nil {
 		return
 	}
@@ -248,7 +248,7 @@ func (m *mockRDSClient) DescribeDBInstances(
 	err error,
 ) {
 	id := describeParams.DBInstanceIdentifier
-	index, instance, err := m.FindInstance(*id)
+	index, instance, err := m.findInstance(*id)
 	if err != nil {
 		return
 	}
