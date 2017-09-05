@@ -15,6 +15,7 @@ type scaleInstanceCase struct {
 	name         string
 	identifier   string
 	instanceType string
+	delayChange  bool
 	instances    []*rds.DBInstance
 }
 
@@ -28,6 +29,7 @@ var scaleInstanceCases = []scaleInstanceCase{
 		name:         "Scaling up instance",
 		identifier:   "test1",
 		instanceType: "db.m1.small",
+		delayChange:  false,
 		instances: []*rds.DBInstance{
 			{
 				DBInstanceIdentifier: aws.String("test1"),
@@ -45,6 +47,7 @@ var scaleInstanceCases = []scaleInstanceCase{
 		name:         "Fail to scale up non existing instance",
 		identifier:   "test1",
 		instanceType: "db.m1.small",
+		delayChange:  false,
 		instances:    []*rds.DBInstance{},
 	},
 	// Fail to scale up non available instance
@@ -56,6 +59,7 @@ var scaleInstanceCases = []scaleInstanceCase{
 		name:         "Fail to scale up non available instance",
 		identifier:   "test1",
 		instanceType: "db.m1.small",
+		delayChange:  false,
 		instances: []*rds.DBInstance{
 			{
 				DBInstanceIdentifier: aws.String("test1"),
@@ -73,6 +77,25 @@ var scaleInstanceCases = []scaleInstanceCase{
 		name:         "Scaling down instance",
 		identifier:   "test1",
 		instanceType: "db.m1.small",
+		delayChange:  false,
+		instances: []*rds.DBInstance{
+			{
+				DBInstanceIdentifier: aws.String("test1"),
+				DBInstanceClass:      aws.String("db.m1.medium"),
+				DBInstanceStatus:     aws.String("available"),
+			},
+		},
+	},
+	// Delayed scaling down instance
+	{
+		testCase: testCase{
+			expected:      "Instance test1 is db.m1.medium",
+			expectedError: "",
+		},
+		name:         "Scaling down instance",
+		identifier:   "test1",
+		instanceType: "db.m1.small",
+		delayChange:  true,
 		instances: []*rds.DBInstance{
 			{
 				DBInstanceIdentifier: aws.String("test1"),
@@ -94,6 +117,7 @@ func TestScaleInstance(t *testing.T) {
 				actual, err := odin.ScaleInstance(
 					test.identifier,
 					test.instanceType,
+					test.delayChange,
 					svc,
 				)
 				test.check(actual, err, t)

@@ -400,11 +400,14 @@ func (m *mockRDSClient) ModifyDBInstance(
 			*params.DBInstanceIdentifier,
 		)
 	}
-	if params.DBInstanceClass != nil &&
-		params.DBInstanceClass != instance.DBInstanceClass {
-		instance.DBInstanceClass = params.DBInstanceClass
+	if params.ApplyImmediately != nil &&
+		*params.ApplyImmediately {
+		instance.DBInstanceStatus = aws.String("modifying")
+		if params.DBInstanceClass != nil &&
+			params.DBInstanceClass != instance.DBInstanceClass {
+			instance.DBInstanceClass = params.DBInstanceClass
+		}
 	}
-	instance.DBInstanceStatus = aws.String("modifying")
 	m.dbInstances[index] = instance
 	out = &rds.ModifyDBInstanceOutput{
 		DBInstance: instance,
