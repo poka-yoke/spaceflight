@@ -95,7 +95,7 @@ func TestCreateSnapshot(t *testing.T) {
 			test.name,
 			func(t *testing.T) {
 				svc := newMockRDSClient()
-				svc.AddInstances(test.instances)
+				svc.addInstances(test.instances)
 				svc.AddSnapshots(test.snapshots)
 				actual, err := odin.CreateSnapshot(
 					test.instanceID,
