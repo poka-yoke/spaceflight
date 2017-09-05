@@ -12,14 +12,17 @@ import (
 func ScaleInstance(
 	instanceName string,
 	instanceType string,
+	delayChange bool,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	out, err := svc.ModifyDBInstance(
-		&rds.ModifyDBInstanceInput{
-			DBInstanceIdentifier: aws.String(instanceName),
-			DBInstanceClass:      aws.String(instanceType),
-		},
-	)
+	in := &rds.ModifyDBInstanceInput{
+		DBInstanceIdentifier: aws.String(instanceName),
+		DBInstanceClass:      aws.String(instanceType),
+	}
+	if !delayChange {
+		in.ApplyImmediately = aws.Bool(true)
+	}
+	out, err := svc.ModifyDBInstance(in)
 	if err != nil {
 		return
 	}
