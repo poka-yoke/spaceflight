@@ -70,7 +70,7 @@ func TestDeleteInstance(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				svc.AddInstances(test.instances)
+				svc.addInstances(test.instances)
 				err := odin.DeleteInstance(
 					test.identifier,
 					test.snapshotID,
