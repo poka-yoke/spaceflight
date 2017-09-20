@@ -41,6 +41,21 @@ func (c *Check) Create(endpoint string, message map[string]interface{}) (req *ht
 	return
 }
 
+// SetMessage builds the request body for healthchecks.io
+func SetMessage(schedule, name, tags string) map[string]interface{} {
+	message := make(map[string]interface{})
+	if schedule != "" {
+		message["schedule"] = schedule
+	}
+	if name != "" {
+		message["name"] = name
+	}
+	if tags != "" {
+		message["tags"] = tags
+	}
+	return message
+}
+
 // GetSlugFromURL extracts the slug from any of the returned URLs
 func GetSlugFromURL(m string) (s string) {
 	s = strings.TrimPrefix(

@@ -33,18 +33,7 @@ var createCmd = &cobra.Command{
 		case strings.Contains(endpoint, "healthchecks.io"):
 			check = health.NewCheck()
 			check.SetAPIKey(apikey)
-			if schedule != "" {
-				message["schedule"] = schedule
-				out = append(out, schedule)
-			}
-			if name != "" {
-				message["name"] = name
-				out = append(out, name)
-			}
-			if tags != "" {
-				message["tags"] = tags
-				out = append(out, tags)
-			}
+			message = health.SetMessage(schedule, name, tags)
 			req, err := check.Create(endpoint, message)
 			if err != nil {
 				log.Fatal(err)
@@ -62,35 +51,11 @@ var createCmd = &cobra.Command{
 				log.Fatal("Can't access field update_url")
 			}
 			slug := health.GetSlugFromURL(v)
-			out = append(out, slug)
+			out = []string{schedule, name, tags, slug}
 		case strings.Contains(endpoint, "cronitor.io"):
 			check = cronitor.NewCheck()
 			check.SetAPIKey(apikey)
-			message["type"] = "heartbeat"
-			if schedule != "" {
-				out = append(out, schedule)
-				message["rules"] = []map[string]interface{}{
-					{
-						"value":     schedule,
-						"rule_type": "not_on_schedule",
-					},
-				}
-			}
-			if name != "" {
-				message["name"] = name
-				out = append(out, name)
-			}
-			if tags != "" {
-				message["tags"] = strings.Split(tags, " ")
-				out = append(out, tags)
-			}
-			if email != "" {
-				message["notifications"] = map[string][]string{
-					"emails": []string{
-						email,
-					},
-				}
-			}
+			message = cronitor.SetMessage(schedule, name, tags, email)
 			req, err := check.Create(endpoint, message)
 			if err != nil {
 				log.Fatal(err)
@@ -107,7 +72,7 @@ var createCmd = &cobra.Command{
 			if !ok {
 				log.Fatal("Can't retrieve id")
 			}
-			out = append(out, v)
+			out = []string{schedule, name, tags, v}
 		default:
 			log.Fatal("Unrecognized provider")
 		}
