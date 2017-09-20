@@ -1,4 +1,4 @@
-package health
+package cronitor
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 // Check represents the checking service and holds service dependent
@@ -37,7 +36,7 @@ func (c *Check) Create(endpoint string, message map[string]interface{}) (res *ht
 	}
 	// Set headers
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Api-Key", c.APIKey)
+	req.SetBasicAuth(c.APIKey, "")
 	res, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return
@@ -45,29 +44,18 @@ func (c *Check) Create(endpoint string, message map[string]interface{}) (res *ht
 	return
 }
 
-// GetSlugFromURL extracts the slug from any of the returned URLs
-func GetSlugFromURL(m string) (s string) {
-	s = strings.TrimPrefix(
-		m,
-		"https://healthchecks.io/api/v1/checks/",
-	)
-	s = strings.TrimPrefix(s, "https://hchk.io/")
-	s = strings.TrimSuffix(s, "/pause")
-	return
-}
-
 // ParseResponse converts the services' response body into a map
-func ParseResponse(in io.ReadCloser) (m map[string]interface{}, err error) {
-	m = make(map[string]interface{})
+func ParseResponse(in io.ReadCloser) (map[string]interface{}, error) {
+	m := make(map[string]interface{})
 	body, err := ioutil.ReadAll(in)
 	if err != nil {
-		return
+		return nil, err
 	}
 	err = json.Unmarshal(body, &m)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return
+	return m, nil
 }
 
 // NewCheck creates an empty Check
