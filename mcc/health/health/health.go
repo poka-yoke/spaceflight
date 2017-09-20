@@ -15,6 +15,11 @@ type Check struct {
 	APIKey string
 }
 
+// SetAPIKey configures the backend with proper API Key
+func (c *Check) SetAPIKey(key string) {
+	c.APIKey = key
+}
+
 // Create adds a new check throuh an API call
 func (c *Check) Create(endpoint string, message map[string]interface{}) (res *http.Response, err error) {
 	// Request body

@@ -10,7 +10,14 @@ import (
 	"github.com/poka-yoke/spaceflight/mcc/health/health"
 )
 
+// Check is an interface to be implemented by all backend providers
+type Check interface {
+	SetAPIKey(string)
+	Create(string, map[string]interface{}) (*http.Response, error)
+}
+
 var apikey, endpoint, schedule, name, tags, sep string
+var check Check
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -21,7 +28,7 @@ var createCmd = &cobra.Command{
 		message := make(map[string]interface{})
 		out := []string{}
 		check := health.NewCheck()
-		check.APIKey = apikey
+		check.SetAPIKey(apikey)
 		if schedule != "" {
 			message["schedule"] = schedule
 			out = append(out, schedule)
