@@ -15,10 +15,10 @@ import (
 // Check is an interface to be implemented by all backend providers
 type Check interface {
 	SetAPIKey(string)
-	Create(string, map[string]interface{}) (*http.Response, error)
+	Create(string, map[string]interface{}) (*http.Request, error)
 }
 
-var apikey, endpoint, schedule, name, tags, sep string
+var apikey, endpoint, schedule, name, tags, sep, email string
 var check Check
 
 // createCmd represents the create command
@@ -45,7 +45,11 @@ var createCmd = &cobra.Command{
 				message["tags"] = tags
 				out = append(out, tags)
 			}
-			res, err := check.Create(endpoint, message)
+			req, err := check.Create(endpoint, message)
+			if err != nil {
+				log.Fatal(err)
+			}
+			res, err := http.DefaultClient.Do(req)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -80,11 +84,22 @@ var createCmd = &cobra.Command{
 				message["tags"] = strings.Split(tags, " ")
 				out = append(out, tags)
 			}
-			res, err := check.Create(endpoint, message)
+			if email != "" {
+				message["notifications"] = map[string][]string{
+					"emails": []string{
+						email,
+					},
+				}
+			}
+			req, err := check.Create(endpoint, message)
 			if err != nil {
 				log.Fatal(err)
 			}
-			m, err := health.ParseResponse(res.Body)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				log.Fatal(err)
+			}
+			m, err := cronitor.ParseResponse(res.Body)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -149,6 +164,13 @@ func init() {
 		"",
 		" ",
 		"Field separator string for output",
+	)
+	createCmd.PersistentFlags().StringVarP(
+		&email,
+		"email",
+		"",
+		"",
+		"Contact email adresses (cronitor only)",
 	)
 
 	// Cobra supports local flags which will only run when this command

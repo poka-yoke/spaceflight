@@ -121,7 +121,11 @@ func TestCheckCreate(t *testing.T) {
 			"schedule": tt.schedule,
 			"name":     tt.name,
 		}
-		res, err := check.Create(server.URL, message)
+		req, err := check.Create(server.URL, message)
+		if err != nil {
+			t.Error(err)
+		}
+		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Error(err)
 		}

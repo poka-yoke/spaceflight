@@ -21,13 +21,13 @@ func (c *Check) SetAPIKey(key string) {
 }
 
 // Create adds a new check throuh an API call
-func (c *Check) Create(endpoint string, message map[string]interface{}) (res *http.Response, err error) {
+func (c *Check) Create(endpoint string, message map[string]interface{}) (req *http.Request, err error) {
 	// Request body
 	buf, err := json.Marshal(message)
 	if err != nil {
 		return
 	}
-	req, err := http.NewRequest(
+	req, err = http.NewRequest(
 		http.MethodPost,
 		endpoint,
 		bytes.NewBuffer(buf),
@@ -38,10 +38,6 @@ func (c *Check) Create(endpoint string, message map[string]interface{}) (res *ht
 	// Set headers
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("X-Api-Key", c.APIKey)
-	res, err = http.DefaultClient.Do(req)
-	if err != nil {
-		return
-	}
 	return
 }
 
