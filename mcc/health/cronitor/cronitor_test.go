@@ -203,3 +203,84 @@ func TestCheckCreate(t *testing.T) {
 		}
 	}
 }
+
+func TestSetMessage(t *testing.T) {
+	data := []struct {
+		schedule, name, tags, email string
+	}{
+		{
+			schedule: "* * * * *",
+			name:     "test",
+			tags:     "cron",
+			email:    "",
+		},
+	}
+	for _, tc := range data {
+		out := SetMessage(tc.schedule, tc.name, tc.tags, tc.email)
+		err := verifyKeyExists("type", "heartbeat", out)
+		if err != nil {
+			t.Error(err)
+		}
+		err = verifyKeyExists("name", tc.name, out)
+		if err != nil {
+			t.Error(err)
+		}
+		if v, ok := out["tags"]; !ok {
+			t.Errorf("Expected tags field was present")
+		} else {
+			tags, ok := v.([]string)
+			if !ok {
+				t.Errorf("Expected tags field to be string")
+			}
+			if strings.Join(tags, " ") != tc.tags {
+				t.Errorf(
+					"Expected tags field to contain %s, got %s",
+					tc.tags,
+					tags,
+				)
+			}
+		}
+		if v, ok := out["rules"]; !ok {
+			t.Errorf("Expected rules field was present")
+		} else {
+			rules, ok := v.([]map[string]interface{})
+			if !ok {
+				t.Errorf(
+					"Expected rules field to be of type "+
+						"map[string]interface{}, not %T",
+					v,
+				)
+			}
+			for _, rule := range rules {
+				err = verifyKeyExists("value", tc.schedule, rule)
+				if err != nil {
+					t.Error(err)
+				}
+				err = verifyKeyExists("rule_type", "not_on_schedule", rule)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+		}
+	}
+}
+
+func verifyKeyExists(field, expected string, container map[string]interface{}) error {
+	v, ok := container[field]
+	if !ok {
+		return fmt.Errorf("Expected %s field was present", field)
+	}
+	typefield, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("Expected %s field to be string", field)
+	}
+	if typefield != expected {
+		return fmt.Errorf(
+			"Expected %s field to contain %s, got %s",
+			field,
+			expected,
+			typefield,
+		)
+	}
+	return nil
+}

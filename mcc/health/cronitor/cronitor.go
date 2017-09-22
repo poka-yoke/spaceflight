@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // Check represents the checking service and holds service dependent
@@ -38,6 +39,34 @@ func (c *Check) Create(endpoint string, message map[string]interface{}) (req *ht
 	req.Header.Add("Content-Type", "application/json")
 	req.SetBasicAuth(c.APIKey, "")
 	return
+}
+
+// SetMessage builds the request body for cronitor.io
+func SetMessage(schedule, name, tags, email string) map[string]interface{} {
+	message := make(map[string]interface{})
+	message["type"] = "heartbeat"
+	if schedule != "" {
+		message["rules"] = []map[string]interface{}{
+			{
+				"value":     schedule,
+				"rule_type": "not_on_schedule",
+			},
+		}
+	}
+	if name != "" {
+		message["name"] = name
+	}
+	if tags != "" {
+		message["tags"] = strings.Split(tags, " ")
+	}
+	if email != "" {
+		message["notifications"] = map[string][]string{
+			"emails": []string{
+				email,
+			},
+		}
+	}
+	return message
 }
 
 // ParseResponse converts the services' response body into a map

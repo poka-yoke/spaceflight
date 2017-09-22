@@ -214,3 +214,50 @@ func TestGetSlugFromURL(t *testing.T) {
 		}
 	}
 }
+
+func TestSetMessage(t *testing.T) {
+	data := []struct {
+		schedule, name, tags string
+	}{
+		{
+			schedule: "* * * * *",
+			name:     "test",
+			tags:     "cron",
+		},
+	}
+	for _, tc := range data {
+		out := SetMessage(tc.schedule, tc.name, tc.tags)
+		err := verifyKeyExists("schedule", tc.schedule, out)
+		if err != nil {
+			t.Error(err)
+		}
+		err = verifyKeyExists("name", tc.name, out)
+		if err != nil {
+			t.Error(err)
+		}
+		err = verifyKeyExists("tags", tc.tags, out)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func verifyKeyExists(field, expected string, container map[string]interface{}) error {
+	v, ok := container[field]
+	if !ok {
+		return fmt.Errorf("Expected %s field was present", field)
+	}
+	typefield, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("Expected %s field to be string", field)
+	}
+	if typefield != expected {
+		return fmt.Errorf(
+			"Expected %s field to contain %s, got %s",
+			field,
+			expected,
+			typefield,
+		)
+	}
+	return nil
+}

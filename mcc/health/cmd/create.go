@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -29,87 +31,51 @@ var createCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		message := make(map[string]interface{})
 		out := []string{}
+		// Select backend to prepare request
 		switch {
 		case strings.Contains(endpoint, "healthchecks.io"):
 			check = health.NewCheck()
-			check.SetAPIKey(apikey)
-			if schedule != "" {
-				message["schedule"] = schedule
-				out = append(out, schedule)
-			}
-			if name != "" {
-				message["name"] = name
-				out = append(out, name)
-			}
-			if tags != "" {
-				message["tags"] = tags
-				out = append(out, tags)
-			}
-			req, err := check.Create(endpoint, message)
-			if err != nil {
-				log.Fatal(err)
-			}
-			res, err := http.DefaultClient.Do(req)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m, err := health.ParseResponse(res.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
+			message = health.SetMessage(schedule, name, tags)
+		case strings.Contains(endpoint, "cronitor.io"):
+			check = cronitor.NewCheck()
+			message = cronitor.SetMessage(schedule, name, tags, email)
+		default:
+			log.Fatal("Unrecognized provider")
+		}
+		// backend independent processing
+		check.SetAPIKey(apikey)
+		req, err := check.Create(endpoint, message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		m := make(map[string]interface{})
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Select backend to process answer
+		switch {
+		case strings.Contains(endpoint, "healthchecks.io"):
 			v, ok := m["update_url"].(string)
 			if !ok {
 				log.Fatal("Can't access field update_url")
 			}
 			slug := health.GetSlugFromURL(v)
-			out = append(out, slug)
+			out = []string{schedule, name, tags, slug}
 		case strings.Contains(endpoint, "cronitor.io"):
-			check = cronitor.NewCheck()
-			check.SetAPIKey(apikey)
-			message["type"] = "heartbeat"
-			if schedule != "" {
-				out = append(out, schedule)
-				message["rules"] = []map[string]interface{}{
-					{
-						"value":     schedule,
-						"rule_type": "not_on_schedule",
-					},
-				}
-			}
-			if name != "" {
-				message["name"] = name
-				out = append(out, name)
-			}
-			if tags != "" {
-				message["tags"] = strings.Split(tags, " ")
-				out = append(out, tags)
-			}
-			if email != "" {
-				message["notifications"] = map[string][]string{
-					"emails": []string{
-						email,
-					},
-				}
-			}
-			req, err := check.Create(endpoint, message)
-			if err != nil {
-				log.Fatal(err)
-			}
-			res, err := http.DefaultClient.Do(req)
-			if err != nil {
-				log.Fatal(err)
-			}
-			m, err := cronitor.ParseResponse(res.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
 			v, ok := m["code"].(string)
 			if !ok {
 				log.Fatal("Can't retrieve id")
 			}
-			out = append(out, v)
-		default:
-			log.Fatal("Unrecognized provider")
+			out = []string{schedule, name, tags, v}
 		}
 		fmt.Println(strings.Join(out, sep))
 	},
