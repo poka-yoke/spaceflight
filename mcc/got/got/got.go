@@ -156,6 +156,7 @@ func WaitForChangeToComplete(
 		if err != nil {
 			log.Printf("Error! Retry in %s", sleep)
 			time.Sleep(sleep)
+			continue
 		}
 		if *getChangeOutput.ChangeInfo.Status == route53.ChangeStatusInsync {
 			break
