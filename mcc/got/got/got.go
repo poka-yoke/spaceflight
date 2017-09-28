@@ -145,17 +145,23 @@ func WaitForChangeToComplete(
 	changeInfo *route53.ChangeInfo,
 	svc *route53.Route53,
 ) {
-	getChangeInput := route53.GetChangeInput{Id: changeInfo.Id}
-	getChangeOutput, err := svc.GetChange(&getChangeInput)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-	for *getChangeOutput.ChangeInfo.Status != route53.ChangeStatusInsync {
-		time.Sleep(1)
-		getChangeOutput, err = svc.GetChange(&getChangeInput)
+	getChangeInput := &route53.GetChangeInput{Id: changeInfo.Id}
+	req, getChangeOutput := svc.GetChangeRequest(getChangeInput)
+	for i := 1; ; i++ {
+		sleep, err := time.ParseDuration(fmt.Sprintf("%ds", i*i))
 		if err != nil {
-			log.Panic(err.Error())
+			log.Fatal(err)
 		}
+		err = req.Send()
+		if err != nil {
+			log.Printf("Error! Retry in %s", sleep)
+			time.Sleep(sleep)
+		}
+		if *getChangeOutput.ChangeInfo.Status == route53.ChangeStatusInsync {
+			break
+		}
+		log.Printf("Waiting for %s", sleep)
+		time.Sleep(sleep)
 	}
 	if Verbose {
 		fmt.Println(getChangeOutput.ChangeInfo)
