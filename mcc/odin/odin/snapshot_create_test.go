@@ -33,14 +33,14 @@ var createSnapshotCases = []createSnapshotsCase{
 	// Create simple snapshot
 	{
 		testCase: testCase{
-			expected:      exampleSnapshot3,
+			expected:      exampleSnapshot4,
 			expectedError: "",
 		},
 		name:       "Create simple snapshot",
 		instances:  []*rds.DBInstance{instance1},
 		snapshots:  []*rds.DBSnapshot{},
-		snapshotID: *exampleSnapshot3ID,
-		instanceID: *exampleSnapshot3DBID,
+		snapshotID: *exampleSnapshot4ID,
+		instanceID: *exampleSnapshot4DBID,
 	},
 	// Snapshot already exists
 	{
@@ -48,14 +48,14 @@ var createSnapshotCases = []createSnapshotsCase{
 			expected: nil,
 			expectedError: fmt.Sprintf(
 				"Snapshot %s already exists",
-				*exampleSnapshot3ID,
+				*exampleSnapshot4ID,
 			),
 		},
 		name:       "Snapshot already exists",
 		instances:  []*rds.DBInstance{instance1},
-		snapshots:  []*rds.DBSnapshot{exampleSnapshot3},
-		snapshotID: *exampleSnapshot3ID,
-		instanceID: *exampleSnapshot3DBID,
+		snapshots:  []*rds.DBSnapshot{exampleSnapshot4},
+		snapshotID: *exampleSnapshot4ID,
+		instanceID: *exampleSnapshot4DBID,
 	},
 	// Invalid instance state
 	{
@@ -63,14 +63,14 @@ var createSnapshotCases = []createSnapshotsCase{
 			expected: nil,
 			expectedError: fmt.Sprintf(
 				"%s instance state is not available",
-				*exampleSnapshot3DBID,
+				*exampleSnapshot4DBID,
 			),
 		},
 		name:       "Invalid instance state",
 		instances:  []*rds.DBInstance{instance2},
 		snapshots:  []*rds.DBSnapshot{},
-		snapshotID: *exampleSnapshot3ID,
-		instanceID: *exampleSnapshot3DBID,
+		snapshotID: *exampleSnapshot4ID,
+		instanceID: *exampleSnapshot4DBID,
 	},
 	// Non existing instance
 	{
@@ -78,14 +78,14 @@ var createSnapshotCases = []createSnapshotsCase{
 			expected: nil,
 			expectedError: fmt.Sprintf(
 				"No such instance %s",
-				*exampleSnapshot3DBID,
+				*exampleSnapshot4DBID,
 			),
 		},
 		name:       "Non existing instance",
 		instances:  []*rds.DBInstance{},
 		snapshots:  []*rds.DBSnapshot{},
-		snapshotID: *exampleSnapshot3ID,
-		instanceID: *exampleSnapshot3DBID,
+		snapshotID: *exampleSnapshot4ID,
+		instanceID: *exampleSnapshot4DBID,
 	},
 }
 
