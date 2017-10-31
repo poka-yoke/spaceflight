@@ -92,7 +92,7 @@ var scaleInstanceCases = []scaleInstanceCase{
 			expected:      "Instance test1 is db.m1.medium",
 			expectedError: "",
 		},
-		name:         "Scaling down instance",
+		name:         "Scaling down instance with delay",
 		identifier:   "test1",
 		instanceType: "db.m1.small",
 		delayChange:  true,
