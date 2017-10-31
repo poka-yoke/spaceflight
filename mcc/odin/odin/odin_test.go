@@ -74,6 +74,19 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 		identifier: "develop",
 		snapshots:  []*rds.DBSnapshot{},
 	},
+	// Get last snapshot id by instance id out of two
+	{
+		testCase: testCase{
+			expected:      exampleSnapshot3,
+			expectedError: "",
+		},
+		name:       "Get last snapshot id by instance id",
+		identifier: "develop-rds",
+		snapshots: []*rds.DBSnapshot{
+			exampleSnapshot2,
+			exampleSnapshot3,
+		},
+	},
 }
 
 func TestGetLastSnapshot(t *testing.T) {
