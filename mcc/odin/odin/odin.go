@@ -81,7 +81,6 @@ func WaitForInstance(
 			return
 		}
 		*instance = *res.DBInstances[0]
-		fmt.Printf("Waiting for %s: %s\n", status, *instance.DBInstanceStatus)
 		// This is to avoid AWS API rate throttling.
 		// Should use configurable exponential back-off
 		time.Sleep(Duration)
