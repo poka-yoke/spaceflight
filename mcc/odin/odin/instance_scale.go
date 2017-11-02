@@ -26,10 +26,6 @@ func ScaleInstance(
 	if err != nil {
 		return
 	}
-	err = WaitForInstance(out.DBInstance, svc, "modifying")
-	if err != nil {
-		return
-	}
 	err = WaitForInstance(out.DBInstance, svc, "available")
 	if err != nil {
 		return

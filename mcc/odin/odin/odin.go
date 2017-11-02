@@ -55,15 +55,12 @@ func GetLastSnapshot(
 	result *rds.DBSnapshot,
 	err error,
 ) {
-	params := &rds.DescribeDBSnapshotsInput{
-		DBInstanceIdentifier: &id,
-	}
-	results, err := svc.DescribeDBSnapshots(params)
-	if err != nil || len(results.DBSnapshots) == 0 {
+	results, err := ListSnapshots(id, svc)
+	if err != nil || len(results) == 0 {
 		err = fmt.Errorf("No snapshot found for %s instance", id)
 		return
 	}
-	return results.DBSnapshots[0], nil
+	return results[0], nil
 }
 
 // WaitForInstance waits until instance's status is "available".
@@ -84,6 +81,7 @@ func WaitForInstance(
 			return
 		}
 		*instance = *res.DBInstances[0]
+		fmt.Printf("Waiting for %s: %s\n", status, *instance.DBInstanceStatus)
 		// This is to avoid AWS API rate throttling.
 		// Should use configurable exponential back-off
 		time.Sleep(Duration)
