@@ -12,25 +12,68 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
-func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
-	res, err := svc.DescribeSecurityGroups(nil)
-	if err != nil {
-		log.Panic(err)
+// CreateSG creates a new security group. If a vpcid is specified the security
+// group will be in that VPC
+func CreateSG(
+	name string,
+	description string,
+	vpcid string,
+	svc ec2iface.EC2API,
+) string {
+	if description == "" {
+		log.Fatal("Not a valid description")
 	}
-	return res
+	params := &ec2.CreateSecurityGroupInput{
+		Description: aws.String(description),
+		GroupName:   aws.String(name),
+	}
+	if vpcid != "" {
+		params.VpcId = aws.String(vpcid)
+	}
+	if err := params.Validate(); err != nil {
+		log.Panic(err.Error())
+	}
+	res, err := svc.CreateSecurityGroup(params)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	return *res.GroupId
 }
 
-// ListSecurityGroups prints all available Security groups accessible
-// by the account on svc
-func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
-	for _, sg := range getSecurityGroups(svc).SecurityGroups {
-		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
-			*sg.GroupId,
-			*sg.GroupName,
-			*sg.Description),
-		)
+// AuthorizeAccessToSecurityGroup adds the specified permissions to the Ingress
+// list of the destination security group on protocol and port
+func AuthorizeAccessToSecurityGroup(
+	svc ec2iface.EC2API,
+	perm *ec2.IpPermission,
+	destination string,
+) *ec2.AuthorizeSecurityGroupIngressOutput {
+	params := &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId:       &destination,
+		IpPermissions: []*ec2.IpPermission{perm},
 	}
-	return
+	out, error := svc.AuthorizeSecurityGroupIngress(params)
+	if error != nil {
+		log.Panic(error)
+	}
+	return out
+}
+
+// RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
+// list of the destination security group on protocol and port
+func RevokeAccessToSecurityGroup(
+	svc ec2iface.EC2API,
+	perm *ec2.IpPermission,
+	destination string,
+) *ec2.RevokeSecurityGroupIngressOutput {
+	params := &ec2.RevokeSecurityGroupIngressInput{
+		GroupId:       &destination,
+		IpPermissions: []*ec2.IpPermission{perm},
+	}
+	out, error := svc.RevokeSecurityGroupIngress(params)
+	if error != nil {
+		log.Panic(error)
+	}
+	return out
 }
 
 // FindSecurityGroupsWithRange returns a list of SGIDs where the CIDR
@@ -73,6 +116,28 @@ func FindSecurityGroupsWithRange(
 				}
 			}
 		}
+	}
+	return
+}
+
+// getSecurityGroups retrieves the list of all Security Groups in the account
+func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
+	res, err := svc.DescribeSecurityGroups(nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	return res
+}
+
+// ListSecurityGroups prints all available Security groups accessible
+// by the account on svc
+func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
+	for _, sg := range getSecurityGroups(svc).SecurityGroups {
+		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
+			*sg.GroupId,
+			*sg.GroupName,
+			*sg.Description),
+		)
 	}
 	return
 }
@@ -124,77 +189,6 @@ func BuildIPPermission(
 	return
 }
 
-// AuthorizeAccessToSecurityGroup adds the specified permissions to the Ingress
-// list of the destination security group on protocol and port
-func AuthorizeAccessToSecurityGroup(
-	svc ec2iface.EC2API,
-	perm *ec2.IpPermission,
-	destination string,
-) *ec2.AuthorizeSecurityGroupIngressOutput {
-	params := &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId:       &destination,
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	out, error := svc.AuthorizeSecurityGroupIngress(params)
-	if error != nil {
-		log.Panic(error)
-	}
-	return out
-}
-
-// RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
-// list of the destination security group on protocol and port
-func RevokeAccessToSecurityGroup(
-	svc ec2iface.EC2API,
-	perm *ec2.IpPermission,
-	destination string,
-) *ec2.RevokeSecurityGroupIngressOutput {
-	params := &ec2.RevokeSecurityGroupIngressInput{
-		GroupId:       &destination,
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	out, error := svc.RevokeSecurityGroupIngress(params)
-	if error != nil {
-		log.Panic(error)
-	}
-	return out
-}
-
-// Init initializes connection to AWS API
-func Init() ec2iface.EC2API {
-	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
-	return ec2.New(sess)
-}
-
-// CreateSG creates a new security group. If a vpcid is specified the security
-// group will be in that VPC
-func CreateSG(
-	name string,
-	description string,
-	vpcid string,
-	svc ec2iface.EC2API,
-) string {
-	if description == "" {
-		log.Fatal("Not a valid description")
-	}
-	params := &ec2.CreateSecurityGroupInput{
-		Description: aws.String(description),
-		GroupName:   aws.String(name),
-	}
-	if vpcid != "" {
-		params.VpcId = aws.String(vpcid)
-	}
-	if err := params.Validate(); err != nil {
-		log.Panic(err.Error())
-	}
-	res, err := svc.CreateSecurityGroup(params)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-	return *res.GroupId
-}
-
 // FindSGByName gets an array of sgids for a name search
 func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 	params := &ec2.DescribeSecurityGroupsInput{
@@ -213,4 +207,11 @@ func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 		ret = append(ret, *sg.GroupId)
 	}
 	return ret
+}
+
+// Init initializes connection to AWS API
+func Init() ec2iface.EC2API {
+	region := "us-east-1"
+	sess := session.New(&aws.Config{Region: aws.String(region)})
+	return ec2.New(sess)
 }
