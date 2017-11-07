@@ -47,11 +47,11 @@ func AuthorizeAccessToSecurityGroup(
 	perm *ec2.IpPermission,
 	destination string,
 ) *ec2.AuthorizeSecurityGroupIngressOutput {
-	params := &ec2.AuthorizeSecurityGroupIngressInput{
-		GroupId:       &destination,
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	out, error := svc.AuthorizeSecurityGroupIngress(params)
+	out, error := svc.AuthorizeSecurityGroupIngress(
+		&ec2.AuthorizeSecurityGroupIngressInput{
+			GroupId:       &destination,
+			IpPermissions: []*ec2.IpPermission{perm},
+		})
 	if error != nil {
 		log.Panic(error)
 	}
@@ -65,11 +65,11 @@ func RevokeAccessToSecurityGroup(
 	perm *ec2.IpPermission,
 	destination string,
 ) *ec2.RevokeSecurityGroupIngressOutput {
-	params := &ec2.RevokeSecurityGroupIngressInput{
-		GroupId:       &destination,
-		IpPermissions: []*ec2.IpPermission{perm},
-	}
-	out, error := svc.RevokeSecurityGroupIngress(params)
+	out, error := svc.RevokeSecurityGroupIngress(
+		&ec2.RevokeSecurityGroupIngressInput{
+			GroupId:       &destination,
+			IpPermissions: []*ec2.IpPermission{perm},
+		})
 	if error != nil {
 		log.Panic(error)
 	}
@@ -193,15 +193,15 @@ func BuildIPPermission(
 
 // FindSGByName gets an array of sgids for a name search
 func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
-	params := &ec2.DescribeSecurityGroupsInput{
-		Filters: []*ec2.Filter{
-			&ec2.Filter{
-				Name:   aws.String("group-name"),
-				Values: []*string{&name},
+	res, err := svc.DescribeSecurityGroups(
+		&ec2.DescribeSecurityGroupsInput{
+			Filters: []*ec2.Filter{
+				&ec2.Filter{
+					Name:   aws.String("group-name"),
+					Values: []*string{&name},
+				},
 			},
-		},
-	}
-	res, err := svc.DescribeSecurityGroups(params)
+		})
 	if err != nil {
 		log.Panic(err.Error())
 	}
@@ -214,6 +214,11 @@ func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 // Init initializes connection to AWS API
 func Init() ec2iface.EC2API {
 	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
-	return ec2.New(sess)
+	return ec2.New(
+		session.New(
+			&aws.Config{
+				Region: aws.String(region),
+			},
+		),
+	)
 }
