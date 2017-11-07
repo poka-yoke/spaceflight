@@ -13,10 +13,10 @@ type mockEC2Client struct {
 func (m *mockEC2Client) AuthorizeSecurityGroupIngress(
 	params *ec2.AuthorizeSecurityGroupIngressInput,
 ) (
-	out *ec2.AuthorizeSecurityGroupIngressOutput,
-	err error,
+	*ec2.AuthorizeSecurityGroupIngressOutput,
+	error,
 ) {
-	return
+	return &ec2.AuthorizeSecurityGroupIngressOutput{}, nil
 }
 
 func (m *mockEC2Client) CreateSecurityGroup(
@@ -62,8 +62,8 @@ func (m *mockEC2Client) DescribeSecurityGroups(
 func (m *mockEC2Client) RevokeSecurityGroupIngress(
 	params *ec2.RevokeSecurityGroupIngressInput,
 ) (
-	out *ec2.RevokeSecurityGroupIngressOutput,
-	err error,
+	*ec2.RevokeSecurityGroupIngressOutput,
+	error,
 ) {
-	return
+	return &ec2.RevokeSecurityGroupIngressOutput{}, nil
 }
