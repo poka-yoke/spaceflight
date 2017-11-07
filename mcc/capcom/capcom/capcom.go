@@ -172,23 +172,29 @@ func BuildIPPermission(
 		ToPort:     &port,
 		IpProtocol: &proto,
 	}
-	if strings.HasPrefix(origin, "sg-") {
+	switch {
+	case strings.HasPrefix(origin, "sg-"):
 		// It's a security group
 		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
-	} else {
-		_, _, err = net.ParseCIDR(origin)
-		if err != nil {
-			// It's not a valid CIDR, and it wasn't an SGID before
-			err = fmt.Errorf(
-				"%s is neither sgid nor IP range in CIDR notation",
-				origin,
-			)
-			return
-		}
+
+	case isCIDR(origin):
 		// It's a valid CIDR
 		perm.IpRanges = []*ec2.IpRange{{CidrIp: &origin}}
+	default:
+		err = fmt.Errorf(
+			"%s is neither sgid nor IP range in CIDR notation",
+			origin,
+		)
 	}
 	return
+}
+
+func isCIDR(origin string) bool {
+	_, _, err := net.ParseCIDR(origin)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // FindSGByName gets an array of sgids for a name search
