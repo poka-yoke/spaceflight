@@ -46,7 +46,7 @@ func AuthorizeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
 	perm *ec2.IpPermission,
 	destination string,
-) *ec2.AuthorizeSecurityGroupIngressOutput {
+) bool {
 	out, error := svc.AuthorizeSecurityGroupIngress(
 		&ec2.AuthorizeSecurityGroupIngressInput{
 			GroupId:       &destination,
@@ -55,7 +55,10 @@ func AuthorizeAccessToSecurityGroup(
 	if error != nil {
 		log.Panic(error)
 	}
-	return out
+	if !(out != nil) {
+		return false
+	}
+	return true
 }
 
 // RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
@@ -64,7 +67,7 @@ func RevokeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
 	perm *ec2.IpPermission,
 	destination string,
-) *ec2.RevokeSecurityGroupIngressOutput {
+) bool {
 	out, error := svc.RevokeSecurityGroupIngress(
 		&ec2.RevokeSecurityGroupIngressInput{
 			GroupId:       &destination,
@@ -73,7 +76,10 @@ func RevokeAccessToSecurityGroup(
 	if error != nil {
 		log.Panic(error)
 	}
-	return out
+	if !(out != nil) {
+		return false
+	}
+	return true
 }
 
 // FindSecurityGroupsWithRange returns a list of SGIDs where the CIDR

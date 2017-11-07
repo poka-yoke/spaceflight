@@ -239,3 +239,60 @@ func TestNetworkContainsIPCheck(t *testing.T) {
 		}
 	}
 }
+
+func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
+	data := []struct {
+		origin, proto string
+		port          int64
+		destination   string
+		expected      bool
+	}{
+		{
+			origin:   "1.2.3.4/32",
+			proto:    "tcp",
+			port:     int64(0),
+			expected: true,
+		},
+	}
+	svc := &mockEC2Client{}
+	for _, tc := range data {
+		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		out := AuthorizeAccessToSecurityGroup(
+			svc,
+			perm,
+			tc.destination,
+		)
+		if out != tc.expected {
+			t.Error("Unexpected mismatch")
+		}
+	}
+}
+
+func TestRevokeAccessToSecurityGroup(t *testing.T) {
+	data := []struct {
+		origin, proto string
+		port          int64
+		destination   string
+		expected      bool
+	}{
+		{
+			origin:   "1.2.3.4/32",
+			proto:    "tcp",
+			port:     int64(0),
+			expected: true,
+		},
+	}
+	svc := &mockEC2Client{}
+	for _, tc := range data {
+		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		out := RevokeAccessToSecurityGroup(
+			svc,
+			perm,
+			tc.destination,
+		)
+		if out != tc.expected {
+			t.Error("Unexpected mismatch")
+		}
+	}
+
+}
