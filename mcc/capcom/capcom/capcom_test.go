@@ -21,7 +21,6 @@ func TestListSecurityGroups(t *testing.T) {
 }
 
 func TestBuildIPPermission(t *testing.T) {
-	for _, tt := range biptable {
 	data := []struct {
 		origin string
 		proto  string
@@ -59,13 +58,14 @@ func TestBuildIPPermission(t *testing.T) {
 			err:    errors.New(""),
 		},
 	}
+	for _, tc := range data {
 		_, err := BuildIPPermission(
-			tt.origin,
-			tt.proto,
-			tt.port,
+			tc.origin,
+			tc.proto,
+			tc.port,
 		)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error(err)
 		}
 	}
@@ -93,17 +93,17 @@ func TestCreateSG(t *testing.T) {
 	}
 
 	svc := &mockEC2Client{}
-	for _, tt := range csgtable {
+	for _, tc := range data {
 		t.Run(
-			tt.description,
+			tc.description,
 			func(t *testing.T) {
 				out := CreateSG(
-					tt.name,
-					tt.description,
-					tt.vpcid,
+					tc.name,
+					tc.description,
+					tc.vpcid,
 					svc,
 				)
-				if out != tt.out {
+				if out != tc.out {
 					t.Error("Unexpected output")
 				}
 			},
@@ -126,10 +126,10 @@ func TestFindSGByName(t *testing.T) {
 		},
 	}
 	svc := &mockEC2Client{}
-	for _, tt := range fsgbntable {
-		ret := FindSGByName(tt.name, tt.vpc, svc)
+	for _, tc := range data {
+		ret := FindSGByName(tc.name, tc.vpc, svc)
 		for index := range ret {
-			if ret[index] != tt.ret[index] {
+			if ret[index] != tc.ret[index] {
 				t.Error("Unexpected output")
 			}
 		}
@@ -156,21 +156,21 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 	}
 
 	svc := &mockEC2Client{}
-	for _, tt := range fsgwtable {
-		ret, err := FindSecurityGroupsWithRange(svc, tt.cidr)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
+	for _, tc := range data {
+		ret, err := FindSecurityGroupsWithRange(svc, tc.cidr)
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error("Unexpected/mismatched error")
 		}
-		if len(ret) != len(tt.ret) {
+		if len(ret) != len(tc.ret) {
 			t.Error("Mismatched results and expectations length")
 		}
 		for k, v := range ret {
-			if v.String() != tt.ret[k].String() {
+			if v.String() != tc.ret[k].String() {
 				t.Errorf(
 					"Unexpected output %s != %s",
 					v.String(),
-					tt.ret[k].String(),
+					tc.ret[k].String(),
 				)
 			}
 		}
@@ -178,11 +178,6 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 }
 
 func TestNetworkContainsIPCheck(t *testing.T) {
-	for _, tt := range ncictable {
-		ip, _, _ := net.ParseCIDR(tt.ip)
-		ret, err := NetworkContainsIPCheck(tt.cidr, ip)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
 	data := []struct {
 		cidr string
 		ip   string
@@ -232,9 +227,14 @@ func TestNetworkContainsIPCheck(t *testing.T) {
 			err:  nil,
 		},
 	}
+	for _, tc := range data {
+		ip, _, _ := net.ParseCIDR(tc.ip)
+		ret, err := NetworkContainsIPCheck(tc.cidr, ip)
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error("Unexpected/mismatched error")
 		}
-		if ret != tt.ret {
+		if ret != tc.ret {
 			t.Error("Unexpected mismatch")
 		}
 	}
