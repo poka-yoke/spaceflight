@@ -3,9 +3,9 @@ package dnsbl
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"os"
 	"strings"
 	"sync"
 )
@@ -19,17 +19,11 @@ var Stats struct {
 	Length, Queried, Positive int
 }
 
-// FromFile reads a file from disk and introduces each line in a channel
-func FromFile(path string) <-chan string {
+// Read introduces each line from io.Reader in a channel
+func Read(in io.Reader) <-chan string {
 	out := make(chan string)
 	go func() {
-		blfile, err := os.Open(path)
-		if err != nil {
-			log.Fatal("Could't open file ", path, err)
-		}
-		defer blfile.Close()
-
-		scanner := bufio.NewScanner(blfile)
+		scanner := bufio.NewScanner(in)
 		for scanner.Scan() {
 			wg.Add(1)
 			out <- scanner.Text()
