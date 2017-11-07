@@ -167,10 +167,11 @@ func BuildIPPermission(
 	perm *ec2.IpPermission,
 	err error,
 ) {
-	perm = &ec2.IpPermission{}
-	perm.FromPort = &port
-	perm.ToPort = &port
-	perm.IpProtocol = &proto
+	perm = &ec2.IpPermission{
+		FromPort:   &port,
+		ToPort:     &port,
+		IpProtocol: &proto,
+	}
 	if strings.HasPrefix(origin, "sg-") {
 		// It's a security group
 		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
