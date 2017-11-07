@@ -89,6 +89,7 @@ func FindSecurityGroupsWithRange(
 	searchIP, _, err := net.ParseCIDR(cidr)
 	if err != nil {
 		err = fmt.Errorf("%s is not a valid CIDR\n", cidr)
+		return
 	}
 	// Obtain and traverse AWS's Security Group structure
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
