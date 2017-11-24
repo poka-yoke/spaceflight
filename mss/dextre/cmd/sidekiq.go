@@ -17,8 +17,7 @@ var sidekiqCmd = &cobra.Command{
 	Long: `This command connects to an exposed API of sidekiq, scrapes the
 endpoints and offers the information gathered in the form of a Nagios check.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if !strings.HasPrefix(baseURL, "http://") ||
-			!strings.HasPrefix(baseURL, "https://") {
+		if sidekiq.ValidScheme(baseURL) {
 			log.Fatal("Unknown scheme: ", baseURL)
 		}
 		info := sidekiq.ProcessGetResponse(baseURL)
