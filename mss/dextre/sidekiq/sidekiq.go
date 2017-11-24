@@ -15,6 +15,14 @@ func must(err error) {
 	}
 }
 
+func ValidScheme(url string) bool {
+	if !strings.HasPrefix(url, "http://") &&
+		!strings.HasPrefix(url, "https://") {
+		return false
+	}
+	return true
+}
+
 type sidekiqStats struct {
 	Processed      int64   `json:"processed"`
 	Failed         int64   `json:"failed"`

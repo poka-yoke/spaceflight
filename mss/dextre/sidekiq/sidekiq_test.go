@@ -220,3 +220,37 @@ func compareSidekiqAttribs(a, b sidekiqAttribs) bool {
 	}
 	return res
 }
+
+var schemesTable = []struct {
+	url      string
+	expected bool
+}{
+	{
+		url:      "https://this.is.valid",
+		expected: true,
+	},
+	{
+		url:      "http://this.is.valid.too",
+		expected: true,
+	},
+	{
+		url:      "hkp://this.is.NOT.valid",
+		expected: false,
+	},
+}
+
+func TestValidScheme(t *testing.T) {
+	for _, tc := range schemesTable {
+		result := ValidScheme(tc.url)
+		if result != tc.expected {
+			msg := "Should not be valid"
+			if tc.expected {
+				msg = "Should be valid"
+			}
+			t.Error(
+				tc.url,
+				msg,
+			)
+		}
+	}
+}
