@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	_ "github.com/lib/pq"
-	"github.com/poka-yoke/spaceflight/mcc/surgeon"
 	"log"
 	"strings"
+
+	_ "github.com/lib/pq"
+
+	"github.com/poka-yoke/spaceflight/pkg/surgeon"
 )
 
 // GetDB returns a sql.DB object to be used when running queries.
