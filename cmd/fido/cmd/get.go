@@ -1,48 +1,45 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/fido/fido"
+	"github.com/poka-yoke/spaceflight/pkg/fido"
 )
 
-var file string
+var name string
 
-// pushCmd represents the push command
-var pushCmd = &cobra.Command{
-	Use:   "push",
-	Short: "Upload CustomJSON to stack",
+// rawCmd represents the raw command
+var getCmd = &cobra.Command{
+	Use:   "get [flags]",
+	Short: "Obtain CustomJSON from OpsWorks stack",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		customJSON, err := fido.ReadFromPipe()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
 		svc := fido.Init()
 		sID, err := fido.GetStackID(svc, name)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		err = fido.PushCustomJSON(svc, sID, customJSON)
+		customJSON, err := fido.GetCustomJSON(svc, sID)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Successfully uploaded CustomJSON to %s\n", name)
+		fmt.Println(customJSON)
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(pushCmd)
+	RootCmd.AddCommand(getCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// pushCmd.PersistentFlags().String("foo", "", "A help for foo")
-	pushCmd.PersistentFlags().StringVarP(
+	// rawCmd.PersistentFlags().String("foo", "", "A help for foo")
+	getCmd.PersistentFlags().StringVarP(
 		&name,
 		"name",
 		"",
@@ -52,6 +49,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// pushCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// rawCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }
