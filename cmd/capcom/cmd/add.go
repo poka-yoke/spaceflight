@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/capcom/capcom"
+	"github.com/poka-yoke/spaceflight/pkg/capcom"
 )
 
 var source, proto string
