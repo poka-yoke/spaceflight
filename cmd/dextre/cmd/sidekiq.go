@@ -4,8 +4,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/poka-yoke/spaceflight/mss/dextre/sidekiq"
 	"github.com/spf13/cobra"
+
+	"github.com/poka-yoke/spaceflight/pkg/sidekiq"
 )
 
 var baseURL string
