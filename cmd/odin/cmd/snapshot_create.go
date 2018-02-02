@@ -6,32 +6,37 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
-// snapshotListCmd represents the snapshot list command
-var snapshotListCmd = &cobra.Command{
-	Use:   "list identifier",
-	Short: "Lists all snapshots",
-	Long:  `Lists all snapshots, ordered from newer to older.`,
+// snapshotCreateCmd represents the snapshot create command
+var snapshotCreateCmd = &cobra.Command{
+	Use:   "create instanceID snapshotID",
+	Short: "Creates a new snapshot",
+	Long: `Create a new snapshot of the specified instance,
+using the specified snapshot name.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			args = append(args, "")
+		if len(args) != 2 {
+			log.Fatal(CreateParamsReq)
 		}
 		svc := odin.Init()
-		snapshots, err := odin.ListSnapshots(
+		snapshot, err := odin.CreateSnapshot(
 			args[0],
+			args[1],
 			svc,
 		)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Println(odin.PrintSnapshots(snapshots))
+		fmt.Printf(
+			"%s snapshot is being created",
+			*snapshot.DBSnapshotIdentifier,
+		)
 	},
 }
 
 func init() {
-	SnapshotCmd.AddCommand(snapshotListCmd)
+	SnapshotCmd.AddCommand(snapshotCreateCmd)
 
 	// Here you will define your flags and configuration settings.
 
