@@ -6,8 +6,9 @@ import (
 	"os"
 
 	"github.com/olorin/nagiosplugin"
-	"github.com/poka-yoke/spaceflight/mss/dextre/dnsbl"
 	"github.com/spf13/cobra"
+
+	"github.com/poka-yoke/spaceflight/pkg/dnsbl"
 )
 
 func must(err error) {
