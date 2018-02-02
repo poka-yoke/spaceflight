@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/got/got"
+	"github.com/poka-yoke/spaceflight/pkg/got"
 )
 
 var dryrun, exclude, wait, filterByName, filterByType bool
