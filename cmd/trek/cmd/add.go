@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/trek/trek"
+	"github.com/poka-yoke/spaceflight/pkg/trek"
 )
 
 var original, final string
