@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/got/got"
+	"github.com/poka-yoke/spaceflight/pkg/got"
 )
 
 // deleteCmd represents the delete command
