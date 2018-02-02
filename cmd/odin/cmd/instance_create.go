@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 var instanceType, password, user, subnetName, securityGroups string

@@ -6,7 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/rds"
 
-	"github.com/poka-yoke/spaceflight/mcc/odin/odin"
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type cloneInstanceCase struct {
