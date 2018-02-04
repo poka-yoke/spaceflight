@@ -4,3 +4,4 @@
 *.png
 *.out
 *.bak
+vendor/
