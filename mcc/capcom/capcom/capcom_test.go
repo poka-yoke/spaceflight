@@ -5,82 +5,14 @@ import (
 	"fmt"
 	"net"
 	"testing"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
-
-type mockEC2Client struct {
-	ec2iface.EC2API
-}
-
-func (m *mockEC2Client) AuthorizeSecurityGroupIngress(
-	params *ec2.AuthorizeSecurityGroupIngressInput,
-) (
-	out *ec2.AuthorizeSecurityGroupIngressOutput,
-	err error,
-) {
-	return
-}
-
-func (m *mockEC2Client) CreateSecurityGroup(
-	params *ec2.CreateSecurityGroupInput,
-) (
-	out *ec2.CreateSecurityGroupOutput,
-	err error,
-) {
-	err = params.Validate()
-	out = &ec2.CreateSecurityGroupOutput{
-		GroupId: aws.String("sg-12345678"),
-	}
-	return
-}
-
-func (m *mockEC2Client) DescribeSecurityGroups(
-	in *ec2.DescribeSecurityGroupsInput,
-) (
-	out *ec2.DescribeSecurityGroupsOutput,
-	err error,
-) {
-	out = &ec2.DescribeSecurityGroupsOutput{
-		SecurityGroups: []*ec2.SecurityGroup{
-			{
-				Description: aws.String(""),
-				GroupId:     aws.String("sg-1234"),
-				GroupName:   aws.String(""),
-				IpPermissions: []*ec2.IpPermission{
-					{
-						IpProtocol: aws.String("tcp"),
-						ToPort:     aws.Int64(22),
-						IpRanges: []*ec2.IpRange{
-							{CidrIp: aws.String("1.2.3.4/32")},
-						},
-					},
-				},
-			},
-		},
-	}
-	return
-}
-
-func (m *mockEC2Client) RevokeSecurityGroupIngress(
-	params *ec2.RevokeSecurityGroupIngressInput,
-) (
-	out *ec2.RevokeSecurityGroupIngressOutput,
-	err error,
-) {
-	return
-}
-
-var ListSecurityGroupsExpectedOutput = []string{
-	fmt.Sprintf("* %10s %20s %s\n", "sg-1234", "", ""),
-}
 
 func TestListSecurityGroups(t *testing.T) {
 	svc := &mockEC2Client{}
 	out := ListSecurityGroups(svc)
-	expected := ListSecurityGroupsExpectedOutput
+	expected := []string{
+		fmt.Sprintf("* %10s %20s %s\n", "sg-1234", "", ""),
+	}
 	for index, line := range out {
 		if line != expected[index] {
 			t.Error("Unexpected output")
@@ -88,91 +20,90 @@ func TestListSecurityGroups(t *testing.T) {
 	}
 }
 
-var biptable = []struct {
-	origin string
-	proto  string
-	port   int64
-	err    error
-}{
-	{
-		origin: "1.2.3.4/32",
-		proto:  "tcp",
-		port:   int64(0),
-		err:    nil,
-	},
-	{
-		origin: "sg-",
-		proto:  "tcp",
-		port:   int64(0),
-		err:    nil,
-	},
-	{
-		origin: "1.2.3.4/32",
-		proto:  "udp",
-		port:   int64(0),
-		err:    nil,
-	},
-	{
-		origin: "sg-",
-		proto:  "icmp",
-		port:   int64(0),
-		err:    nil,
-	},
-	{
-		origin: "1.2.3./32",
-		proto:  "udp",
-		port:   int64(0),
-		err:    errors.New(""),
-	},
-}
-
 func TestBuildIPPermission(t *testing.T) {
-	for _, tt := range biptable {
+	data := []struct {
+		origin string
+		proto  string
+		port   int64
+		err    error
+	}{
+		{
+			origin: "1.2.3.4/32",
+			proto:  "tcp",
+			port:   int64(0),
+			err:    nil,
+		},
+		{
+			origin: "sg-",
+			proto:  "tcp",
+			port:   int64(0),
+			err:    nil,
+		},
+		{
+			origin: "1.2.3.4/32",
+			proto:  "udp",
+			port:   int64(0),
+			err:    nil,
+		},
+		{
+			origin: "sg-",
+			proto:  "icmp",
+			port:   int64(0),
+			err:    nil,
+		},
+		{
+			origin: "1.2.3./32",
+			proto:  "udp",
+			port:   int64(0),
+			err:    errors.New(""),
+		},
+	}
+	for _, tc := range data {
 		_, err := BuildIPPermission(
-			tt.origin,
-			tt.proto,
-			tt.port,
+			tc.origin,
+			tc.proto,
+			tc.port,
 		)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error(err)
 		}
 	}
 }
 
-var csgtable = []struct {
-	name        string
-	description string
-	vpcid       string
-	out         string
-}{
-	{
-		name:        "",
-		description: "Non-VPC success",
-		vpcid:       "",
-		out:         "sg-12345678",
-	},
-	{
-		name:        "",
-		description: "VPC success",
-		vpcid:       "vpc-12345678",
-		out:         "sg-12345678",
-	},
-}
-
 func TestCreateSG(t *testing.T) {
+	data := []struct {
+		name        string
+		description string
+		vpcid       string
+		out         string
+	}{
+		{
+			name:        "",
+			description: "Non-VPC success",
+			vpcid:       "",
+			out:         "sg-12345678",
+		},
+		{
+			name:        "",
+			description: "VPC success",
+			vpcid:       "vpc-12345678",
+			out:         "sg-12345678",
+		},
+	}
+
 	svc := &mockEC2Client{}
-	for _, tt := range csgtable {
+	for _, tc := range data {
 		t.Run(
-			tt.description,
+			tc.description,
 			func(t *testing.T) {
 				out := CreateSG(
-					tt.name,
-					tt.description,
-					tt.vpcid,
+					tc.name,
+					tc.description,
+					tc.vpcid,
 					svc,
 				)
-				if out != tt.out {
+				if out != tc.out {
 					t.Error("Unexpected output")
 				}
 			},
@@ -180,133 +111,188 @@ func TestCreateSG(t *testing.T) {
 	}
 }
 
-var fsgbntable = []struct {
-	name string
-	vpc  string
-	ret  []string
-}{
-	{
-		name: "",
-		vpc:  "",
-		ret: []string{
-			"sg-1234",
-		},
-	},
-}
-
 func TestFindSGByName(t *testing.T) {
+	data := []struct {
+		name string
+		vpc  string
+		ret  []string
+	}{
+		{
+			name: "",
+			vpc:  "",
+			ret: []string{
+				"sg-1234",
+			},
+		},
+	}
 	svc := &mockEC2Client{}
-	for _, tt := range fsgbntable {
-		ret := FindSGByName(tt.name, tt.vpc, svc)
+	for _, tc := range data {
+		ret := FindSGByName(tc.name, tc.vpc, svc)
 		for index := range ret {
-			if ret[index] != tt.ret[index] {
+			if ret[index] != tc.ret[index] {
 				t.Error("Unexpected output")
 			}
 		}
 	}
 }
 
-var fsgwtable = []struct {
-	cidr string
-	err  error
-	ret  []SearchResult
-}{
-	{
-		cidr: "1.2.3.4/32",
-		err:  nil,
-		ret: []SearchResult{
-			SearchResult{
-				GroupID:  "sg-1234",
-				Protocol: "tcp",
-				Port:     22,
-				Source:   "1.2.3.4/32",
-			}},
-	},
-}
-
 func TestFindSecurityGroupsWithRange(t *testing.T) {
+	data := []struct {
+		cidr string
+		err  error
+		ret  []SearchResult
+	}{
+		{
+			cidr: "1.2.3.4/32",
+			err:  nil,
+			ret: []SearchResult{
+				SearchResult{
+					GroupID:  "sg-1234",
+					Protocol: "tcp",
+					Port:     22,
+					Source:   "1.2.3.4/32",
+				}},
+		},
+	}
+
 	svc := &mockEC2Client{}
-	for _, tt := range fsgwtable {
-		ret, err := FindSecurityGroupsWithRange(svc, tt.cidr)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
+	for _, tc := range data {
+		ret, err := FindSecurityGroupsWithRange(svc, tc.cidr)
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error("Unexpected/mismatched error")
 		}
-		if len(ret) != len(tt.ret) {
+		if len(ret) != len(tc.ret) {
 			t.Error("Mismatched results and expectations length")
 		}
 		for k, v := range ret {
-			if v.String() != tt.ret[k].String() {
+			if v.String() != tc.ret[k].String() {
 				t.Errorf(
 					"Unexpected output %s != %s",
 					v.String(),
-					tt.ret[k].String(),
+					tc.ret[k].String(),
 				)
 			}
 		}
 	}
 }
 
-var ncictable = []struct {
-	cidr string
-	ip   string
-	ret  bool
-	err  error
-}{
-	{
-		cidr: "0.0.0.0/0",
-		ip:   "1.2.3.4/32",
-		ret:  true,
-		err:  nil,
-	},
-	{
-		cidr: "deadbeef",
-		ip:   "1.2.3.4/32",
-		ret:  false,
-		err:  errors.New(""),
-	},
-	{
-		cidr: "192.168.1.0/24",
-		ip:   "192.168.1.1/32",
-		ret:  true,
-		err:  nil,
-	},
-	{
-		cidr: "192.168.1.0/24",
-		ip:   "192.168.3.1/32",
-		ret:  false,
-		err:  nil,
-	},
-	{
-		cidr: "192.168.1.0/24",
-		ip:   "192.168.1.0/24",
-		ret:  true,
-		err:  nil,
-	},
-	{
-		cidr: "192.168.1.0/24",
-		ip:   "192.168.3.0/24",
-		ret:  false,
-		err:  nil,
-	},
-	{
-		cidr: "192.168.0.0/16",
-		ip:   "192.168.10.0/24",
-		ret:  true,
-		err:  nil,
-	},
-}
-
 func TestNetworkContainsIPCheck(t *testing.T) {
-	for _, tt := range ncictable {
-		ip, _, _ := net.ParseCIDR(tt.ip)
-		ret, err := NetworkContainsIPCheck(tt.cidr, ip)
-		if (err != nil && tt.err == nil) ||
-			(err == nil && tt.err != nil) {
+	data := []struct {
+		cidr string
+		ip   string
+		ret  bool
+		err  error
+	}{
+		{
+			cidr: "0.0.0.0/0",
+			ip:   "1.2.3.4/32",
+			ret:  true,
+			err:  nil,
+		},
+		{
+			cidr: "deadbeef",
+			ip:   "1.2.3.4/32",
+			ret:  false,
+			err:  errors.New(""),
+		},
+		{
+			cidr: "192.168.1.0/24",
+			ip:   "192.168.1.1/32",
+			ret:  true,
+			err:  nil,
+		},
+		{
+			cidr: "192.168.1.0/24",
+			ip:   "192.168.3.1/32",
+			ret:  false,
+			err:  nil,
+		},
+		{
+			cidr: "192.168.1.0/24",
+			ip:   "192.168.1.0/24",
+			ret:  true,
+			err:  nil,
+		},
+		{
+			cidr: "192.168.1.0/24",
+			ip:   "192.168.3.0/24",
+			ret:  false,
+			err:  nil,
+		},
+		{
+			cidr: "192.168.0.0/16",
+			ip:   "192.168.10.0/24",
+			ret:  true,
+			err:  nil,
+		},
+	}
+	for _, tc := range data {
+		ip, _, _ := net.ParseCIDR(tc.ip)
+		ret, err := NetworkContainsIPCheck(tc.cidr, ip)
+		if (err != nil && tc.err == nil) ||
+			(err == nil && tc.err != nil) {
 			t.Error("Unexpected/mismatched error")
 		}
-		if ret != tt.ret {
+		if ret != tc.ret {
 			t.Error("Unexpected mismatch")
 		}
 	}
+}
+
+func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
+	data := []struct {
+		origin, proto string
+		port          int64
+		destination   string
+		expected      bool
+	}{
+		{
+			origin:   "1.2.3.4/32",
+			proto:    "tcp",
+			port:     int64(0),
+			expected: true,
+		},
+	}
+	svc := &mockEC2Client{}
+	for _, tc := range data {
+		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		out := AuthorizeAccessToSecurityGroup(
+			svc,
+			perm,
+			tc.destination,
+		)
+		if out != tc.expected {
+			t.Error("Unexpected mismatch")
+		}
+	}
+}
+
+func TestRevokeAccessToSecurityGroup(t *testing.T) {
+	data := []struct {
+		origin, proto string
+		port          int64
+		destination   string
+		expected      bool
+	}{
+		{
+			origin:   "1.2.3.4/32",
+			proto:    "tcp",
+			port:     int64(0),
+			expected: true,
+		},
+	}
+	svc := &mockEC2Client{}
+	for _, tc := range data {
+		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		out := RevokeAccessToSecurityGroup(
+			svc,
+			perm,
+			tc.destination,
+		)
+		if out != tc.expected {
+			t.Error("Unexpected mismatch")
+		}
+	}
+
 }

@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"math"
+	"os"
 
 	"github.com/olorin/nagiosplugin"
 	"github.com/poka-yoke/spaceflight/mss/dextre/dnsbl"
@@ -24,7 +25,13 @@ var blCmd = &cobra.Command{
 	Short: "Check for blacklist presence",
 	Long:  `Checks the supplied list of DNS-based blacklists for a specific IP presence. It returns the results in a Nagios compliat string. Thresholds for different Nagios states can be supplied as well.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		list := dnsbl.FromFile(blacklist)
+		blfile, err := os.Open(blacklist)
+		if err != nil {
+			log.Fatal("Could't open file ", blacklist, err)
+		}
+		defer blfile.Close()
+
+		list := dnsbl.Read(blfile)
 		dnsbl.Queries(ipAddress, list)
 
 		positive := dnsbl.Stats.Positive
