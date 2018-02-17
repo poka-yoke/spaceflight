@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
+
+	"github.com/Devex/spaceflight/pkg/internal/http"
 )
 
 // Verbose flag
@@ -147,23 +149,16 @@ func WaitForChangeToComplete(
 ) {
 	getChangeInput := &route53.GetChangeInput{Id: changeInfo.Id}
 	req, getChangeOutput := svc.GetChangeRequest(getChangeInput)
-	for i := 1; ; i++ {
-		sleep, err := time.ParseDuration(fmt.Sprintf("%ds", i*i))
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = req.Send()
-		if err != nil {
-			log.Printf("Error! Retry in %s", sleep)
-			time.Sleep(sleep)
-			continue
-		}
-		if *getChangeOutput.ChangeInfo.Status == route53.ChangeStatusInsync {
-			break
-		}
-		log.Printf("Waiting for %s", sleep)
-		time.Sleep(sleep)
-	}
+
+	http.NewLinearBackoff(
+		func() bool {
+			return *getChangeOutput.ChangeInfo.Status ==
+				route53.ChangeStatusInsync
+		},
+		time.Second,
+		30*time.Second,
+	).Do(req)
+
 	if Verbose {
 		fmt.Println(getChangeOutput.ChangeInfo)
 	}
