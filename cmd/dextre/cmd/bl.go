@@ -32,8 +32,7 @@ var blCmd = &cobra.Command{
 		}
 		defer blfile.Close()
 
-		list := dnsbl.Read(blfile)
-		dnsbl.Queries(ipAddress, list)
+		dnsbl.Query(ipAddress, blfile)
 
 		positive := dnsbl.Stats.Positive
 		queried := dnsbl.Stats.Queried
