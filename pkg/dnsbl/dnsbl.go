@@ -10,22 +10,21 @@ import (
 	"sync"
 )
 
-// Lookup contains the lookup function used
-var Lookup = net.LookupHost
-
 // Checker controls the flow of package and provides a single point of
 // entry for its users.
 type Checker struct {
 	// Public members
 	Length, Queried, Positive int
 
+	// lookup contains the lookup function used
+	lookup func(string) ([]string, error)
 	// Functional control
 	wg sync.WaitGroup
 }
 
 // NewChecker creates a new, default configured Checker
 func NewChecker() *Checker {
-	return &Checker{}
+	return &Checker{lookup: net.LookupHost}
 }
 
 // Query handles concurrency for Query. WaitGroup elements are added
@@ -71,7 +70,7 @@ func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
 		reverseAddress(ipAddress),
 		bl,
 	)
-	result, _ := Lookup(reversedIPAddress)
+	result, _ := c.lookup(reversedIPAddress)
 	if len(result) > 0 {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
 	}
