@@ -50,8 +50,7 @@ func mockLookup(blacklist string) (addresses []string, err error) {
 }
 
 func TestQuery(t *testing.T) {
-	Lookup = mockLookup
-	checker := &Checker{}
+	checker := &Checker{lookup: mockLookup}
 	results := make(chan int)
 	t.Log("Hola")
 	go checker.query("127.0.0.1", "positive.dnsbl.com", results)
