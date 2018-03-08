@@ -19,8 +19,28 @@ var Stats struct {
 	Length, Queried, Positive int
 }
 
-// Read introduces each line from io.Reader in a channel
-func Read(in io.Reader) <-chan string {
+// Queries handles concurrency for Query. WaitGroup elements are added
+// when reading the input
+func Queries(ipAddress string, lists io.Reader) {
+	list := read(lists)
+	responses := make(chan int)
+	for l := range list {
+		go query(ipAddress, l, responses)
+	}
+	go func() {
+		for response := range responses {
+			if response > 0 {
+				Stats.Positive += response
+			}
+			wg.Done()
+		}
+	}()
+	wg.Wait()
+	close(responses)
+}
+
+// read introduces each line from io.Reader in a channel
+func read(in io.Reader) <-chan string {
 	out := make(chan string)
 	go func() {
 		scanner := bufio.NewScanner(in)
@@ -64,23 +84,4 @@ func query(ipAddress, bl string, addresses chan<- int) {
 	}
 	addresses <- len(result)
 	Stats.Queried++
-}
-
-// Queries handles concurrency for Query. WaitGroup elements are added
-// when reading the input
-func Queries(ipAddress string, list <-chan string) {
-	responses := make(chan int)
-	for l := range list {
-		go query(ipAddress, l, responses)
-	}
-	go func() {
-		for response := range responses {
-			if response > 0 {
-				Stats.Positive += response
-			}
-			wg.Done()
-		}
-	}()
-	wg.Wait()
-	close(responses)
 }
