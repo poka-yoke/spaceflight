@@ -19,9 +19,9 @@ var Stats struct {
 	Length, Queried, Positive int
 }
 
-// Queries handles concurrency for Query. WaitGroup elements are added
+// Query handles concurrency for Query. WaitGroup elements are added
 // when reading the input
-func Queries(ipAddress string, lists io.Reader) {
+func Query(ipAddress string, lists io.Reader) {
 	list := read(lists)
 	responses := make(chan int)
 	for l := range list {
