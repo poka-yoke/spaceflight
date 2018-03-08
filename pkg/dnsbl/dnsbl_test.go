@@ -8,7 +8,7 @@ func TestReverse(t *testing.T) {
 		"2",
 		"3",
 	}
-	Reverse(stringSlice)
+	reverse(stringSlice)
 	if stringSlice[0] != "3" {
 		t.Errorf(
 			"stringSlice[0] should be 3 and not %s",
@@ -31,7 +31,7 @@ func TestReverse(t *testing.T) {
 
 func TestReverseAddress(t *testing.T) {
 	ipAddress := "127.0.0.1"
-	reversedIPAddress := ReverseAddress(ipAddress)
+	reversedIPAddress := reverseAddress(ipAddress)
 	if reversedIPAddress != "1.0.0.127" {
 		t.Errorf(
 			"reversedIPAddress should be 1.0.0.127 and not %s",
@@ -53,7 +53,7 @@ func TestQuery(t *testing.T) {
 	Lookup = mockLookup
 	results := make(chan int)
 	t.Log("Hola")
-	go Query("127.0.0.1", "positive.dnsbl.com", results)
+	go query("127.0.0.1", "positive.dnsbl.com", results)
 	result := <-results
 	if result != 1 {
 		t.Errorf(
@@ -62,7 +62,7 @@ func TestQuery(t *testing.T) {
 			result,
 		)
 	}
-	go Query("127.0.0.1", "negative.dnsbl.com", results)
+	go query("127.0.0.1", "negative.dnsbl.com", results)
 	result = <-results
 	if result != 0 {
 		t.Errorf(

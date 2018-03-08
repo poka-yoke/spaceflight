@@ -35,7 +35,7 @@ func Read(in io.Reader) <-chan string {
 }
 
 // Reverse reverses slice of string elements.
-func Reverse(original []string) {
+func reverse(original []string) {
 	for i := len(original)/2 - 1; i >= 0; i-- {
 		opp := len(original) - 1 - i
 		original[i], original[opp] = original[opp], original[i]
@@ -43,19 +43,19 @@ func Reverse(original []string) {
 }
 
 // ReverseAddress converts IP address in string to reversed address for query.
-func ReverseAddress(ipAddress string) (reversedIPAddress string) {
+func reverseAddress(ipAddress string) (reversedIPAddress string) {
 	ipAddressValues := strings.Split(ipAddress, ".")
-	Reverse(ipAddressValues)
+	reverse(ipAddressValues)
 	reversedIPAddress = strings.Join(ipAddressValues, ".")
 	return
 }
 
 // Query queries a DNSBL and returns true if the argument gets a match
 // in the BL.
-func Query(ipAddress, bl string, addresses chan<- int) {
+func query(ipAddress, bl string, addresses chan<- int) {
 	reversedIPAddress := fmt.Sprintf(
 		"%v.%v",
-		ReverseAddress(ipAddress),
+		reverseAddress(ipAddress),
 		bl,
 	)
 	result, _ := Lookup(reversedIPAddress)
@@ -71,7 +71,7 @@ func Query(ipAddress, bl string, addresses chan<- int) {
 func Queries(ipAddress string, list <-chan string) {
 	responses := make(chan int)
 	for l := range list {
-		go Query(ipAddress, l, responses)
+		go query(ipAddress, l, responses)
 	}
 	go func() {
 		for response := range responses {
