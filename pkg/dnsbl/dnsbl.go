@@ -13,14 +13,12 @@ import (
 // Lookup contains the lookup function used
 var Lookup = net.LookupHost
 
-// Stats of the DNSBL queries
-var Stats struct {
-	Length, Queried, Positive int
-}
-
 // Checker controls the flow of package and provides a single point of
 // entry for its users.
 type Checker struct {
+	// Public members
+	Length, Queried, Positive int
+
 	// Functional control
 	wg sync.WaitGroup
 }
@@ -36,12 +34,12 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) {
 	list := c.read(lists)
 	responses := make(chan int)
 	for l := range list {
-		go query(ipAddress, l, responses)
+		go c.query(ipAddress, l, responses)
 	}
 	go func() {
 		for response := range responses {
 			if response > 0 {
-				Stats.Positive += response
+				c.Positive += response
 			}
 			c.wg.Done()
 		}
@@ -58,11 +56,27 @@ func (c *Checker) read(in io.Reader) <-chan string {
 		for scanner.Scan() {
 			c.wg.Add(1)
 			out <- scanner.Text()
-			Stats.Length++
+			c.Length++
 		}
 		close(out)
 	}()
 	return out
+}
+
+// Query queries a DNSBL and returns true if the argument gets a match
+// in the BL.
+func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
+	reversedIPAddress := fmt.Sprintf(
+		"%v.%v",
+		reverseAddress(ipAddress),
+		bl,
+	)
+	result, _ := Lookup(reversedIPAddress)
+	if len(result) > 0 {
+		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
+	}
+	addresses <- len(result)
+	c.Queried++
 }
 
 // Reverse reverses slice of string elements.
@@ -79,20 +93,4 @@ func reverseAddress(ipAddress string) (reversedIPAddress string) {
 	reverse(ipAddressValues)
 	reversedIPAddress = strings.Join(ipAddressValues, ".")
 	return
-}
-
-// Query queries a DNSBL and returns true if the argument gets a match
-// in the BL.
-func query(ipAddress, bl string, addresses chan<- int) {
-	reversedIPAddress := fmt.Sprintf(
-		"%v.%v",
-		reverseAddress(ipAddress),
-		bl,
-	)
-	result, _ := Lookup(reversedIPAddress)
-	if len(result) > 0 {
-		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
-	}
-	addresses <- len(result)
-	Stats.Queried++
 }
