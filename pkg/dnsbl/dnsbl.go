@@ -13,8 +13,7 @@ import (
 // Checker controls the flow of package and provides a single point of
 // entry for its users.
 type Checker struct {
-	// Public members
-	Length, Queried, Positive int
+	length, queried, positive int
 
 	// lookup contains the lookup function used
 	lookup func(string) ([]string, error)
@@ -38,13 +37,19 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) {
 	go func() {
 		for response := range responses {
 			if response > 0 {
-				c.Positive += response
+				c.positive += response
 			}
 			c.wg.Done()
 		}
 	}()
 	c.wg.Wait()
 	close(responses)
+}
+
+// Stats returns the number of positive results along with the amount
+// of blacklists supplied and the amount that were reachable.
+func (c *Checker) Stats() (int, int, int) {
+	return c.positive, c.queried, c.length
 }
 
 // read introduces each line from io.Reader in a channel
@@ -55,7 +60,7 @@ func (c *Checker) read(in io.Reader) <-chan string {
 		for scanner.Scan() {
 			c.wg.Add(1)
 			out <- scanner.Text()
-			c.Length++
+			c.length++
 		}
 		close(out)
 	}()
@@ -75,7 +80,7 @@ func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
 	}
 	addresses <- len(result)
-	c.Queried++
+	c.queried++
 }
 
 // Reverse reverses slice of string elements.
