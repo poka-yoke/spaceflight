@@ -28,7 +28,7 @@ func NewChecker() *Checker {
 
 // Query handles concurrency for Query. WaitGroup elements are added
 // when reading the input
-func (c *Checker) Query(ipAddress string, lists io.Reader) {
+func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 	list := c.read(lists)
 	responses := make(chan int)
 	for l := range list {
@@ -44,6 +44,7 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) {
 	}()
 	c.wg.Wait()
 	close(responses)
+	return c
 }
 
 // Stats returns the number of positive results along with the amount
