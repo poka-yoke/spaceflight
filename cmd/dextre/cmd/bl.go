@@ -32,7 +32,8 @@ var blCmd = &cobra.Command{
 		}
 		defer blfile.Close()
 
-		dnsbl.Query(ipAddress, blfile)
+		checker := dnsbl.NewChecker()
+		checker.Query(ipAddress, blfile)
 
 		positive := dnsbl.Stats.Positive
 		queried := dnsbl.Stats.Queried

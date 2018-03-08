@@ -12,17 +12,28 @@ import (
 
 // Lookup contains the lookup function used
 var Lookup = net.LookupHost
-var wg sync.WaitGroup
 
 // Stats of the DNSBL queries
 var Stats struct {
 	Length, Queried, Positive int
 }
 
+// Checker controls the flow of package and provides a single point of
+// entry for its users.
+type Checker struct {
+	// Functional control
+	wg sync.WaitGroup
+}
+
+// NewChecker creates a new, default configured Checker
+func NewChecker() *Checker {
+	return &Checker{}
+}
+
 // Query handles concurrency for Query. WaitGroup elements are added
 // when reading the input
-func Query(ipAddress string, lists io.Reader) {
-	list := read(lists)
+func (c *Checker) Query(ipAddress string, lists io.Reader) {
+	list := c.read(lists)
 	responses := make(chan int)
 	for l := range list {
 		go query(ipAddress, l, responses)
@@ -32,20 +43,20 @@ func Query(ipAddress string, lists io.Reader) {
 			if response > 0 {
 				Stats.Positive += response
 			}
-			wg.Done()
+			c.wg.Done()
 		}
 	}()
-	wg.Wait()
+	c.wg.Wait()
 	close(responses)
 }
 
 // read introduces each line from io.Reader in a channel
-func read(in io.Reader) <-chan string {
+func (c *Checker) read(in io.Reader) <-chan string {
 	out := make(chan string)
 	go func() {
 		scanner := bufio.NewScanner(in)
 		for scanner.Scan() {
-			wg.Add(1)
+			c.wg.Add(1)
 			out <- scanner.Text()
 			Stats.Length++
 		}
