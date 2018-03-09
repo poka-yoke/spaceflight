@@ -13,6 +13,9 @@ import (
 // Checker controls the flow of package and provides a single point of
 // entry for its users.
 type Checker struct {
+	// length is the number of providers
+	// queried is the number of providers who answered
+	// positive is the number of appearances reported
 	length, queried, positive int
 
 	// lookup contains the lookup function used
@@ -26,8 +29,8 @@ func NewChecker() *Checker {
 	return &Checker{lookup: net.LookupHost}
 }
 
-// Query handles concurrency for Query. WaitGroup elements are added
-// when reading the input
+// Query contacts the providers to check if the IP is present in their
+// lists
 func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 	responses := make(chan int)
 	scanner := bufio.NewScanner(lists)
@@ -50,7 +53,10 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 
 // Stats returns the number of positive results along with the amount
 // of blacklists supplied and the amount that were reachable.
-func (c *Checker) Stats() (int, int, int) {
+// length is the number of providers
+// queried is the number of providers who answered
+// positive is the number of appearances reported
+func (c *Checker) Stats() (positive, queried, length int) {
 	return c.positive, c.queried, c.length
 }
 
@@ -62,6 +68,9 @@ func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
 		reverseAddress(ipAddress),
 		bl,
 	)
+	// We ignore errors because the providers where we are not
+	// flagged can't be resolved. We can not distinguish if we are
+	// not on their list or their service is broken.
 	result, _ := c.lookup(reversedIPAddress)
 	if len(result) > 0 {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
