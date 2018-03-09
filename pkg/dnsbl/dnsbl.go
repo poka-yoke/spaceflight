@@ -36,9 +36,8 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 	}
 	go func() {
 		for response := range responses {
-			if response > 0 {
-				c.positive += response
-			}
+			c.positive += response
+			c.queried++
 			c.wg.Done()
 		}
 	}()
@@ -81,7 +80,6 @@ func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
 		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
 	}
 	addresses <- len(result)
-	c.queried++
 }
 
 // Reverse reverses slice of string elements.
