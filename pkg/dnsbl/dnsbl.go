@@ -37,7 +37,14 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 	for scanner.Scan() {
 		c.length++
 		c.wg.Add(1)
-		go c.query(ipAddress, scanner.Text(), responses)
+		go func(provider string) {
+			reversedIPAddress := fmt.Sprintf(
+				"%v.%v",
+				reverseAddress(ipAddress),
+				provider,
+			)
+			responses <- c.query(reversedIPAddress)
+		}(scanner.Text())
 	}
 	go func() {
 		for response := range responses {
@@ -60,22 +67,17 @@ func (c *Checker) Stats() (positive, queried, length int) {
 	return c.positive, c.queried, c.length
 }
 
-// Query queries a DNSBL and returns true if the argument gets a match
+// query queries a DNSBL and returns true if the argument gets a match
 // in the BL.
-func (c *Checker) query(ipAddress, bl string, addresses chan<- int) {
-	reversedIPAddress := fmt.Sprintf(
-		"%v.%v",
-		reverseAddress(ipAddress),
-		bl,
-	)
+func (c *Checker) query(address string) int {
 	// We ignore errors because the providers where we are not
 	// flagged can't be resolved. We can not distinguish if we are
 	// not on their list or their service is broken.
-	result, _ := c.lookup(reversedIPAddress)
+	result, _ := c.lookup(address)
 	if len(result) > 0 {
-		log.Printf("%v present in %v(%v)", reversedIPAddress, bl, result)
+		log.Printf("%v returned %v\n", address, result)
 	}
-	addresses <- len(result)
+	return len(result)
 }
 
 // Reverse reverses slice of string elements.
