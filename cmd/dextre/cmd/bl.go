@@ -32,12 +32,7 @@ var blCmd = &cobra.Command{
 		}
 		defer blfile.Close()
 
-		list := dnsbl.Read(blfile)
-		dnsbl.Queries(ipAddress, list)
-
-		positive := dnsbl.Stats.Positive
-		queried := dnsbl.Stats.Queried
-		length := dnsbl.Stats.Length
+		positive, queried, length := dnsbl.NewChecker().Query(ipAddress, blfile).Stats()
 
 		check := nagiosplugin.NewCheck()
 		defer check.Finish()
