@@ -29,10 +29,12 @@ func NewChecker() *Checker {
 // Query handles concurrency for Query. WaitGroup elements are added
 // when reading the input
 func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
-	list := c.read(lists)
 	responses := make(chan int)
-	for l := range list {
-		go c.query(ipAddress, l, responses)
+	scanner := bufio.NewScanner(lists)
+	for scanner.Scan() {
+		c.length++
+		c.wg.Add(1)
+		go c.query(ipAddress, scanner.Text(), responses)
 	}
 	go func() {
 		for response := range responses {
@@ -50,21 +52,6 @@ func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
 // of blacklists supplied and the amount that were reachable.
 func (c *Checker) Stats() (int, int, int) {
 	return c.positive, c.queried, c.length
-}
-
-// read introduces each line from io.Reader in a channel
-func (c *Checker) read(in io.Reader) <-chan string {
-	out := make(chan string)
-	go func() {
-		scanner := bufio.NewScanner(in)
-		for scanner.Scan() {
-			c.wg.Add(1)
-			out <- scanner.Text()
-			c.length++
-		}
-		close(out)
-	}()
-	return out
 }
 
 // Query queries a DNSBL and returns true if the argument gets a match
