@@ -1,6 +1,9 @@
 package dnsbl
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"strings"
 )
 
@@ -18,4 +21,19 @@ func reverseAddress(ipAddress string) (reversedIPAddress string) {
 	reverse(ipAddressValues)
 	reversedIPAddress = strings.Join(ipAddressValues, ".")
 	return
+}
+
+// GetProviders returns a slice of provider addresses to check
+func GetProviders(ipAddress string, lists io.Reader) (providers []string) {
+	reverseAddress := reverseAddress(ipAddress)
+	scanner := bufio.NewScanner(lists)
+	for scanner.Scan() {
+		reversedIPAddress := fmt.Sprintf(
+			"%v.%v",
+			reverseAddress,
+			scanner.Text(),
+		)
+		providers = append(providers, reversedIPAddress)
+	}
+	return providers
 }
