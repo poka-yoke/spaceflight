@@ -7,20 +7,21 @@ import (
 	"strings"
 )
 
-// Reverse reverses slice of string elements.
-func reverse(original []string) {
+// Reverse returns a slice of string elements in reverse order than
+// the one supplied.
+func reverse(original []string) []string {
+	copy := original
 	for i := len(original)/2 - 1; i >= 0; i-- {
 		opp := len(original) - 1 - i
-		original[i], original[opp] = original[opp], original[i]
+		copy[i], copy[opp] = original[opp], original[i]
 	}
+	return copy
 }
 
-// ReverseAddress converts IP address in string to reversed address for query.
-func reverseAddress(ipAddress string) (reversedIPAddress string) {
+// ReverseAddress converts IP address into reversed address for query.
+func reverseAddress(ipAddress string) string {
 	ipAddressValues := strings.Split(ipAddress, ".")
-	reverse(ipAddressValues)
-	reversedIPAddress = strings.Join(ipAddressValues, ".")
-	return
+	return strings.Join(reverse(ipAddressValues), ".")
 }
 
 // GetProviders returns a slice of provider addresses to check
