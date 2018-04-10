@@ -1,12 +1,8 @@
 package dnsbl
 
 import (
-	"bufio"
-	"fmt"
-	"io"
 	"log"
 	"net"
-	"strings"
 	"sync"
 )
 
@@ -17,6 +13,7 @@ type Checker struct {
 	// queried is the number of providers who answered
 	// positive is the number of appearances reported
 	length, queried, positive int
+	providers                 []string
 
 	// lookup contains the lookup function used
 	lookup func(string) ([]string, error)
@@ -25,26 +22,20 @@ type Checker struct {
 }
 
 // NewChecker creates a new, default configured Checker
-func NewChecker() *Checker {
-	return &Checker{lookup: net.LookupHost}
+func NewChecker(providers []string) *Checker {
+	return &Checker{lookup: net.LookupHost, providers: providers}
 }
 
 // Query contacts the providers to check if the IP is present in their
 // lists
-func (c *Checker) Query(ipAddress string, lists io.Reader) *Checker {
+func (c *Checker) Query() *Checker {
 	responses := make(chan int)
-	scanner := bufio.NewScanner(lists)
-	for scanner.Scan() {
+	for _, provider := range c.providers {
 		c.length++
 		c.wg.Add(1)
 		go func(provider string) {
-			reversedIPAddress := fmt.Sprintf(
-				"%v.%v",
-				reverseAddress(ipAddress),
-				provider,
-			)
-			responses <- c.query(reversedIPAddress)
-		}(scanner.Text())
+			responses <- c.query(provider)
+		}(provider)
 	}
 	go func() {
 		for response := range responses {
@@ -78,20 +69,4 @@ func (c *Checker) query(address string) int {
 		log.Printf("%v returned %v\n", address, result)
 	}
 	return len(result)
-}
-
-// Reverse reverses slice of string elements.
-func reverse(original []string) {
-	for i := len(original)/2 - 1; i >= 0; i-- {
-		opp := len(original) - 1 - i
-		original[i], original[opp] = original[opp], original[i]
-	}
-}
-
-// ReverseAddress converts IP address in string to reversed address for query.
-func reverseAddress(ipAddress string) (reversedIPAddress string) {
-	ipAddressValues := strings.Split(ipAddress, ".")
-	reverse(ipAddressValues)
-	reversedIPAddress = strings.Join(ipAddressValues, ".")
-	return
 }
