@@ -60,3 +60,8 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  source = "github.com/prometheus/client_golang"
+  branch = "master"
