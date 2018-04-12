@@ -29,21 +29,24 @@ func NewChecker(providers []string) *Checker {
 // Query contacts the providers to check if the IP is present in their
 // lists
 func (c *Checker) Query() *Checker {
-	responses := make(chan int)
-	for _, provider := range c.providers {
-		c.length++
-		c.wg.Add(1)
-		go func(provider string) {
-			responses <- c.query(provider)
-		}(provider)
-	}
+	length := len(c.providers)
+	responses := make(chan int, length)
+	c.wg.Add(length)
 	go func() {
+		c.positive = 0
+		c.queried = 0
 		for response := range responses {
 			c.positive += response
 			c.queried++
 			c.wg.Done()
 		}
 	}()
+	for _, provider := range c.providers {
+		go func(provider string) {
+			responses <- c.query(provider)
+		}(provider)
+	}
+	c.length = length
 	c.wg.Wait()
 	close(responses)
 	return c
