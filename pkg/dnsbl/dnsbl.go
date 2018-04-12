@@ -1,7 +1,6 @@
 package dnsbl
 
 import (
-	"log"
 	"net"
 	"sync"
 )
@@ -15,35 +14,36 @@ type Checker struct {
 	length, queried, positive int
 	providers                 []string
 
-	// lookup contains the lookup function used
-	lookup func(string) ([]string, error)
 	// Functional control
 	wg sync.WaitGroup
 }
 
 // NewChecker creates a new, default configured Checker
 func NewChecker(providers []string) *Checker {
-	return &Checker{lookup: net.LookupHost, providers: providers}
+	return &Checker{providers: providers}
 }
 
 // Query contacts the providers to check if the IP is present in their
 // lists
 func (c *Checker) Query() *Checker {
-	responses := make(chan int)
-	for _, provider := range c.providers {
-		c.length++
-		c.wg.Add(1)
-		go func(provider string) {
-			responses <- c.query(provider)
-		}(provider)
-	}
+	length := len(c.providers)
+	responses := make(chan int, length)
+	c.wg.Add(length)
 	go func() {
+		c.positive = 0
+		c.queried = 0
 		for response := range responses {
 			c.positive += response
 			c.queried++
 			c.wg.Done()
 		}
 	}()
+	for _, provider := range c.providers {
+		go func(provider string) {
+			responses <- query(c, provider)
+		}(provider)
+	}
+	c.length = length
 	c.wg.Wait()
 	close(responses)
 	return c
@@ -58,15 +58,6 @@ func (c *Checker) Stats() (positive, queried, length int) {
 	return c.positive, c.queried, c.length
 }
 
-// query queries a DNSBL and returns true if the argument gets a match
-// in the BL.
-func (c *Checker) query(address string) int {
-	// We ignore errors because the providers where we are not
-	// flagged can't be resolved. We can not distinguish if we are
-	// not on their list or their service is broken.
-	result, _ := c.lookup(address)
-	if len(result) > 0 {
-		log.Printf("%v returned %v\n", address, result)
-	}
-	return len(result)
+func (c *Checker) lookup(address string) ([]string, error) {
+	return net.LookupHost(address)
 }

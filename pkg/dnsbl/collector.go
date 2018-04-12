@@ -1,7 +1,6 @@
 package dnsbl
 
 import (
-	"log"
 	"net"
 	"sync"
 
@@ -14,8 +13,6 @@ type Collector struct {
 	providers               []string
 	positive, query, length prometheus.Gauge
 
-	// lookup contains the lookup function used
-	lookup func(string) ([]string, error)
 	// Functional control
 	wg sync.WaitGroup
 }
@@ -23,7 +20,6 @@ type Collector struct {
 // NewCollector creates a new, default configured Collector
 func NewCollector(providers []string) *Collector {
 	return &Collector{
-		lookup:    net.LookupHost,
 		providers: providers,
 		positive: prometheus.NewGauge(
 			prometheus.GaugeOpts{
@@ -72,17 +68,9 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *Collector) runCollection() {
-	responses := make(chan int)
-	for _, provider := range c.providers {
-		c.wg.Add(1)
-		go func(provider string) {
-			result, _ := c.lookup(provider)
-			if len(result) > 0 {
-				log.Printf("%v returned %v\n", provider, result)
-			}
-			responses <- len(result)
-		}(provider)
-	}
+	length := len(c.providers)
+	responses := make(chan int, length)
+	c.wg.Add(length)
 	go func() {
 		c.positive.Set(0)
 		c.query.Set(0)
@@ -92,7 +80,16 @@ func (c *Collector) runCollection() {
 			c.wg.Done()
 		}
 	}()
-	c.length.Set(float64(len(c.providers)))
+	for _, provider := range c.providers {
+		go func(provider string) {
+			responses <- query(c, provider)
+		}(provider)
+	}
+	c.length.Set(float64(length))
 	c.wg.Wait()
 	close(responses)
+}
+
+func (c *Collector) lookup(address string) ([]string, error) {
+	return net.LookupHost(address)
 }
