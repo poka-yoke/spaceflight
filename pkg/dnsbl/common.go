@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 )
 
@@ -37,4 +38,22 @@ func GetProviders(ipAddress string, lists io.Reader) (providers []string) {
 		providers = append(providers, reversedIPAddress)
 	}
 	return providers
+}
+
+// lookuper interface provides a method to do hostname lookups
+type lookuper interface {
+	lookup(string) ([]string, error)
+}
+
+// query queries a DNSBL and returns true if the argument gets a match
+// in the BL.
+func query(c lookuper, address string) int {
+	// We ignore errors because the providers where we are not
+	// flagged can't be resolved. We can not distinguish if we are
+	// not on their list or their service is broken.
+	result, _ := c.lookup(address)
+	if len(result) > 0 {
+		log.Printf("%v returned %v\n", address, result)
+	}
+	return len(result)
 }
