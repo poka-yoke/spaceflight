@@ -32,7 +32,7 @@ func NewCollector() *Collector {
 		transformationsUsageAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "transformationsUsageAmount",
+				Name:        "transformations_usage_amount",
 				Help:        "Number of used transformations in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -40,7 +40,7 @@ func NewCollector() *Collector {
 		transformationsLimitAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "transformationsLimitAmount",
+				Name:        "transformations_limit_amount",
 				Help:        "Limit of transformations allowed in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -48,7 +48,7 @@ func NewCollector() *Collector {
 		transformationsUsageRatio: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "transformationsUsageRatio",
+				Name:        "transformations_usage_ratio",
 				Help:        "Ratio of used transformations over corresponding limit",
 				ConstLabels: nil,
 			},
@@ -56,7 +56,7 @@ func NewCollector() *Collector {
 		objectsUsageAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "objectsUsageAmount",
+				Name:        "objects_usage_amount",
 				Help:        "Number of used objects in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -64,7 +64,7 @@ func NewCollector() *Collector {
 		objectsLimitAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "objectsLimitAmount",
+				Name:        "objects_limit_amount",
 				Help:        "Limit of objects allowed in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -72,7 +72,7 @@ func NewCollector() *Collector {
 		objectsUsageRatio: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "objectsUsageRatio",
+				Name:        "objects_usage_ratio",
 				Help:        "Ratio of used objects over corresponding limit",
 				ConstLabels: nil,
 			},
@@ -80,7 +80,7 @@ func NewCollector() *Collector {
 		bandwidthUsageBytes: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "bandwidthUsageBytes",
+				Name:        "bandwidth_usage_bytes",
 				Help:        "Bytes used in bandwidth in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -88,7 +88,7 @@ func NewCollector() *Collector {
 		bandwidthLimitBytes: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "bandwidthLimitBytes",
+				Name:        "bandwidth_limit_bytes",
 				Help:        "Limit of bytes in bandwidth to use in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -96,7 +96,7 @@ func NewCollector() *Collector {
 		bandwidthUsageRatio: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "bandwidthUsageRatio",
+				Name:        "bandwidth_usage_ratio",
 				Help:        "Ratio of used bytes in bandwidth over corresponding limit",
 				ConstLabels: nil,
 			},
@@ -104,7 +104,7 @@ func NewCollector() *Collector {
 		storageUsageBytes: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "storageUsageBytes",
+				Name:        "storage_usage_bytes",
 				Help:        "Bytes of storage used in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -112,7 +112,7 @@ func NewCollector() *Collector {
 		storageLimitBytes: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "storageLimitBytes",
+				Name:        "storage_limit_bytes",
 				Help:        "Limit of storage used allowed in the last 30 days",
 				ConstLabels: nil,
 			},
@@ -120,7 +120,7 @@ func NewCollector() *Collector {
 		storageUsageRatio: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "storageUsageRatio",
+				Name:        "storage_usage_ratio",
 				Help:        "Ratio of storage bytes used over corresponding limit",
 				ConstLabels: nil,
 			},
@@ -128,7 +128,7 @@ func NewCollector() *Collector {
 		requestsAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "requestsAmount",
+				Name:        "requests_amount",
 				Help:        "Number of requests done to Cloudinary",
 				ConstLabels: nil,
 			},
@@ -136,7 +136,7 @@ func NewCollector() *Collector {
 		resourcesAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "resourcesAmount",
+				Name:        "resources_amount",
 				Help:        "Number of resources in Cloudinary",
 				ConstLabels: nil,
 			},
@@ -144,7 +144,7 @@ func NewCollector() *Collector {
 		derivedResourcesAmount: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace:   "cloudinary",
-				Name:        "derivedResourcesAmount",
+				Name:        "derived_resources_amount",
 				Help:        "Number of derived resources in Cloudinary",
 				ConstLabels: nil,
 			},
