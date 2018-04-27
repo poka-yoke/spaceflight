@@ -25,24 +25,8 @@ type UsageReport struct {
 	DerivedResources int64     `json:"derived_resources"`
 }
 
-func GetRequest() (req *http.Request, err error) {
-	cloudName, key, secret := CloudinaryCredentials.get()
-	req, err = http.NewRequest(
-		"GET",
-		fmt.Sprintf(
-			"https://%s:%s@api.cloudinary.com/v1_1/%s/usage",
-			key,
-			secret,
-			cloudName,
-		),
-		nil,
-	)
-	return req, err
-}
-
-func GetUsageReport(req *http.Request) (usageReport *UsageReport, err error) {
-	client := http.Client{}
-	rs, err := client.Do(req)
+func getUsageReport(url string) (usageReport *UsageReport, err error) {
+	rs, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"ERROR: Request failure: %v",
@@ -68,6 +52,7 @@ func GetUsageReport(req *http.Request) (usageReport *UsageReport, err error) {
 }
 
 func DerivedResources(usageReport UsageReport) float64 {
+	fmt.Println(usageReport.DerivedResources)
 	return float64(usageReport.DerivedResources)
 }
 
