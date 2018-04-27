@@ -209,8 +209,8 @@ func (c *Collector) runCollection() {
 		fmt.Println(err)
 	}
 
-	c.transformationsUsageAmount.Set(transformationUsage(*report))
-	c.transformationsLimitAmount.Set(transformationLimit(*report))
+	c.transformationsUsageAmount.Set(transformationsUsage(*report))
+	c.transformationsLimitAmount.Set(transformationsLimit(*report))
 	c.transformationsUsageRatio.Set(transformationsUsageRatio(*report))
 	c.objectsUsageAmount.Set(objectsUsage(*report))
 	c.objectsLimitAmount.Set(objectsLimit(*report))
