@@ -103,14 +103,14 @@ func objectsUsageRatio(usageReport UsageReport) float64 {
 	return float64(usageReport.Objects.UsedPercent / 100)
 }
 
-func transformationUsage(usageReport UsageReport) float64 {
+func transformationsUsage(usageReport UsageReport) float64 {
 	return float64(usageReport.Transformations.Usage)
 }
 
-func transformationLimit(usageReport UsageReport) float64 {
+func transformationsLimit(usageReport UsageReport) float64 {
 	return float64(usageReport.Transformations.Limit)
 }
 
-func transformationUsageRatio(usageReport UsageReport) float64 {
+func transformationsUsageRatio(usageReport UsageReport) float64 {
 	return float64(usageReport.Transformations.UsedPercent / 100)
 }
