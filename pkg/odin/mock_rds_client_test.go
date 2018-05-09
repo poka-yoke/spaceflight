@@ -324,7 +324,7 @@ func (m *mockRDSClient) CreateDBInstance(
 			fmt.Sprintf(
 				"arn:aws:rds:%s:0:db:%s",
 				region,
-				id,
+				*id,
 			),
 		),
 		DBInstanceIdentifier: id,
@@ -363,7 +363,7 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 			fmt.Sprintf(
 				"arn:aws:rds:%s:0:db:%s",
 				region,
-				id,
+				*id,
 			),
 		),
 		DBInstanceIdentifier: id,
