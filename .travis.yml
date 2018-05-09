@@ -12,6 +12,10 @@ install:
 
 script:
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 addons:
   code_climate:
