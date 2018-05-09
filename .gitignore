@@ -1,1 +1,7 @@
 *.zip
+\#*
+*~
+*.png
+*.out
+*.bak
+vendor/

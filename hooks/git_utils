@@ -1,0 +1,24 @@
+function update_branch() {
+    remote="origin"
+    branch=$(echo ${1} | cut -d/ -f1)
+    if [ $(echo ${1} | grep -c "/") -eq 1 ]; then
+        remote=$branch
+        branch=$(echo ${1} | cut -d/ -f2)
+    fi
+    git checkout ${branch}
+    git pull ${remote} ${branch}
+}
+
+function checkout_branch() {
+    remote="origin"
+    branch=$(echo ${1} | cut -d/ -f1)
+    if [ $(echo ${1} | grep -c "/") -eq 1 ]; then
+        remote=$branch
+        branch=$(echo ${1} | cut -d/ -f2)
+    fi
+    if [ $(git branch | grep -ic ${branch}) -ge 1 ]; then
+        git checkout ${branch}
+    else
+        git checkout -b ${branch} && git branch -u ${remote}/${branch}
+    fi
+}
