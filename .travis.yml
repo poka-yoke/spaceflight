@@ -1,30 +1,21 @@
 language: go
 
 go:
-  - 1.8
+  - 1.10.x
   - master
   
 install:
-  - go get github.com/awalterschulze/gographviz
-  - go get github.com/aws/aws-sdk-go/aws
-  - go get github.com/aws/aws-sdk-go/aws/session
-  - go get github.com/aws/aws-sdk-go/service/ec2
-  - go get github.com/aws/aws-sdk-go/service/ec2/ec2iface
-  - go get github.com/aws/aws-sdk-go/service/route53
-  - go get github.com/aws/aws-sdk-go/service/route53/route53iface
-  - go get github.com/aws/aws-sdk-go/service/opsworks
-  - go get github.com/aws/aws-sdk-go/service/opsworks/opsworksiface
-  - go get github.com/olorin/nagiosplugin
-  - go get github.com/lib/pq
-  - go get gopkg.in/olivere/elastic.v1
-  - go get github.com/spf13/cobra
-  - go get github.com/spf13/viper
-  - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
-  - go get github.com/go-test/deep
+  - wget -O dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
+  - chmod +x dep
+  - ./dep ensure
 
 script:
   - test -z "${COVERALLS_TOKEN}" || $HOME/gopath/bin/goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 addons:
   code_climate:
