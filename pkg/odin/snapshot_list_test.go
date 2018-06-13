@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
-	"github.com/poka-yoke/spaceflight/pkg/odin"
+	"github.com/Devex/spaceflight/pkg/odin"
 )
 
 var exampleSnapshot1Type = aws.String("db.m1.medium")

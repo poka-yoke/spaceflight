@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/poka-yoke/spaceflight/pkg/odin"
+	"github.com/Devex/spaceflight/pkg/odin"
 )
 
 type createInstanceCase struct {

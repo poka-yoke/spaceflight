@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/got"
+	"github.com/Devex/spaceflight/pkg/got"
 )
 
 var name, typ string

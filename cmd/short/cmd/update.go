@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/short"
+	"github.com/Devex/spaceflight/pkg/short"
 )
 
 // updateCmd represents the update command

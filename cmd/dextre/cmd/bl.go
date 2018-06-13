@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/dnsbl"
+	"github.com/Devex/spaceflight/pkg/dnsbl"
 )
 
 func must(err error) {

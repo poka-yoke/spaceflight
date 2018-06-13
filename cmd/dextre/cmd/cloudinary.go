@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/cloudinary"
+	"github.com/Devex/spaceflight/pkg/cloudinary"
 )
 
 // cloudinaryCmd represents the cloudinary command
