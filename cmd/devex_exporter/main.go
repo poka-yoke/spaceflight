@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/poka-yoke/spaceflight/pkg/dnsbl"
+	"github.com/Devex/spaceflight/pkg/dnsbl"
 )
 
 func main() {

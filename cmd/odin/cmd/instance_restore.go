@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/odin"
+	"github.com/Devex/spaceflight/pkg/odin"
 )
 
 // instanceRestoreCmd represents the instance restore command

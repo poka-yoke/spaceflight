@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/sitemap"
+	"github.com/Devex/spaceflight/pkg/sitemap"
 )
 
 var url, file string

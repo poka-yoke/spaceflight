@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/poka-yoke/spaceflight/pkg/sidekiq"
+	"github.com/Devex/spaceflight/pkg/sidekiq"
 )
 
 var baseURL string

@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 
-	"github.com/poka-yoke/spaceflight/pkg/roosa"
+	"github.com/Devex/spaceflight/pkg/roosa"
 )
 
 var zoneName string

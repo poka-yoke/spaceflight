@@ -1,6 +1,6 @@
 package main
 
-import "github.com/poka-yoke/spaceflight/cmd/capcom/cmd"
+import "github.com/Devex/spaceflight/cmd/capcom/cmd"
 
 func main() {
 	cmd.Execute()

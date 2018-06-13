@@ -1,6 +1,6 @@
 package main
 
-import "github.com/poka-yoke/spaceflight/cmd/short/cmd"
+import "github.com/Devex/spaceflight/cmd/short/cmd"
 
 func main() {
 	cmd.Execute()

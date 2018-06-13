@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/poka-yoke/spaceflight/pkg/surgeon"
+	"github.com/Devex/spaceflight/pkg/surgeon"
 )
 
 // GetDB returns a sql.DB object to be used when running queries.
