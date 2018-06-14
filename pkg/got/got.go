@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 
-	"github.com/Devex/spaceflight/pkg/internal/http"
+	"github.com/Devex/spaceflight/internal/http"
 )
 
 // Verbose flag
