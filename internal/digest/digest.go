@@ -1,4 +1,4 @@
-package digests
+package digest
 
 import (
 	"crypto/sha1"
