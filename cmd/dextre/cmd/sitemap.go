@@ -21,9 +21,7 @@ var sitemapCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var urls []string
 
-		if pgaddress == "" {
-			log.Fatal("pgaddress is mandatory")
-		}
+		must(checkPGAddress())
 		if url == "" && file == "" {
 			log.Fatal("Either URL or file are mandatory")
 		}
