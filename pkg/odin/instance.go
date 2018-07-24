@@ -100,6 +100,7 @@ func (i Instance) DeleteDBInput(
 
 // ModifyDBInput returns ModifyDBInstanceInput for the instance.
 func (i Instance) ModifyDBInput(
+	applyNow bool,
 	svc rdsiface.RDSAPI,
 ) (result *rds.ModifyDBInstanceInput, err error) {
 	SecurityGroups := []*string{}
@@ -108,7 +109,9 @@ func (i Instance) ModifyDBInput(
 	}
 	result = &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: &i.Identifier,
+		DBInstanceClass: &i.Type,
 		VpcSecurityGroupIds:  SecurityGroups,
+		ApplyImmediately: aws.Bool(applyNow),
 	}
 	if err = result.Validate(); err != nil {
 		err = fmt.Errorf(

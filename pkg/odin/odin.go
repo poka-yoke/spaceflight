@@ -23,7 +23,7 @@ func Init() rdsiface.RDSAPI {
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
 type ModifiableParams interface {
-	ModifyDBInput(rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
+	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
 }
 
 func modifyInstance(
@@ -32,6 +32,7 @@ func modifyInstance(
 	svc rdsiface.RDSAPI,
 ) (err error) {
 	rdsParams, err := params.ModifyDBInput(
+		false,
 		svc,
 	)
 	if err != nil {
