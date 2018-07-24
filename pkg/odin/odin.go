@@ -27,7 +27,6 @@ type ModifiableParams interface {
 }
 
 func modifyInstance(
-	instanceName string,
 	params ModifiableParams,
 	svc rdsiface.RDSAPI,
 ) (err error) {

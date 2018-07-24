@@ -23,6 +23,7 @@ var instanceCloneCmd = &cobra.Command{
 		}
 		svc := odin.Init()
 		params := odin.Instance{
+			Identifier:           args[0],
 			Type:                 instanceType,
 			User:                 user,
 			Password:             password,
@@ -32,7 +33,6 @@ var instanceCloneCmd = &cobra.Command{
 			OriginalInstanceName: from,
 		}
 		endpoint, err := odin.CloneInstance(
-			args[0],
 			params,
 			svc,
 		)

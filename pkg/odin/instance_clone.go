@@ -10,7 +10,6 @@ import (
 // from a snapshot. If a vpcid is specified the security group will be
 // in that VPC.
 func CloneInstance(
-	instanceName string,
 	params Instance,
 	svc rdsiface.RDSAPI,
 ) (
@@ -35,6 +34,6 @@ func CloneInstance(
 		return
 	}
 	result = *res.DBInstance.Endpoint.Address
-	err = modifyInstance(instanceName, params, svc)
+	err = modifyInstance(params, svc)
 	return
 }

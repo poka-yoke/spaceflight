@@ -111,7 +111,6 @@ func TestCreateInstance(t *testing.T) {
 					Size:     test.size,
 				}
 				actual, err := odin.CreateInstance(
-					test.identifier,
 					params,
 					svc,
 				)

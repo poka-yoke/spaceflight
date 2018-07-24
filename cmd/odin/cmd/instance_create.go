@@ -24,6 +24,7 @@ var instanceCreateCmd = &cobra.Command{
 		}
 		svc := odin.Init()
 		params := odin.Instance{
+			Identifier:      args[0],
 			Type:            instanceType,
 			User:            user,
 			Password:        password,
@@ -32,7 +33,6 @@ var instanceCreateCmd = &cobra.Command{
 			Size:            size,
 		}
 		endpoint, err := odin.CreateInstance(
-			args[0],
 			params,
 			svc,
 		)

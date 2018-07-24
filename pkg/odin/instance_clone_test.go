@@ -73,7 +73,6 @@ func TestCloneInstance(t *testing.T) {
 					OriginalInstanceName: test.from,
 				}
 				actual, err := odin.CloneInstance(
-					test.identifier,
 					params,
 					svc,
 				)

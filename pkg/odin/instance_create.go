@@ -7,7 +7,6 @@ import (
 // CreateInstance creates a new RDS database instance. If a vpcid is
 // specified the security group will be in that VPC.
 func CreateInstance(
-	instanceName string,
 	params Instance,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
@@ -26,6 +25,6 @@ func CreateInstance(
 		return
 	}
 	result = *res.DBInstance.Endpoint.Address
-	err = modifyInstance(instanceName, params, svc)
+	err = modifyInstance(params, svc)
 	return
 }

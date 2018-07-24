@@ -134,7 +134,6 @@ func TestRestoreInstance(t *testing.T) {
 					OriginalInstanceName: test.from,
 				}
 				actual, err := odin.RestoreInstance(
-					test.identifier,
 					params,
 					svc,
 				)

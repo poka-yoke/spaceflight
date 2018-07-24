@@ -8,7 +8,6 @@ import (
 // RestoreInstance creates a new RDS database instance restoring
 // from a snapshot.
 func RestoreInstance(
-	instanceName string,
 	params Instance,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
@@ -28,6 +27,6 @@ func RestoreInstance(
 		return "", err
 	}
 	result = *res.DBInstance.Endpoint.Address
-	err = modifyInstance(instanceName, params, svc)
+	err = modifyInstance(params, svc)
 	return
 }
