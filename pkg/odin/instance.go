@@ -22,6 +22,23 @@ type Instance struct {
 	LastSnapshot         *rds.DBSnapshot
 }
 
+// CloneDBInput returns CreateDBInstanceInput for the instance with
+// Snapshot belonging to a target instance.
+func (i Instance) CloneDBInput(
+	identifier string,
+	svc rdsiface.RDSAPI,
+) (
+	result *rds.CreateDBInstanceInput,
+	err error,
+) {
+	instance, err := i.AddLastSnapshot(i.OriginalInstanceName, svc)
+	if err != nil {
+		return nil, err
+	}
+	i = *instance
+	return i.CreateDBInput(identifier, svc)
+}
+
 // CreateDBInput returns CreateDBInstanceInput for the instance.
 func (i Instance) CreateDBInput(
 	identifier string,

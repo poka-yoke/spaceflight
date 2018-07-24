@@ -43,11 +43,7 @@ func doClone(
 	instance *rds.DBInstance,
 	err error,
 ) {
-	pparams, err := params.AddLastSnapshot(params.OriginalInstanceName, svc)
-	if err != nil {
-		return nil, err
-	}
-	rdsParams, err := pparams.CreateDBInput(
+	rdsParams, err := params.CloneDBInput(
 		instanceName,
 		svc,
 	)
@@ -56,7 +52,7 @@ func doClone(
 	}
 	res, err := svc.CreateDBInstance(rdsParams)
 	if err != nil {
-		return
+		return nil, err
 	}
 	return res.DBInstance, nil
 }
