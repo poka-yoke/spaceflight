@@ -21,6 +21,7 @@ type Instance struct {
 	Size                 int64
 	OriginalInstanceName string
 	LastSnapshot         *rds.DBSnapshot
+	FinalSnapshotID string
 }
 
 // CloneDBInput returns CreateDBInstanceInput for the instance with
@@ -64,6 +65,28 @@ func (i Instance) CreateDBInput(
 	if i.LastSnapshot != nil {
 		result.AllocatedStorage = i.LastSnapshot.AllocatedStorage
 		result.MasterUsername = i.LastSnapshot.MasterUsername
+	}
+	if err = result.Validate(); err != nil {
+		err = fmt.Errorf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
+		return nil, err
+	}
+	return result, nil
+}
+
+// DeleteDBInput returns DeleteDBInstanceInput for the instance.
+func (i Instance) DeleteDBInput(
+	svc rdsiface.RDSAPI,
+)(result *rds.DeleteDBInstanceInput, err error) {
+	result = &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier: aws.String(i.Identifier),
+	}
+	if i.FinalSnapshotID == "" {
+		result.SkipFinalSnapshot = aws.Bool(true)
+	} else {
+		result.FinalDBSnapshotIdentifier = &i.FinalSnapshotID
 	}
 	if err = result.Validate(); err != nil {
 		err = fmt.Errorf(
