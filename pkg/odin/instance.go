@@ -81,15 +81,23 @@ func (i Instance) CreateDBInput(
 func (i Instance) ModifyDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
-) *rds.ModifyDBInstanceInput {
+) (result *rds.ModifyDBInstanceInput, err error) {
 	SecurityGroups := []*string{}
 	for _, sgid := range i.SecurityGroups {
 		SecurityGroups = append(SecurityGroups, aws.String(sgid))
 	}
-	return &rds.ModifyDBInstanceInput{
+	result = &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: &identifier,
 		VpcSecurityGroupIds:  SecurityGroups,
 	}
+	if err = result.Validate(); err != nil {
+		err = fmt.Errorf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
+		return nil, err
+	}
+	return result, nil
 }
 
 // RestoreDBInput returns RestoreDBInstanceFromDBSnapshotInput for the
