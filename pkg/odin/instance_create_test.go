@@ -103,11 +103,11 @@ func TestCreateInstance(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				params := odin.CreateParams{
-					InstanceType: test.instanceType,
-					User:         test.user,
-					Password:     test.password,
-					Size:         test.size,
+				params := odin.Instance{
+					Type:     test.instanceType,
+					User:     test.user,
+					Password: test.password,
+					Size:     test.size,
 				}
 				actual, err := odin.CreateInstance(
 					test.identifier,

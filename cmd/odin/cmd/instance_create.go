@@ -23,8 +23,8 @@ var instanceCreateCmd = &cobra.Command{
 			log.Fatal(NewInstanceIDReq)
 		}
 		svc := odin.Init()
-		params := odin.CreateParams{
-			InstanceType:    instanceType,
+		params := odin.Instance{
+			Type:            instanceType,
 			User:            user,
 			Password:        password,
 			SubnetGroupName: subnetName,

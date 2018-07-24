@@ -7,19 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
-// CloneParams represents CreateDBInstance parameters for cloning.
-type CloneParams struct {
-	CreateParams
-
-	OriginalInstanceName string
-}
-
 // CloneInstance creates a new RDS database instance, copying parameters
 // from a snapshot. If a vpcid is specified the security group will be
 // in that VPC.
 func CloneInstance(
 	instanceName string,
-	params CloneParams,
+	params Instance,
 	svc rdsiface.RDSAPI,
 ) (
 	result string,
@@ -42,54 +35,23 @@ func CloneInstance(
 	return
 }
 
-func applySnapshotParams(
-	identifier string,
-	in *rds.CreateDBInstanceInput,
-	svc rdsiface.RDSAPI,
-) (
-	out *rds.CreateDBInstanceInput,
-	err error,
-) {
-	var snapshot *rds.DBSnapshot
-	out = in
-	snapshot, err = GetLastSnapshot(identifier, svc)
-	if err != nil {
-		err = fmt.Errorf(
-			"No snapshot found for %s instance",
-			identifier,
-		)
-		return
-	}
-	out.AllocatedStorage = snapshot.AllocatedStorage
-	out.MasterUsername = snapshot.MasterUsername
-	return
-}
-
 func doClone(
 	instanceName string,
-	params CloneParams,
+	params Instance,
 	svc rdsiface.RDSAPI,
 ) (
 	instance *rds.DBInstance,
 	err error,
 ) {
-	rdsParams := params.GetCreateDBInput(
+	pparams, err := params.AddLastSnapshot(params.OriginalInstanceName, svc)
+	if err != nil {
+		return nil, err
+	}
+	rdsParams, err := pparams.CreateDBInput(
 		instanceName,
 		svc,
 	)
-	rdsParams, err = applySnapshotParams(
-		params.OriginalInstanceName,
-		rdsParams,
-		svc,
-	)
 	if err != nil {
-		return
-	}
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
 		return
 	}
 	res, err := svc.CreateDBInstance(rdsParams)
