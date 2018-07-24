@@ -44,17 +44,9 @@ func doRestore(
 	if err != nil {
 		return
 	}
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
-		return
-	}
 	res, err = svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
 	if err != nil {
 		return
 	}
-	instance = res.DBInstance
-	return
+	return res.DBInstance, nil
 }

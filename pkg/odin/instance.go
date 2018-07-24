@@ -98,7 +98,7 @@ func (i Instance) RestoreDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) (
-	out *rds.RestoreDBInstanceFromDBSnapshotInput,
+	result *rds.RestoreDBInstanceFromDBSnapshotInput,
 	err error,
 ) {
 	if i.OriginalInstanceName == "" {
@@ -110,14 +110,21 @@ func (i Instance) RestoreDBInput(
 		return nil, err
 	}
 	i = *instance
-	out = &rds.RestoreDBInstanceFromDBSnapshotInput{
+	result = &rds.RestoreDBInstanceFromDBSnapshotInput{
 		DBInstanceClass:      &i.Type,
 		DBInstanceIdentifier: &identifier,
 		DBSnapshotIdentifier: i.LastSnapshot.DBSnapshotIdentifier,
 		DBSubnetGroupName:    &i.SubnetGroupName,
 		Engine:               aws.String("postgres"),
 	}
-	return out, nil
+	if err = result.Validate(); err != nil {
+		err = fmt.Errorf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
+		return nil, err
+	}
+	return result, nil
 }
 
 // addLastSnapshot adds the reference to the last available snapshot
