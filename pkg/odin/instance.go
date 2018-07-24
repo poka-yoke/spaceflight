@@ -22,24 +22,23 @@ type Instance struct {
 	LastSnapshot         *rds.DBSnapshot
 }
 
-// CreateDBInput method creates a new CreateDBInstanceInput from
-// rds.DBSnapshot.
-func (params Instance) CreateDBInput(
+// CreateDBInput returns CreateDBInstanceInput for the instance.
+func (i Instance) CreateDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) (result *rds.CreateDBInstanceInput, err error) {
 	result = &rds.CreateDBInstanceInput{
-		AllocatedStorage:     &params.Size,
+		AllocatedStorage:     &i.Size,
 		DBInstanceIdentifier: &identifier,
-		DBSubnetGroupName:    &params.SubnetGroupName,
-		DBInstanceClass:      &params.Type,
+		DBSubnetGroupName:    &i.SubnetGroupName,
+		DBInstanceClass:      &i.Type,
 		DBSecurityGroups: []*string{
 			aws.String("default"),
 		},
 		Engine:             aws.String("postgres"),
 		EngineVersion:      aws.String("9.4.11"),
-		MasterUsername:     &params.User,
-		MasterUserPassword: &params.Password,
+		MasterUsername:     &i.User,
+		MasterUserPassword: &i.Password,
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String("Name"),
@@ -47,9 +46,9 @@ func (params Instance) CreateDBInput(
 			},
 		},
 	}
-	if params.LastSnapshot != nil {
-		result.AllocatedStorage = params.LastSnapshot.AllocatedStorage
-		result.MasterUsername = params.LastSnapshot.MasterUsername
+	if i.LastSnapshot != nil {
+		result.AllocatedStorage = i.LastSnapshot.AllocatedStorage
+		result.MasterUsername = i.LastSnapshot.MasterUsername
 	}
 	if err = result.Validate(); err != nil {
 		err = fmt.Errorf(
@@ -61,14 +60,13 @@ func (params Instance) CreateDBInput(
 	return result, nil
 }
 
-// ModifyDBInput method creates a new ModifyDBInstanceInput
-// rds.DBSnapshot.
-func (params Instance) ModifyDBInput(
+// ModifyDBInput returns ModifyDBInstanceInput for the instance.
+func (i Instance) ModifyDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) *rds.ModifyDBInstanceInput {
 	SecurityGroups := []*string{}
-	for _, sgid := range params.SecurityGroups {
+	for _, sgid := range i.SecurityGroups {
 		SecurityGroups = append(SecurityGroups, aws.String(sgid))
 	}
 	return &rds.ModifyDBInstanceInput{
@@ -77,55 +75,47 @@ func (params Instance) ModifyDBInput(
 	}
 }
 
-// RestoreDBInput method creates a new
-// RestoreDBInstanceFromDBSnapshotInput from provided CreateDBParams and
-// rds.DBSnapshot.
-func (p Instance) RestoreDBInput(
+// RestoreDBInput returns RestoreDBInstanceFromDBSnapshotInput for the
+// instance.
+func (i Instance) RestoreDBInput(
 	identifier string,
 	svc rdsiface.RDSAPI,
 ) (
 	out *rds.RestoreDBInstanceFromDBSnapshotInput,
 	err error,
 ) {
-	if p.OriginalInstanceName == "" {
+	if i.OriginalInstanceName == "" {
 		err = fmt.Errorf("Original Instance Name was empty")
-		return
+		return nil, err
 	}
-	snapshot, err := GetLastSnapshot(p.OriginalInstanceName, svc)
+	instance, err := i.AddLastSnapshot(i.OriginalInstanceName, svc)
 	if err != nil {
-		err = fmt.Errorf(
-			"No snapshot found for %s instance",
-			p.OriginalInstanceName,
-		)
-		return
+		return nil, err
 	}
+	i = *instance
 	out = &rds.RestoreDBInstanceFromDBSnapshotInput{
-		DBInstanceClass:      &p.Type,
+		DBInstanceClass:      &i.Type,
 		DBInstanceIdentifier: &identifier,
-		DBSnapshotIdentifier: snapshot.DBSnapshotIdentifier,
-		DBSubnetGroupName:    &p.SubnetGroupName,
+		DBSnapshotIdentifier: i.LastSnapshot.DBSnapshotIdentifier,
+		DBSubnetGroupName:    &i.SubnetGroupName,
 		Engine:               aws.String("postgres"),
 	}
-	return
+	return out, nil
 }
 
 // AddLastSnapshot adds the reference to the last available snapshot
-// to the Instance structure, when it represents an already existing
-// RDS instance.
-func (params *Instance) AddLastSnapshot(
+// of the target instance to this instance.
+func (i *Instance) AddLastSnapshot(
 	identifier string,
 	svc rdsiface.RDSAPI,
-) (
-	self *Instance,
-	err error,
-) {
-	params.LastSnapshot, err = GetLastSnapshot(identifier, svc)
+) (_ *Instance, err error) {
+	i.LastSnapshot, err = GetLastSnapshot(identifier, svc)
 	if err != nil {
 		err = fmt.Errorf(
 			"No snapshot found for %s instance",
 			identifier,
 		)
-		return params, err
+		return i, err
 	}
-	return params, nil
+	return i, nil
 }
