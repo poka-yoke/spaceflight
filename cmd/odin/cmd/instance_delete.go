@@ -24,7 +24,7 @@ var instanceDeleteCmd = &cobra.Command{
 
 		err := odin.DeleteInstance(
 			odin.Instance{
-				Identifier: args[0],
+				Identifier:      args[0],
 				FinalSnapshotID: finalSnapshotID,
 			},
 			svc,

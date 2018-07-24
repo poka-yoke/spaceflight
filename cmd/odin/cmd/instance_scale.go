@@ -24,7 +24,7 @@ var instanceScaleCmd = &cobra.Command{
 		svc := odin.Init()
 		params := odin.Instance{
 			Identifier: args[0],
-			Type: instanceType,
+			Type:       instanceType,
 		}
 		result, err := odin.ScaleInstance(
 			params,

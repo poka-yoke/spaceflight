@@ -31,9 +31,9 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			},
 			expectedError: "",
 		},
-		name:       "Params with Snapshot",
+		name: "Params with Snapshot",
 		params: odin.Instance{
-			Identifier: "develop",
+			Identifier:           "develop",
 			Type:                 "db.m1.medium",
 			OriginalInstanceName: "production-rds",
 		},
@@ -45,10 +45,10 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			expected:      nil,
 			expectedError: "Original Instance Name was empty",
 		},
-		name:       "Params with Snapshot without OriginalInstanceName",
+		name: "Params with Snapshot without OriginalInstanceName",
 		params: odin.Instance{
 			Identifier: "production-rds",
-			Type: "db.m1.medium",
+			Type:       "db.m1.medium",
 		},
 		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
@@ -58,9 +58,9 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 			expected:      nil,
 			expectedError: "No snapshot found for develop instance",
 		},
-		name:       "Params with non existing Snapshot",
+		name: "Params with non existing Snapshot",
 		params: odin.Instance{
-			Identifier: "production-rds",
+			Identifier:           "production-rds",
 			Type:                 "db.m1.medium",
 			OriginalInstanceName: "develop",
 		},
@@ -129,7 +129,7 @@ func TestRestoreInstance(t *testing.T) {
 					svc.AddSnapshots(test.snapshots)
 				}
 				params := odin.Instance{
-					Identifier: test.identifier,
+					Identifier:           test.identifier,
 					Type:                 test.instanceType,
 					OriginalInstanceName: test.from,
 				}

@@ -21,7 +21,7 @@ type Instance struct {
 	Size                 int64
 	OriginalInstanceName string
 	LastSnapshot         *rds.DBSnapshot
-	FinalSnapshotID string
+	FinalSnapshotID      string
 }
 
 // CloneDBInput returns CreateDBInstanceInput for the instance with
@@ -79,7 +79,7 @@ func (i Instance) CreateDBInput(
 // DeleteDBInput returns DeleteDBInstanceInput for the instance.
 func (i Instance) DeleteDBInput(
 	svc rdsiface.RDSAPI,
-)(result *rds.DeleteDBInstanceInput, err error) {
+) (result *rds.DeleteDBInstanceInput, err error) {
 	result = &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Identifier),
 	}
@@ -109,9 +109,9 @@ func (i Instance) ModifyDBInput(
 	}
 	result = &rds.ModifyDBInstanceInput{
 		DBInstanceIdentifier: &i.Identifier,
-		DBInstanceClass: &i.Type,
+		DBInstanceClass:      &i.Type,
 		VpcSecurityGroupIds:  SecurityGroups,
-		ApplyImmediately: aws.Bool(applyNow),
+		ApplyImmediately:     aws.Bool(applyNow),
 	}
 	if err = result.Validate(); err != nil {
 		err = fmt.Errorf(
