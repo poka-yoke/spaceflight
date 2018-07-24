@@ -31,7 +31,7 @@ func (i Instance) CloneDBInput(
 	result *rds.CreateDBInstanceInput,
 	err error,
 ) {
-	instance, err := i.AddLastSnapshot(i.OriginalInstanceName, svc)
+	instance, err := i.addLastSnapshot(svc)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (i Instance) RestoreDBInput(
 		err = fmt.Errorf("Original Instance Name was empty")
 		return nil, err
 	}
-	instance, err := i.AddLastSnapshot(i.OriginalInstanceName, svc)
+	instance, err := i.addLastSnapshot(svc)
 	if err != nil {
 		return nil, err
 	}
@@ -120,17 +120,16 @@ func (i Instance) RestoreDBInput(
 	return out, nil
 }
 
-// AddLastSnapshot adds the reference to the last available snapshot
+// addLastSnapshot adds the reference to the last available snapshot
 // of the target instance to this instance.
-func (i *Instance) AddLastSnapshot(
-	identifier string,
+func (i *Instance) addLastSnapshot(
 	svc rdsiface.RDSAPI,
 ) (_ *Instance, err error) {
-	i.LastSnapshot, err = GetLastSnapshot(identifier, svc)
+	i.LastSnapshot, err = GetLastSnapshot(i.OriginalInstanceName, svc)
 	if err != nil {
 		err = fmt.Errorf(
 			"No snapshot found for %s instance",
-			identifier,
+			i.OriginalInstanceName,
 		)
 		return i, err
 	}
