@@ -12,6 +12,7 @@ import (
 // instances and provides methods to obtain the AWS structures needed
 // to perform them.
 type Instance struct {
+	Identifier           string
 	Type                 string
 	User                 string
 	Password             string
@@ -25,7 +26,6 @@ type Instance struct {
 // CloneDBInput returns CreateDBInstanceInput for the instance with
 // Snapshot belonging to a target instance.
 func (i Instance) CloneDBInput(
-	identifier string,
 	svc rdsiface.RDSAPI,
 ) (
 	result *rds.CreateDBInstanceInput,
@@ -35,18 +35,16 @@ func (i Instance) CloneDBInput(
 	if err != nil {
 		return nil, err
 	}
-	i = *instance
-	return i.CreateDBInput(identifier, svc)
+	return instance.CreateDBInput(svc)
 }
 
 // CreateDBInput returns CreateDBInstanceInput for the instance.
 func (i Instance) CreateDBInput(
-	identifier string,
 	svc rdsiface.RDSAPI,
 ) (result *rds.CreateDBInstanceInput, err error) {
 	result = &rds.CreateDBInstanceInput{
 		AllocatedStorage:     &i.Size,
-		DBInstanceIdentifier: &identifier,
+		DBInstanceIdentifier: &i.Identifier,
 		DBSubnetGroupName:    &i.SubnetGroupName,
 		DBInstanceClass:      &i.Type,
 		DBSecurityGroups: []*string{
@@ -59,7 +57,7 @@ func (i Instance) CreateDBInput(
 		Tags: []*rds.Tag{
 			{
 				Key:   aws.String("Name"),
-				Value: &identifier,
+				Value: &i.Identifier,
 			},
 		},
 	}
@@ -79,7 +77,6 @@ func (i Instance) CreateDBInput(
 
 // ModifyDBInput returns ModifyDBInstanceInput for the instance.
 func (i Instance) ModifyDBInput(
-	identifier string,
 	svc rdsiface.RDSAPI,
 ) (result *rds.ModifyDBInstanceInput, err error) {
 	SecurityGroups := []*string{}
@@ -87,7 +84,7 @@ func (i Instance) ModifyDBInput(
 		SecurityGroups = append(SecurityGroups, aws.String(sgid))
 	}
 	result = &rds.ModifyDBInstanceInput{
-		DBInstanceIdentifier: &identifier,
+		DBInstanceIdentifier: &i.Identifier,
 		VpcSecurityGroupIds:  SecurityGroups,
 	}
 	if err = result.Validate(); err != nil {
@@ -103,7 +100,6 @@ func (i Instance) ModifyDBInput(
 // RestoreDBInput returns RestoreDBInstanceFromDBSnapshotInput for the
 // instance.
 func (i Instance) RestoreDBInput(
-	identifier string,
 	svc rdsiface.RDSAPI,
 ) (
 	result *rds.RestoreDBInstanceFromDBSnapshotInput,
@@ -120,7 +116,7 @@ func (i Instance) RestoreDBInput(
 	i = *instance
 	result = &rds.RestoreDBInstanceFromDBSnapshotInput{
 		DBInstanceClass:      &i.Type,
-		DBInstanceIdentifier: &identifier,
+		DBInstanceIdentifier: &i.Identifier,
 		DBSnapshotIdentifier: i.LastSnapshot.DBSnapshotIdentifier,
 		DBSubnetGroupName:    &i.SubnetGroupName,
 		Engine:               aws.String("postgres"),
