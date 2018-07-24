@@ -1,8 +1,6 @@
 package odin
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
@@ -16,9 +14,6 @@ func CloneInstance(
 	result string,
 	err error,
 ) {
-	if params.OriginalInstanceName == "" {
-		return "", fmt.Errorf("Original instance name not provided")
-	}
 	rdsParams, err := params.CloneDBInput(
 		svc,
 	)

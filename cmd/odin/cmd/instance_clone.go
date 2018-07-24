@@ -22,6 +22,9 @@ var instanceCloneCmd = &cobra.Command{
 			log.Fatal(NewInstanceIDReq)
 		}
 		svc := odin.Init()
+		if from == "" {
+			log.Fatal("Original instance name not provided")
+		}
 		params := odin.Instance{
 			Identifier:           args[0],
 			Type:                 instanceType,
