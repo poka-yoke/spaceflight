@@ -66,11 +66,7 @@ func (i Instance) CreateDBInput(
 		result.AllocatedStorage = i.LastSnapshot.AllocatedStorage
 		result.MasterUsername = i.LastSnapshot.MasterUsername
 	}
-	if err = result.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
+	if err = validate(result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -88,11 +84,7 @@ func (i Instance) DeleteDBInput(
 	} else {
 		result.FinalDBSnapshotIdentifier = &i.FinalSnapshotID
 	}
-	if err = result.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
+	if err = validate(result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -113,11 +105,7 @@ func (i Instance) ModifyDBInput(
 		VpcSecurityGroupIds:  SecurityGroups,
 		ApplyImmediately:     aws.Bool(applyNow),
 	}
-	if err = result.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
+	if err = validate(result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -147,11 +135,7 @@ func (i Instance) RestoreDBInput(
 		DBSubnetGroupName:    &i.SubnetGroupName,
 		Engine:               aws.String("postgres"),
 	}
-	if err = result.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
+	if err = validate(result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -171,4 +155,21 @@ func (i *Instance) addLastSnapshot(
 		return i, err
 	}
 	return i, nil
+}
+
+// Validator interface enforces validation of objects through
+// Validate() method
+type Validator interface {
+	Validate() error
+}
+
+func validate(result Validator) error {
+	if err := result.Validate(); err != nil {
+		err = fmt.Errorf(
+			"DB instance parameters failed to validate: %s",
+			err,
+		)
+		return err
+	}
+	return nil
 }

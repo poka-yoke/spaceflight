@@ -1,7 +1,6 @@
 package odin
 
 import (
-	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
@@ -11,14 +10,13 @@ func RestoreInstance(
 	params Instance,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	var res *rds.RestoreDBInstanceFromDBSnapshotOutput
 	rdsParams, err := params.RestoreDBInput(
 		svc,
 	)
 	if err != nil {
 		return "", err
 	}
-	res, err = svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
+	res, err := svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
 	if err != nil {
 		return "", err
 	}

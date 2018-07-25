@@ -24,10 +24,9 @@ func ScaleInstance(
 	if err != nil {
 		return "", err
 	}
-	result = fmt.Sprintf(
+	return fmt.Sprintf(
 		"Instance %s is %s",
 		*out.DBInstance.DBInstanceIdentifier,
 		*out.DBInstance.DBInstanceClass,
-	)
-	return
+	), nil
 }
