@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/internal/http"
+	"github.com/poka-yoke/spaceflight/internal/http"
 )
 
 // robotsGenGCmd represents the robots gen_gc command

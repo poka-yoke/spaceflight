@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/pkg/capcom"
+	"github.com/poka-yoke/spaceflight/pkg/capcom"
 )
 
 // revokeCmd represents the revoke command

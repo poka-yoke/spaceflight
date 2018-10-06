@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/pkg/fido"
+	"github.com/poka-yoke/spaceflight/pkg/fido"
 )
 
 var name string

@@ -9,8 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/internal/digest"
-	"github.com/Devex/spaceflight/internal/http"
+	"github.com/poka-yoke/spaceflight/internal/digest"
+	"github.com/poka-yoke/spaceflight/internal/http"
 )
 
 var robotsState = prometheus.NewGauge(prometheus.GaugeOpts{

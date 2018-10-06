@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/pkg/dnsbl"
+	"github.com/poka-yoke/spaceflight/pkg/dnsbl"
 )
 
 var ipAddress, blacklist, pgaddress string

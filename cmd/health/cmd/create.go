@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/pkg/cronitor"
-	"github.com/Devex/spaceflight/pkg/health"
+	"github.com/poka-yoke/spaceflight/pkg/cronitor"
+	"github.com/poka-yoke/spaceflight/pkg/health"
 )
 
 // Check is an interface to be implemented by all backend providers

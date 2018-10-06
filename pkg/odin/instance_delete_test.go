@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
-	"github.com/Devex/spaceflight/pkg/odin"
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type deleteInstanceCase struct {

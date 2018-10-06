@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Devex/spaceflight/pkg/short"
+	"github.com/poka-yoke/spaceflight/pkg/short"
 )
 
 var apiKey, addURL string
