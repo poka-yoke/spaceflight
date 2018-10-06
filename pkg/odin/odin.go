@@ -23,27 +23,22 @@ func Init() rdsiface.RDSAPI {
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
 type ModifiableParams interface {
-	GetModifyDBInput(string, rdsiface.RDSAPI) *rds.ModifyDBInstanceInput
+	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
 }
 
 func modifyInstance(
-	instanceName string,
 	params ModifiableParams,
 	svc rdsiface.RDSAPI,
 ) (err error) {
-	rdsParams := params.GetModifyDBInput(
-		instanceName,
+	rdsParams, err := params.ModifyDBInput(
+		false,
 		svc,
 	)
-	if err = rdsParams.Validate(); err != nil {
-		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
-			err,
-		)
-		return
+	if err != nil {
+		return err
 	}
 	_, err = svc.ModifyDBInstance(rdsParams)
-	return
+	return err
 }
 
 // GetLastSnapshot queries AWS looking for a Snapshot ID, depending on

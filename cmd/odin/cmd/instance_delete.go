@@ -21,9 +21,12 @@ var instanceDeleteCmd = &cobra.Command{
 			log.Fatal(InstanceIDReq)
 		}
 		svc := odin.Init()
+
 		err := odin.DeleteInstance(
-			args[0],
-			finalSnapshotID,
+			odin.Instance{
+				Identifier:      args[0],
+				FinalSnapshotID: finalSnapshotID,
+			},
 			svc,
 		)
 		if err != nil {

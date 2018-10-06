@@ -3,37 +3,30 @@ package odin
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
 // ScaleInstance scales an existing RDS database instance.
 func ScaleInstance(
-	instanceName string,
-	instanceType string,
+	params Instance,
 	delayChange bool,
 	svc rdsiface.RDSAPI,
 ) (result string, err error) {
-	in := &rds.ModifyDBInstanceInput{
-		DBInstanceIdentifier: aws.String(instanceName),
-		DBInstanceClass:      aws.String(instanceType),
-	}
-	if !delayChange {
-		in.ApplyImmediately = aws.Bool(true)
-	}
-	out, err := svc.ModifyDBInstance(in)
+	rdsParams, err := params.ModifyDBInput(!delayChange, svc)
 	if err != nil {
-		return
+		return "", err
+	}
+	out, err := svc.ModifyDBInstance(rdsParams)
+	if err != nil {
+		return "", err
 	}
 	err = WaitForInstance(out.DBInstance, svc, "available")
 	if err != nil {
-		return
+		return "", err
 	}
-	result = fmt.Sprintf(
+	return fmt.Sprintf(
 		"Instance %s is %s",
 		*out.DBInstance.DBInstanceIdentifier,
 		*out.DBInstance.DBInstanceClass,
-	)
-	return
+	), nil
 }

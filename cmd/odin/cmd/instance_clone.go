@@ -22,20 +22,20 @@ var instanceCloneCmd = &cobra.Command{
 			log.Fatal(NewInstanceIDReq)
 		}
 		svc := odin.Init()
-		createParams := odin.CreateParams{
-			InstanceType:    instanceType,
-			User:            user,
-			Password:        password,
-			SubnetGroupName: subnetName,
-			SecurityGroups:  strings.Split(securityGroups, ","),
-			Size:            size,
+		if from == "" {
+			log.Fatal("Original instance name not provided")
 		}
-		params := odin.CloneParams{
-			CreateParams:         createParams,
+		params := odin.Instance{
+			Identifier:           args[0],
+			Type:                 instanceType,
+			User:                 user,
+			Password:             password,
+			SubnetGroupName:      subnetName,
+			SecurityGroups:       strings.Split(securityGroups, ","),
+			Size:                 size,
 			OriginalInstanceName: from,
 		}
 		endpoint, err := odin.CloneInstance(
-			args[0],
 			params,
 			svc,
 		)

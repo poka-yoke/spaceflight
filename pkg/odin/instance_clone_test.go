@@ -64,18 +64,15 @@ func TestCloneInstance(t *testing.T) {
 				if test.from != "" {
 					svc.AddSnapshots(test.snapshots)
 				}
-				createParams := odin.CreateParams{
-					InstanceType: test.instanceType,
-					User:         test.user,
-					Password:     test.password,
-					Size:         test.size,
-				}
-				params := odin.CloneParams{
-					CreateParams:         createParams,
+				params := odin.Instance{
+					Identifier:           test.identifier,
+					Type:                 test.instanceType,
+					User:                 test.user,
+					Password:             test.password,
+					Size:                 test.size,
 					OriginalInstanceName: test.from,
 				}
 				actual, err := odin.CloneInstance(
-					test.identifier,
 					params,
 					svc,
 				)

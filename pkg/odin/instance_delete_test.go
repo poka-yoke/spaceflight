@@ -72,8 +72,10 @@ func TestDeleteInstance(t *testing.T) {
 			func(t *testing.T) {
 				svc.addInstances(test.instances)
 				err := odin.DeleteInstance(
-					test.identifier,
-					test.snapshotID,
+					odin.Instance{
+						Identifier:      test.identifier,
+						FinalSnapshotID: test.snapshotID,
+					},
 					svc,
 				)
 				test.check("", err, t)

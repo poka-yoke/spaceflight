@@ -21,14 +21,14 @@ var instanceRestoreCmd = &cobra.Command{
 		}
 		svc := odin.Init()
 		securityGroupsList := strings.Split(securityGroups, ",")
-		params := odin.RestoreParams{
-			InstanceType:         instanceType,
+		params := odin.Instance{
+			Identifier:           args[0],
+			Type:                 instanceType,
 			SubnetGroupName:      subnetName,
 			SecurityGroups:       securityGroupsList,
 			OriginalInstanceName: from,
 		}
 		endpoint, err := odin.RestoreInstance(
-			args[0],
 			params,
 			svc,
 		)

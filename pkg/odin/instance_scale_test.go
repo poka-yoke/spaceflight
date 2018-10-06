@@ -115,8 +115,10 @@ func TestScaleInstance(t *testing.T) {
 			func(t *testing.T) {
 				svc.addInstances(test.instances)
 				actual, err := odin.ScaleInstance(
-					test.identifier,
-					test.instanceType,
+					odin.Instance{
+						Identifier: test.identifier,
+						Type:       test.instanceType,
+					},
 					test.delayChange,
 					svc,
 				)
