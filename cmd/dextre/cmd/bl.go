@@ -12,12 +12,6 @@ import (
 	"github.com/poka-yoke/spaceflight/pkg/dnsbl"
 )
 
-func must(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 var ipAddress, blacklist, pgaddress string
 var warning, critical int
 

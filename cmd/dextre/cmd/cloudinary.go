@@ -22,9 +22,7 @@ var cloudinaryCmd = &cobra.Command{
 			os.Getenv("CLOUDINARY_SECRET"),
 		))
 
-		if pgaddress == "" {
-			log.Fatal("pgaddress is mandatory")
-		}
+		must(checkPGAddress())
 		err := push.New(pgaddress, "cloudinary").
 			Collector(cloudinary.NewCollector()).Push()
 
