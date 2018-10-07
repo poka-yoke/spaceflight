@@ -7,11 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type deleteInstanceCase struct {
-	testCase
+	testcase.TestCase
 	name       string
 	identifier string
 	snapshotID string
@@ -21,9 +22,9 @@ type deleteInstanceCase struct {
 var deleteInstanceCases = []deleteInstanceCase{
 	// Deleting simple instance
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "",
 		},
 		name:       "Deleting simple instance",
 		identifier: "test1",
@@ -37,9 +38,9 @@ var deleteInstanceCases = []deleteInstanceCase{
 	},
 	// Deleting simple instance with final snapshot
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "",
 		},
 		name:       "Deleting simple instance with final snapshot",
 		identifier: "test3",
@@ -53,9 +54,9 @@ var deleteInstanceCases = []deleteInstanceCase{
 	},
 	// Deleting non existing instance
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "No such instance test2",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "No such instance test2",
 		},
 		name:       "Deleting non existing instance",
 		identifier: "test2",
@@ -78,7 +79,7 @@ func TestDeleteInstance(t *testing.T) {
 					},
 					svc,
 				)
-				test.check("", err, t)
+				test.Check("", err, t)
 				_, instance, _ := svc.findInstance(
 					test.identifier,
 				)

@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type createInstanceCase struct {
-	testCase
+	testcase.TestCase
 	name         string
 	identifier   string
 	instanceType string
@@ -20,9 +21,9 @@ type createInstanceCase struct {
 var createInstanceCases = []createInstanceCase{
 	// Creating simple instance
 	{
-		testCase: testCase{
-			expected:      "test1.0.us-east-1.rds.amazonaws.com",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "test1.0.us-east-1.rds.amazonaws.com",
+			ExpectedError: "",
 		},
 		name:         "Creating simple instance",
 		identifier:   "test1",
@@ -33,9 +34,9 @@ var createInstanceCases = []createInstanceCase{
 	},
 	// Fail because empty user
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "Specify Master User",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "Specify Master User",
 		},
 		name:         "Fail because empty user",
 		identifier:   "test1",
@@ -46,9 +47,9 @@ var createInstanceCases = []createInstanceCase{
 	},
 	// Fail because empty password
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "Specify Master User Password",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "Specify Master User Password",
 		},
 		name:         "Fail because empty password",
 		identifier:   "test1",
@@ -59,9 +60,9 @@ var createInstanceCases = []createInstanceCase{
 	},
 	// Fail because non-present size
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "Specify size between 5 and 6144",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "Specify size between 5 and 6144",
 		},
 		name:         "Fail because non-present size",
 		identifier:   "test1",
@@ -71,9 +72,9 @@ var createInstanceCases = []createInstanceCase{
 	},
 	// Fail because too small size
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "Specify size between 5 and 6144",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "Specify size between 5 and 6144",
 		},
 		name:         "Fail because too small size",
 		identifier:   "test1",
@@ -83,9 +84,9 @@ var createInstanceCases = []createInstanceCase{
 	},
 	// Fail because too big size
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "Specify size between 5 and 6144",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "Specify size between 5 and 6144",
 		},
 		name:         "Fail because too big size",
 		identifier:   "test1",
@@ -114,7 +115,7 @@ func TestCreateInstance(t *testing.T) {
 					params,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}

@@ -7,11 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type createSnapshotsCase struct {
-	testCase
+	testcase.TestCase
 	name       string
 	instances  []*rds.DBInstance
 	snapshots  []*rds.DBSnapshot
@@ -32,9 +33,9 @@ var instance2 = &rds.DBInstance{
 var createSnapshotCases = []createSnapshotsCase{
 	// Create simple snapshot
 	{
-		testCase: testCase{
-			expected:      exampleSnapshot4,
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      exampleSnapshot4,
+			ExpectedError: "",
 		},
 		name:       "Create simple snapshot",
 		instances:  []*rds.DBInstance{instance1},
@@ -44,9 +45,9 @@ var createSnapshotCases = []createSnapshotsCase{
 	},
 	// Snapshot already exists
 	{
-		testCase: testCase{
-			expected: nil,
-			expectedError: fmt.Sprintf(
+		TestCase: testcase.TestCase{
+			Expected: nil,
+			ExpectedError: fmt.Sprintf(
 				"Snapshot %s already exists",
 				*exampleSnapshot4ID,
 			),
@@ -59,9 +60,9 @@ var createSnapshotCases = []createSnapshotsCase{
 	},
 	// Invalid instance state
 	{
-		testCase: testCase{
-			expected: nil,
-			expectedError: fmt.Sprintf(
+		TestCase: testcase.TestCase{
+			Expected: nil,
+			ExpectedError: fmt.Sprintf(
 				"%s instance state is not available",
 				*exampleSnapshot4DBID,
 			),
@@ -74,9 +75,9 @@ var createSnapshotCases = []createSnapshotsCase{
 	},
 	// Non existing instance
 	{
-		testCase: testCase{
-			expected: nil,
-			expectedError: fmt.Sprintf(
+		TestCase: testcase.TestCase{
+			Expected: nil,
+			ExpectedError: fmt.Sprintf(
 				"No such instance %s",
 				*exampleSnapshot4DBID,
 			),
@@ -102,7 +103,7 @@ func TestCreateSnapshot(t *testing.T) {
 					test.snapshotID,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}

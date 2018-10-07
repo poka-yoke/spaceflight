@@ -7,11 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type getRestoreDBInputCase struct {
-	testCase
+	testcase.TestCase
 	name       string
 	identifier string
 	params     odin.Instance
@@ -21,15 +22,15 @@ type getRestoreDBInputCase struct {
 var getRestoreDBInputCases = []getRestoreDBInputCase{
 	// Params with Snapshot
 	{
-		testCase: testCase{
-			expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
+		TestCase: testcase.TestCase{
+			Expected: &rds.RestoreDBInstanceFromDBSnapshotInput{
 				DBInstanceClass:      exampleSnapshot1Type,
 				DBInstanceIdentifier: aws.String("develop"),
 				DBSnapshotIdentifier: exampleSnapshot1ID,
 				DBSubnetGroupName:    aws.String(""),
 				Engine:               aws.String("postgres"),
 			},
-			expectedError: "",
+			ExpectedError: "",
 		},
 		name: "Params with Snapshot",
 		params: odin.Instance{
@@ -41,9 +42,9 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 	},
 	// Params with Snapshot without OriginalInstanceName
 	{
-		testCase: testCase{
-			expected:      nil,
-			expectedError: "Original Instance Name was empty",
+		TestCase: testcase.TestCase{
+			Expected:      nil,
+			ExpectedError: "Original Instance Name was empty",
 		},
 		name: "Params with Snapshot without OriginalInstanceName",
 		params: odin.Instance{
@@ -54,9 +55,9 @@ var getRestoreDBInputCases = []getRestoreDBInputCase{
 	},
 	// Params with non existing Snapshot
 	{
-		testCase: testCase{
-			expected:      nil,
-			expectedError: "No snapshot found for develop instance",
+		TestCase: testcase.TestCase{
+			Expected:      nil,
+			ExpectedError: "No snapshot found for develop instance",
 		},
 		name: "Params with non existing Snapshot",
 		params: odin.Instance{
@@ -79,7 +80,7 @@ func TestGetRestoreDBInput(t *testing.T) {
 				actual, err := params.RestoreDBInput(
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}
@@ -88,9 +89,9 @@ func TestGetRestoreDBInput(t *testing.T) {
 var restoreInstanceCases = []cloneInstanceCase{
 	// Uses snapshot to restore from
 	{
-		testCase: testCase{
-			expected:      "test1.0.us-east-1.rds.amazonaws.com",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "test1.0.us-east-1.rds.amazonaws.com",
+			ExpectedError: "",
 		},
 		name:         "Uses snapshot to restore from",
 		identifier:   "test1",
@@ -103,9 +104,9 @@ var restoreInstanceCases = []cloneInstanceCase{
 	},
 	// Uses non existing snapshot to restore from
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "No snapshot found for develop instance",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "No snapshot found for develop instance",
 		},
 		name:         "Uses non existing snapshot to restore from",
 		identifier:   "test1",
@@ -137,7 +138,7 @@ func TestRestoreInstance(t *testing.T) {
 					params,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}

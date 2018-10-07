@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
@@ -83,33 +84,33 @@ var exampleSnapshot2Out = fmt.Sprintf(
 var printSnapshotsCases = []listSnapshotsCase{
 	// No snapshots
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "",
 		},
 		name:      "No snapshots",
 		snapshots: []*rds.DBSnapshot{},
 	},
 	// One snapshot
 	{
-		testCase: testCase{
-			expected:      exampleSnapshot1Out,
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      exampleSnapshot1Out,
+			ExpectedError: "",
 		},
 		name:      "One snapshot",
 		snapshots: []*rds.DBSnapshot{exampleSnapshot1},
 	},
 	// Two snapshots
 	{
-		testCase: testCase{
-			expected: strings.Join(
+		TestCase: testcase.TestCase{
+			Expected: strings.Join(
 				[]string{
 					exampleSnapshot2Out,
 					exampleSnapshot1Out,
 				},
 				"",
 			),
-			expectedError: "",
+			ExpectedError: "",
 		},
 		name: "Two snapshots",
 		snapshots: []*rds.DBSnapshot{
@@ -127,14 +128,14 @@ func TestPrintSnapshot(t *testing.T) {
 				actual := odin.PrintSnapshots(
 					test.snapshots,
 				)
-				test.check(actual, nil, t)
+				test.Check(actual, nil, t)
 			},
 		)
 	}
 }
 
 type listSnapshotsCase struct {
-	testCase
+	testcase.TestCase
 	name       string
 	snapshots  []*rds.DBSnapshot
 	instanceID string
@@ -143,9 +144,9 @@ type listSnapshotsCase struct {
 var listSnapshotsCases = []listSnapshotsCase{
 	// No snapshots for any instance
 	{
-		testCase: testCase{
-			expected:      []*rds.DBSnapshot{},
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      []*rds.DBSnapshot{},
+			ExpectedError: "",
 		},
 		name:       "No snapshots for any instance",
 		snapshots:  []*rds.DBSnapshot{},
@@ -153,9 +154,9 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// One instance, one snapshot
 	{
-		testCase: testCase{
-			expected:      []*rds.DBSnapshot{exampleSnapshot1},
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      []*rds.DBSnapshot{exampleSnapshot1},
+			ExpectedError: "",
 		},
 		name:       "One instance one snapshot",
 		snapshots:  []*rds.DBSnapshot{exampleSnapshot1},
@@ -163,12 +164,12 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// Two instances, two snapshots
 	{
-		testCase: testCase{
-			expected: []*rds.DBSnapshot{
+		TestCase: testcase.TestCase{
+			Expected: []*rds.DBSnapshot{
 				exampleSnapshot2,
 				exampleSnapshot1,
 			},
-			expectedError: "",
+			ExpectedError: "",
 		},
 		name: "Two instances two snapshots",
 		snapshots: []*rds.DBSnapshot{
@@ -179,11 +180,11 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// Instance selection
 	{
-		testCase: testCase{
-			expected: []*rds.DBSnapshot{
+		TestCase: testcase.TestCase{
+			Expected: []*rds.DBSnapshot{
 				exampleSnapshot2,
 			},
-			expectedError: "",
+			ExpectedError: "",
 		},
 		name: "Two instances two snapshots, one selected",
 		snapshots: []*rds.DBSnapshot{
@@ -205,7 +206,7 @@ func TestListSnapshots(t *testing.T) {
 					test.instanceID,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}
