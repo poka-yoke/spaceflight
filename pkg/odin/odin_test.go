@@ -4,48 +4,13 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/go-test/deep"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
-type testCase struct {
-	expected      interface{}
-	expectedError string
-}
-
-func (tc *testCase) expectingError(err error) bool {
-	return tc.expectedError != "" && err.Error() == tc.expectedError
-}
-
-func (tc *testCase) check(actual interface{}, err error, t *testing.T) {
-	switch {
-	case err != nil && !tc.expectingError(err):
-		t.Errorf(
-			"Unexpected error: %v",
-			err,
-		)
-	case err != nil && tc.expectingError(err):
-	case err == nil && tc.expectedError != "":
-		t.Errorf(
-			"Expected error: %v missing",
-			tc.expectedError,
-		)
-	case err == nil:
-		if diff := deep.Equal(
-			actual,
-			tc.expected,
-		); diff != nil {
-			t.Errorf(
-				"Unexpected output: %s",
-				diff,
-			)
-		}
-	}
-}
-
 type getLastSnapshotCase struct {
-	testCase
+	testcase.TestCase
 	name       string
 	identifier string
 	snapshots  []*rds.DBSnapshot
@@ -54,9 +19,9 @@ type getLastSnapshotCase struct {
 var getLastSnapshotCases = []getLastSnapshotCase{
 	// Get snapshot id by instance id
 	{
-		testCase: testCase{
-			expected:      exampleSnapshot1,
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      exampleSnapshot1,
+			ExpectedError: "",
 		},
 		name:       "Get snapshot id by instance id",
 		identifier: "production-rds",
@@ -66,9 +31,9 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 	},
 	// Get non-existing snapshot id by instance id
 	{
-		testCase: testCase{
-			expected:      nil,
-			expectedError: "No snapshot found for develop instance",
+		TestCase: testcase.TestCase{
+			Expected:      nil,
+			ExpectedError: "No snapshot found for develop instance",
 		},
 		name:       "Get non-existing snapshot id by instance id",
 		identifier: "develop",
@@ -76,9 +41,9 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 	},
 	// Get last snapshot id by instance id out of two
 	{
-		testCase: testCase{
-			expected:      exampleSnapshot3,
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      exampleSnapshot3,
+			ExpectedError: "",
 		},
 		name:       "Get last snapshot id by instance id",
 		identifier: "develop-rds",
@@ -100,7 +65,7 @@ func TestGetLastSnapshot(t *testing.T) {
 					test.identifier,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}

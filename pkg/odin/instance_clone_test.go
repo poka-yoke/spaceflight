@@ -6,11 +6,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type cloneInstanceCase struct {
-	testCase
+	testcase.TestCase
 	name         string
 	identifier   string
 	instanceType string
@@ -24,9 +25,9 @@ type cloneInstanceCase struct {
 var cloneInstanceCases = []cloneInstanceCase{
 	// Uses snapshot to copy from
 	{
-		testCase: testCase{
-			expected:      "test1.0.us-east-1.rds.amazonaws.com",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "test1.0.us-east-1.rds.amazonaws.com",
+			ExpectedError: "",
 		},
 		name:         "Uses snapshot to copy from",
 		identifier:   "test1",
@@ -39,9 +40,9 @@ var cloneInstanceCases = []cloneInstanceCase{
 	},
 	// Uses non existing snapshot to copy from
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "No snapshot found for develop instance",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "No snapshot found for develop instance",
 		},
 		name:         "Uses non existing snapshot to copy from",
 		identifier:   "test1",
@@ -76,7 +77,7 @@ func TestCloneInstance(t *testing.T) {
 					params,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}

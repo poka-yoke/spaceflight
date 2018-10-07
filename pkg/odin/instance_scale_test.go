@@ -7,11 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
+	"github.com/poka-yoke/spaceflight/internal/test_case"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type scaleInstanceCase struct {
-	testCase
+	testcase.TestCase
 	name         string
 	identifier   string
 	instanceType string
@@ -22,9 +23,9 @@ type scaleInstanceCase struct {
 var scaleInstanceCases = []scaleInstanceCase{
 	// Scaling up instance
 	{
-		testCase: testCase{
-			expected:      "Instance test1 is db.m1.small",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "Instance test1 is db.m1.small",
+			ExpectedError: "",
 		},
 		name:         "Scaling up instance",
 		identifier:   "test1",
@@ -40,9 +41,9 @@ var scaleInstanceCases = []scaleInstanceCase{
 	},
 	// Fail to scale up non existing instance
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "No such instance test1",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "No such instance test1",
 		},
 		name:         "Fail to scale up non existing instance",
 		identifier:   "test1",
@@ -52,9 +53,9 @@ var scaleInstanceCases = []scaleInstanceCase{
 	},
 	// Fail to scale up non available instance
 	{
-		testCase: testCase{
-			expected:      "",
-			expectedError: "test1 instance state is not available",
+		TestCase: testcase.TestCase{
+			Expected:      "",
+			ExpectedError: "test1 instance state is not available",
 		},
 		name:         "Fail to scale up non available instance",
 		identifier:   "test1",
@@ -70,9 +71,9 @@ var scaleInstanceCases = []scaleInstanceCase{
 	},
 	// Scaling down instance
 	{
-		testCase: testCase{
-			expected:      "Instance test1 is db.m1.small",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "Instance test1 is db.m1.small",
+			ExpectedError: "",
 		},
 		name:         "Scaling down instance",
 		identifier:   "test1",
@@ -88,9 +89,9 @@ var scaleInstanceCases = []scaleInstanceCase{
 	},
 	// Delayed scaling down instance
 	{
-		testCase: testCase{
-			expected:      "Instance test1 is db.m1.medium",
-			expectedError: "",
+		TestCase: testcase.TestCase{
+			Expected:      "Instance test1 is db.m1.medium",
+			ExpectedError: "",
 		},
 		name:         "Scaling down instance with delay",
 		identifier:   "test1",
@@ -122,7 +123,7 @@ func TestScaleInstance(t *testing.T) {
 					test.delayChange,
 					svc,
 				)
-				test.check(actual, err, t)
+				test.Check(actual, err, t)
 			},
 		)
 	}
