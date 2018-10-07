@@ -12,7 +12,6 @@ You'll find we talk about tool types. Keep reading for a description:
 
 * Mission Control Consoles (MCC): These are tools thought to be executed from administration nodes, i.e. your computer.
 * Mobile Servicing Systems (MSS): These are tools thought to be executed under certain automated systems, like checks in a monitoring system.
-* Orbiters: These are tools thought to be executed in serverless infrastructure.
 
 Finally, here you can find a relation of tools:
 
@@ -26,7 +25,6 @@ Finally, here you can find a relation of tools:
 | [fido](mcc/fido) | MCC | Configuration management tool |
 | [surgeon](mcc/surgeon) | MCC | (WIP) Service Diagnosing tool |
 | [odin](mcc/odin) | MCC | (WIP) Databases management tool |
-| [es](orbiter/es) | Orbiter | (WIP) ElasticSearch automatic tuning Lambda |
 
 ## Collaborations
 
