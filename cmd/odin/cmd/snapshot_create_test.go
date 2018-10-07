@@ -1,4 +1,4 @@
-package odin_test
+package cmd
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/poka-yoke/spaceflight/internal/test_case"
-	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type createSnapshotsCase struct {
@@ -98,7 +97,7 @@ func TestCreateSnapshot(t *testing.T) {
 				svc := newMockRDSClient()
 				svc.addInstances(test.instances)
 				svc.AddSnapshots(test.snapshots)
-				actual, err := odin.CreateSnapshot(
+				actual, err := createSnapshot(
 					test.instanceID,
 					test.snapshotID,
 					svc,

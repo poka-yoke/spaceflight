@@ -1,4 +1,4 @@
-package odin_test
+package cmd
 
 import (
 	"testing"
@@ -99,7 +99,6 @@ var createInstanceCases = []createInstanceCase{
 
 func TestCreateInstance(t *testing.T) {
 	svc := newMockRDSClient()
-	odin.Duration = time.Duration(0)
 	for _, test := range createInstanceCases {
 		t.Run(
 			test.name,
@@ -111,9 +110,10 @@ func TestCreateInstance(t *testing.T) {
 					Password:   test.password,
 					Size:       test.size,
 				}
-				actual, err := odin.CreateInstance(
+				actual, err := createInstance(
 					params,
 					svc,
+					time.Duration(0),
 				)
 				test.Check(actual, err, t)
 			},

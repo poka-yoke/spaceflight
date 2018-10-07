@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/spf13/cobra"
-
-	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 // snapshotCreateCmd represents the snapshot create command
@@ -19,8 +20,8 @@ using the specified snapshot name.`,
 		if len(args) != 2 {
 			log.Fatal(CreateParamsReq)
 		}
-		svc := odin.Init()
-		snapshot, err := odin.CreateSnapshot(
+		svc := rdsLogin("us-east-1")
+		snapshot, err := createSnapshot(
 			args[0],
 			args[1],
 			svc,
@@ -48,4 +49,26 @@ func init() {
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
+}
+
+// createSnapshot creates a Snapshot for specified instance.
+func createSnapshot(
+	instanceName string,
+	snapshotName string,
+	svc rdsiface.RDSAPI,
+) (
+	result *rds.DBSnapshot,
+	err error,
+) {
+	output, err := svc.CreateDBSnapshot(
+		&rds.CreateDBSnapshotInput{
+			DBInstanceIdentifier: aws.String(instanceName),
+			DBSnapshotIdentifier: aws.String(snapshotName),
+		},
+	)
+	if err != nil {
+		return
+	}
+	result = output.DBSnapshot
+	return
 }

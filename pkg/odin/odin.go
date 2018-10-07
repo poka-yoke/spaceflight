@@ -2,23 +2,20 @@ package odin
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
+const (
+	// RFC8601 is the date/time format used by AWS.
+	RFC8601 = "2006-01-02T15:04:05-07:00"
+)
+
 // Duration specified time to wait for instance to be available.
 var Duration = time.Duration(5) * time.Second
-
-// Init initializes connection to AWS API
-func Init() rdsiface.RDSAPI {
-	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
-	return rds.New(sess)
-}
 
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
@@ -26,7 +23,8 @@ type ModifiableParams interface {
 	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
 }
 
-func modifyInstance(
+// ModifyInstance enqueues a modify operation
+func ModifyInstance(
 	params ModifiableParams,
 	svc rdsiface.RDSAPI,
 ) (err error) {
@@ -56,6 +54,36 @@ func GetLastSnapshot(
 		return
 	}
 	return results[0], nil
+}
+
+// ListSnapshots return a list of all DBSnapshots.
+func ListSnapshots(
+	instanceName string,
+	svc rdsiface.RDSAPI,
+) (
+	result []*rds.DBSnapshot,
+	err error,
+) {
+	input := &rds.DescribeDBSnapshotsInput{}
+	if instanceName != "" {
+		input.SetDBInstanceIdentifier(instanceName)
+	}
+	output, err := svc.DescribeDBSnapshots(input)
+	if err != nil {
+		return
+	}
+	// Lambda function here implements reverse ordering based
+	// on snapshot's creation time, so first element is newer.
+	sort.Slice(
+		output.DBSnapshots,
+		func(i, j int) bool {
+			return output.DBSnapshots[i].SnapshotCreateTime.After(
+				*output.DBSnapshots[j].SnapshotCreateTime,
+			)
+		},
+	)
+	result = output.DBSnapshots
+	return
 }
 
 // WaitForInstance waits until instance's status is "available".

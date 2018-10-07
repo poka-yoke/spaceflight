@@ -1,4 +1,4 @@
-package odin_test
+package cmd
 
 import (
 	"testing"
@@ -109,19 +109,19 @@ var scaleInstanceCases = []scaleInstanceCase{
 
 func TestScaleInstance(t *testing.T) {
 	svc := newMockRDSClient()
-	odin.Duration = time.Duration(0)
 	for _, test := range scaleInstanceCases {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
 				svc.addInstances(test.instances)
-				actual, err := odin.ScaleInstance(
+				actual, err := scaleInstance(
 					odin.Instance{
 						Identifier: test.identifier,
 						Type:       test.instanceType,
 					},
 					test.delayChange,
 					svc,
+					time.Duration(0),
 				)
 				test.Check(actual, err, t)
 			},
