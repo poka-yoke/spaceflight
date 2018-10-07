@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/pkg/odin"
@@ -23,13 +22,24 @@ var instanceDeleteCmd = &cobra.Command{
 			log.Fatal(InstanceIDReq)
 		}
 		svc := rdsLogin("us-east-1")
-
-		err := deleteInstance(
-			odin.Instance{
-				Identifier:      args[0],
-				FinalSnapshotID: finalSnapshotID,
-			},
+		params := odin.Instance{
+			Identifier:      args[0],
+			FinalSnapshotID: finalSnapshotID,
+		}
+		rdsParams, err := params.DeleteDBInput(svc)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		out, err := svc.DeleteDBInstance(
+			rdsParams,
+		)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		err = waitForInstance(
+			out.DBInstance,
 			svc,
+			"deleted",
 			5*time.Second,
 		)
 		if err != nil {
@@ -59,24 +69,4 @@ func init() {
 		"Final snapshot ID, if desired. If missing, no snapshot",
 	)
 
-}
-
-// deleteInstance deletes an existing RDS database instance.
-func deleteInstance(
-	params odin.Instance,
-	svc rdsiface.RDSAPI,
-	duration time.Duration,
-) (err error) {
-	rdsParams, err := params.DeleteDBInput(svc)
-	if err != nil {
-		return err
-	}
-	out, err := svc.DeleteDBInstance(
-		rdsParams,
-	)
-	if err != nil {
-		return err
-	}
-	err = waitForInstance(out.DBInstance, svc, "deleted", duration)
-	return nil
 }

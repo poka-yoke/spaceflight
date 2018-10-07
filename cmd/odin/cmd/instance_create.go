@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/pkg/odin"
@@ -34,15 +33,29 @@ var instanceCreateCmd = &cobra.Command{
 			SecurityGroups:  strings.Split(securityGroups, ","),
 			Size:            size,
 		}
-		endpoint, err := createInstance(
-			params,
+		rdsParams, err := params.CreateDBInput(
 			svc,
+		)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		res, err := svc.CreateDBInstance(rdsParams)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		err = waitForInstance(
+			res.DBInstance,
+			svc,
+			"available",
 			5*time.Second,
 		)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Println(endpoint)
+		if err := odin.ModifyInstance(params, svc); err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		fmt.Println(*res.DBInstance.Endpoint.Address)
 	},
 }
 
@@ -101,30 +114,4 @@ func init() {
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
-}
-
-// createInstance creates a new RDS database instance. If a vpcid is
-// specified the security group will be in that VPC.
-func createInstance(
-	params odin.Instance,
-	svc rdsiface.RDSAPI,
-	duration time.Duration,
-) (result string, err error) {
-	rdsParams, err := params.CreateDBInput(
-		svc,
-	)
-	if err != nil {
-		return "", err
-	}
-	res, err := svc.CreateDBInstance(rdsParams)
-	if err != nil {
-		return "", err
-	}
-	err = waitForInstance(res.DBInstance, svc, "available", duration)
-	if err != nil {
-		return
-	}
-	result = *res.DBInstance.Endpoint.Address
-	err = odin.ModifyInstance(params, svc)
-	return
 }
