@@ -1,4 +1,4 @@
-package odin_test
+package cmd
 
 import (
 	"testing"
@@ -121,7 +121,6 @@ var restoreInstanceCases = []cloneInstanceCase{
 
 func TestRestoreInstance(t *testing.T) {
 	svc := newMockRDSClient()
-	odin.Duration = time.Duration(0)
 	for _, test := range restoreInstanceCases {
 		t.Run(
 			test.name,
@@ -134,9 +133,10 @@ func TestRestoreInstance(t *testing.T) {
 					Type:                 test.instanceType,
 					OriginalInstanceName: test.from,
 				}
-				actual, err := odin.RestoreInstance(
+				actual, err := restoreInstance(
 					params,
 					svc,
+					time.Duration(0),
 				)
 				test.Check(actual, err, t)
 			},

@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/pkg/odin"
@@ -26,7 +28,7 @@ var snapshotListCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Println(odin.PrintSnapshots(snapshots))
+		fmt.Println(printSnapshots(snapshots))
 	},
 }
 
@@ -43,4 +45,22 @@ func init() {
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
+}
+
+// printSnapshots return a string with the snapshot list output.
+func printSnapshots(snapshots []*rds.DBSnapshot) string {
+	lines := []string{}
+	for _, snapshot := range snapshots {
+		line := fmt.Sprintf(
+			"%v %v %v %v\n",
+			*snapshot.DBSnapshotIdentifier,
+			*snapshot.DBInstanceIdentifier,
+			(*snapshot.SnapshotCreateTime).Format(
+				RFC8601,
+			),
+			*snapshot.Status,
+		)
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "")
 }

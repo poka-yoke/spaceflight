@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/pkg/odin"
@@ -28,9 +30,10 @@ var instanceRestoreCmd = &cobra.Command{
 			SecurityGroups:       securityGroupsList,
 			OriginalInstanceName: from,
 		}
-		endpoint, err := odin.RestoreInstance(
+		endpoint, err := restoreInstance(
 			params,
 			svc,
+			5*time.Second,
 		)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
@@ -80,4 +83,30 @@ func init() {
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
+}
+
+// restoreInstance creates a new RDS database instance restoring
+// from a snapshot.
+func restoreInstance(
+	params odin.Instance,
+	svc rdsiface.RDSAPI,
+	duration time.Duration,
+) (result string, err error) {
+	rdsParams, err := params.RestoreDBInput(
+		svc,
+	)
+	if err != nil {
+		return "", err
+	}
+	res, err := svc.RestoreDBInstanceFromDBSnapshot(rdsParams)
+	if err != nil {
+		return "", err
+	}
+	err = waitForInstance(res.DBInstance, svc, "available", duration)
+	if err != nil {
+		return "", err
+	}
+	result = *res.DBInstance.Endpoint.Address
+	err = odin.ModifyInstance(params, svc)
+	return
 }

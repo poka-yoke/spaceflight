@@ -1,4 +1,4 @@
-package odin_test
+package cmd
 
 import (
 	"testing"
@@ -57,7 +57,6 @@ var cloneInstanceCases = []cloneInstanceCase{
 
 func TestCloneInstance(t *testing.T) {
 	svc := newMockRDSClient()
-	odin.Duration = time.Duration(0)
 	for _, test := range cloneInstanceCases {
 		t.Run(
 			test.name,
@@ -73,9 +72,10 @@ func TestCloneInstance(t *testing.T) {
 					Size:                 test.size,
 					OriginalInstanceName: test.from,
 				}
-				actual, err := odin.CloneInstance(
+				actual, err := cloneInstance(
 					params,
 					svc,
+					time.Duration(0),
 				)
 				test.Check(actual, err, t)
 			},

@@ -115,9 +115,9 @@ func healthCheckServer(t *testing.T) func(http.ResponseWriter, *http.Request) {
 					},
 					"request":                  nil,
 					"request_interval_seconds": nil,
-					"note":                 d.note,
-					"has_duration_history": false,
-					"created":              time.Now().Format("2006-01-02T15:04:05-07:00"),
+					"note":                     d.note,
+					"has_duration_history":     false,
+					"created":                  time.Now().Format("2006-01-02T15:04:05-07:00"),
 				}
 				buf, err := json.Marshal(b)
 				if err != nil {
