@@ -25,6 +25,6 @@ func CreateInstance(
 		return
 	}
 	result = *res.DBInstance.Endpoint.Address
-	err = modifyInstance(params, svc)
+	err = ModifyInstance(params, svc)
 	return
 }

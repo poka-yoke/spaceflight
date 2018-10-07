@@ -25,6 +25,6 @@ func RestoreInstance(
 		return "", err
 	}
 	result = *res.DBInstance.Endpoint.Address
-	err = modifyInstance(params, svc)
+	err = ModifyInstance(params, svc)
 	return
 }

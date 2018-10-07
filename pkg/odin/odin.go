@@ -17,7 +17,8 @@ type ModifiableParams interface {
 	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
 }
 
-func modifyInstance(
+// ModifyInstance enqueues a modify operation
+func ModifyInstance(
 	params ModifiableParams,
 	svc rdsiface.RDSAPI,
 ) (err error) {
