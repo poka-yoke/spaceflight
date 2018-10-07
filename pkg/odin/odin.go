@@ -4,21 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
 // Duration specified time to wait for instance to be available.
 var Duration = time.Duration(5) * time.Second
-
-// Init initializes connection to AWS API
-func Init() rdsiface.RDSAPI {
-	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
-	return rds.New(sess)
-}
 
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.

@@ -20,7 +20,7 @@ var instanceDeleteCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal(InstanceIDReq)
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 
 		err := odin.DeleteInstance(
 			odin.Instance{

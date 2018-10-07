@@ -18,7 +18,7 @@ var snapshotListCmd = &cobra.Command{
 		if len(args) != 1 {
 			args = append(args, "")
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 		snapshots, err := odin.ListSnapshots(
 			args[0],
 			svc,

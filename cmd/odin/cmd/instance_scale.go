@@ -21,7 +21,7 @@ var instanceScaleCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal(InstanceIDReq)
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 		params := odin.Instance{
 			Identifier: args[0],
 			Type:       instanceType,

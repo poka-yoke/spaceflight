@@ -19,7 +19,7 @@ using the specified snapshot name.`,
 		if len(args) != 2 {
 			log.Fatal(CreateParamsReq)
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 		snapshot, err := odin.CreateSnapshot(
 			args[0],
 			args[1],

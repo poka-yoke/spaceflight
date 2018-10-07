@@ -19,7 +19,7 @@ var instanceRestoreCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal(NewInstanceIDReq)
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 		securityGroupsList := strings.Split(securityGroups, ",")
 		params := odin.Instance{
 			Identifier:           args[0],

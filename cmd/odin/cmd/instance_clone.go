@@ -21,7 +21,7 @@ var instanceCloneCmd = &cobra.Command{
 		if len(args) != 1 {
 			log.Fatal(NewInstanceIDReq)
 		}
-		svc := odin.Init()
+		svc := rdsLogin("us-east-1")
 		if from == "" {
 			log.Fatal("Original instance name not provided")
 		}
