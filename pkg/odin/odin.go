@@ -16,7 +16,7 @@ const (
 // ModifiableParams is interface for params structs supporting
 // DBInstance modification.
 type ModifiableParams interface {
-	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
+	ModifyDBInput(bool) (*rds.ModifyDBInstanceInput, error)
 }
 
 // GetLastSnapshot queries AWS looking for a Snapshot ID, depending on

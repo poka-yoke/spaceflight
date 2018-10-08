@@ -27,7 +27,7 @@ var instanceScaleCmd = &cobra.Command{
 			Identifier: args[0],
 			Type:       instanceType,
 		}
-		rdsParams, err := params.ModifyDBInput(!delay, svc)
+		rdsParams, err := params.ModifyDBInput(!delay)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}

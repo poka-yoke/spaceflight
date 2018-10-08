@@ -26,7 +26,7 @@ var instanceDeleteCmd = &cobra.Command{
 			Identifier:      args[0],
 			FinalSnapshotID: finalSnapshotID,
 		}
-		rdsParams, err := params.DeleteDBInput(svc)
+		rdsParams, err := params.DeleteDBInput()
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}

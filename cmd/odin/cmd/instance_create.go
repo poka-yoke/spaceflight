@@ -33,9 +33,7 @@ var instanceCreateCmd = &cobra.Command{
 			SecurityGroups:  strings.Split(securityGroups, ","),
 			Size:            size,
 		}
-		rdsParams, err := params.CreateDBInput(
-			svc,
-		)
+		rdsParams, err := params.CreateDBInput()
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}

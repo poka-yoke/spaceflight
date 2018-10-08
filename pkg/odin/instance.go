@@ -36,13 +36,11 @@ func (i Instance) CloneDBInput(
 	if err != nil {
 		return nil, err
 	}
-	return instance.CreateDBInput(svc)
+	return instance.CreateDBInput()
 }
 
 // CreateDBInput returns CreateDBInstanceInput for the instance.
-func (i Instance) CreateDBInput(
-	svc rdsiface.RDSAPI,
-) (result *rds.CreateDBInstanceInput, err error) {
+func (i Instance) CreateDBInput() (result *rds.CreateDBInstanceInput, err error) {
 	result = &rds.CreateDBInstanceInput{
 		AllocatedStorage:     &i.Size,
 		DBInstanceIdentifier: &i.Identifier,
@@ -73,9 +71,7 @@ func (i Instance) CreateDBInput(
 }
 
 // DeleteDBInput returns DeleteDBInstanceInput for the instance.
-func (i Instance) DeleteDBInput(
-	svc rdsiface.RDSAPI,
-) (result *rds.DeleteDBInstanceInput, err error) {
+func (i Instance) DeleteDBInput() (result *rds.DeleteDBInstanceInput, err error) {
 	result = &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Identifier),
 	}
@@ -93,7 +89,6 @@ func (i Instance) DeleteDBInput(
 // ModifyDBInput returns ModifyDBInstanceInput for the instance.
 func (i Instance) ModifyDBInput(
 	applyNow bool,
-	svc rdsiface.RDSAPI,
 ) (result *rds.ModifyDBInstanceInput, err error) {
 	SecurityGroups := []*string{}
 	for _, sgid := range i.SecurityGroups {
