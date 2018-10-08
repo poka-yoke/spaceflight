@@ -114,6 +114,77 @@ func TestDeleteDBInput(t *testing.T) {
 	}
 }
 
+func TestModifyDBInputGroups(t *testing.T) {
+	tt := []struct{
+		securityGroups []string
+	}{
+		// No groups
+		{
+			securityGroups: []string{},
+		},
+		// Just one group
+		{
+			securityGroups: []string{
+				"sg-12345",
+			},
+		},
+		// Several groups
+		{
+			securityGroups: []string{
+				"sg-12345",
+				"sg-23456",
+				"sg-34567",
+				"sg-45678",
+			},
+		},
+	}
+	for _, tc := range tt {
+		res, err := Instance{SecurityGroups: tc.securityGroups}.ModifyDBInput(false)
+		if err != nil {
+			t.Errorf("It should not fail")
+		}
+		if len(res.VpcSecurityGroupIds) != len(tc.securityGroups) {
+			t.Errorf(
+				"Expected: %d entries, but got %d",
+				len(tc.securityGroups),
+				len(res.VpcSecurityGroupIds),
+			)
+		}
+		for i, sgid := range tc.securityGroups {
+			if *res.VpcSecurityGroupIds[i] != sgid {
+				t.Errorf(
+					"Expected: %s, but got %s at position %d",
+					sgid,
+					*res.VpcSecurityGroupIds[i],
+					i,
+				)
+			}
+		}
+	}
+}
+
+func TestModifyDBInputApplyNow(t *testing.T) {
+	tt := []struct{
+		applyNow bool
+	}{
+		{ applyNow: true },
+		{ applyNow: false },
+	}
+	for _, tc := range tt {
+		res, err := Instance{}.ModifyDBInput(tc.applyNow)
+		if err != nil {
+			t.Errorf("It should not fail")
+		}
+		if *res.ApplyImmediately != tc.applyNow {
+			t.Errorf(
+				"Expected: %v, but got %v",
+				tc.applyNow,
+				*res.ApplyImmediately,
+			)
+		}
+	}
+}
+
 func TestRestoreDBInput(t *testing.T) {
 	tt := []struct{
 		input Instance
