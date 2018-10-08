@@ -7,7 +7,8 @@ import(
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
+
+	"github.com/poka-yoke/spaceflight/internal/test/mockRDSClient"
 )
 
 func getTime(original string) (parsed time.Time) {
@@ -16,58 +17,6 @@ func getTime(original string) (parsed time.Time) {
 		original,
 	)
 	return
-}
-
-type mockRDSClient struct {
-	rdsiface.RDSAPI
-	dbInstances []*rds.DBInstance
-	dbSnapshots []*rds.DBSnapshot
-}
-
-// newMockRDSClient creates a mockRDSClient.
-func newMockRDSClient() *mockRDSClient {
-	return &mockRDSClient{
-		dbInstances: []*rds.DBInstance{},
-		dbSnapshots: []*rds.DBSnapshot{},
-	}
-}
-
-// DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
-func (m mockRDSClient) DescribeDBSnapshots(
-	describeParams *rds.DescribeDBSnapshotsInput,
-) (
-	result *rds.DescribeDBSnapshotsOutput,
-	err error,
-) {
-	var snapshots []*rds.DBSnapshot
-	if describeParams.DBInstanceIdentifier != nil {
-		snapshots = []*rds.DBSnapshot{}
-		id := describeParams.DBInstanceIdentifier
-		for _, snapshot := range m.dbSnapshots {
-			if *snapshot.DBInstanceIdentifier == *id {
-				snapshots = append(
-					snapshots,
-					snapshot,
-				)
-			}
-		}
-	} else {
-		snapshots = m.dbSnapshots
-	}
-	result = &rds.DescribeDBSnapshotsOutput{
-		DBSnapshots: snapshots,
-	}
-	return
-}
-
-// AddSnapshots adds a list of snapshots to the mock
-func (m *mockRDSClient) AddSnapshots(
-	snapshots []*rds.DBSnapshot,
-) {
-	m.dbSnapshots = append(
-		m.dbSnapshots,
-		snapshots...,
-	)
 }
 
 func TestDeleteDBInput(t *testing.T) {
@@ -147,7 +96,7 @@ func TestRestoreDBInput(t *testing.T) {
 			dbSnapshotIdentifier: "rds:production-2015-06-11",
 		},
 	}
-	svc := newMockRDSClient()
+	svc := mockrdsclient.NewMockRDSClient()
 	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
 	for _, tc := range tt {
 		res, err := tc.input.RestoreDBInput(svc)

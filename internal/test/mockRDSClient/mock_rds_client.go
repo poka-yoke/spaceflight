@@ -1,4 +1,4 @@
-package odin_test
+package mockrdsclient
 
 import (
 	"errors"
@@ -18,7 +18,8 @@ func trimLast(in string) string {
 	return in[:len(in)-1]
 }
 
-type mockRDSClient struct {
+// MockRDSClient mocks RDSAPI methods for testing of RDS API clients.
+type MockRDSClient struct {
 	rdsiface.RDSAPI
 	dbInstances []*rds.DBInstance
 	dbSnapshots []*rds.DBSnapshot
@@ -26,7 +27,7 @@ type mockRDSClient struct {
 
 // TakeFinalSnapshot emulates taking the final snapshot, if specified,
 // validating params.
-func (m *mockRDSClient) TakeFinalSnapshot(
+func (m *MockRDSClient) TakeFinalSnapshot(
 	params *rds.DeleteDBInstanceInput,
 ) (err error) {
 	if params.SkipFinalSnapshot == nil {
@@ -55,7 +56,7 @@ func (m *mockRDSClient) TakeFinalSnapshot(
 }
 
 // DeleteDBInstance mocks rds.DeleteDBInstance.
-func (m *mockRDSClient) DeleteDBInstance(
+func (m *MockRDSClient) DeleteDBInstance(
 	params *rds.DeleteDBInstanceInput,
 ) (
 	result *rds.DeleteDBInstanceOutput,
@@ -78,9 +79,9 @@ func (m *mockRDSClient) DeleteDBInstance(
 	return
 }
 
-// FindSnapshotInstance return index and snapshot in mockRDSClient.dbSnapshots
+// FindSnapshotInstance return index and snapshot in MockRDSClient.dbSnapshots
 // for a specific instance id.
-func (m mockRDSClient) FindSnapshotInstance(instanceID string) (
+func (m MockRDSClient) FindSnapshotInstance(instanceID string) (
 	index int,
 	snapshot *rds.DBSnapshot,
 	err error,
@@ -103,9 +104,9 @@ func (m mockRDSClient) FindSnapshotInstance(instanceID string) (
 	return
 }
 
-// FindSnapshot return index and snapshot in mockRDSClient.dbSnapshots
+// FindSnapshot return index and snapshot in MockRDSClient.dbSnapshots
 // for a specific id.
-func (m mockRDSClient) FindSnapshot(id string) (
+func (m MockRDSClient) FindSnapshot(id string) (
 	index int,
 	snapshot *rds.DBSnapshot,
 	err error,
@@ -128,9 +129,9 @@ func (m mockRDSClient) FindSnapshot(id string) (
 	return
 }
 
-// findInstance return index and instance in mockRDSClient.dbInstances
+// findInstance return index and instance in MockRDSClient.dbInstances
 // for a specific id.
-func (m mockRDSClient) findInstance(id string) (
+func (m MockRDSClient) findInstance(id string) (
 	index int,
 	instance *rds.DBInstance,
 	err error,
@@ -154,7 +155,7 @@ func (m mockRDSClient) findInstance(id string) (
 }
 
 // addInstances add a list of instances to the mock
-func (m *mockRDSClient) addInstances(
+func (m *MockRDSClient) addInstances(
 	instances []*rds.DBInstance,
 ) {
 	m.dbInstances = []*rds.DBInstance{}
@@ -165,7 +166,7 @@ func (m *mockRDSClient) addInstances(
 }
 
 // AddSnapshots add a list of snapshots to the mock
-func (m *mockRDSClient) AddSnapshots(
+func (m *MockRDSClient) AddSnapshots(
 	snapshots []*rds.DBSnapshot,
 ) {
 	m.dbSnapshots = []*rds.DBSnapshot{}
@@ -176,7 +177,7 @@ func (m *mockRDSClient) AddSnapshots(
 }
 
 // CreateDBSnapshot mocks rds.CreateDBSnapshot.
-func (m *mockRDSClient) CreateDBSnapshot(
+func (m *MockRDSClient) CreateDBSnapshot(
 	params *rds.CreateDBSnapshotInput,
 ) (
 	output *rds.CreateDBSnapshotOutput,
@@ -213,7 +214,7 @@ func (m *mockRDSClient) CreateDBSnapshot(
 }
 
 // DescribeDBSnapshots mocks rds.DescribeDBSnapshots.
-func (m mockRDSClient) DescribeDBSnapshots(
+func (m MockRDSClient) DescribeDBSnapshots(
 	describeParams *rds.DescribeDBSnapshotsInput,
 ) (
 	result *rds.DescribeDBSnapshotsOutput,
@@ -241,7 +242,7 @@ func (m mockRDSClient) DescribeDBSnapshots(
 }
 
 // DescribeDBInstances mocks rds.DescribeDBInstances.
-func (m *mockRDSClient) DescribeDBInstances(
+func (m *MockRDSClient) DescribeDBInstances(
 	describeParams *rds.DescribeDBInstancesInput,
 ) (
 	result *rds.DescribeDBInstancesOutput,
@@ -286,7 +287,7 @@ func (m *mockRDSClient) DescribeDBInstances(
 }
 
 // CreateDBInstance mocks rds.CreateDBInstance.
-func (m *mockRDSClient) CreateDBInstance(
+func (m *MockRDSClient) CreateDBInstance(
 	inputParams *rds.CreateDBInstanceInput,
 ) (
 	result *rds.CreateDBInstanceOutput,
@@ -342,7 +343,7 @@ func (m *mockRDSClient) CreateDBInstance(
 }
 
 // RestoreDBInstanceFromDBSnapshot mocks rds.RestoreDBInstanceFromDBSnapshot.
-func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
+func (m *MockRDSClient) RestoreDBInstanceFromDBSnapshot(
 	inputParams *rds.RestoreDBInstanceFromDBSnapshotInput,
 ) (
 	result *rds.RestoreDBInstanceFromDBSnapshotOutput,
@@ -381,7 +382,7 @@ func (m *mockRDSClient) RestoreDBInstanceFromDBSnapshot(
 }
 
 // ModifyDBInstance mocks rds.ModifyDBInstance.
-func (m *mockRDSClient) ModifyDBInstance(
+func (m *MockRDSClient) ModifyDBInstance(
 	params *rds.ModifyDBInstanceInput,
 ) (
 	out *rds.ModifyDBInstanceOutput,
@@ -415,9 +416,9 @@ func (m *mockRDSClient) ModifyDBInstance(
 	return
 }
 
-// newMockRDSClient creates a mockRDSClient.
-func newMockRDSClient() *mockRDSClient {
-	return &mockRDSClient{
+// NewMockRDSClient creates a MockRDSClient.
+func NewMockRDSClient() *MockRDSClient {
+	return &MockRDSClient{
 		dbInstances: []*rds.DBInstance{},
 		dbSnapshots: []*rds.DBSnapshot{},
 	}
