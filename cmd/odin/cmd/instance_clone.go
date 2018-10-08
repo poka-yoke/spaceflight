@@ -53,7 +53,7 @@ var instanceCloneCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		if err := odin.ModifyInstance(params, svc); err != nil {
+		if err := modifyInstance(params, svc, false); err != nil {
 			log.Fatalf("Error: %s", err)
 		}
 		fmt.Println(*res.DBInstance.Endpoint.Address)

@@ -23,22 +23,6 @@ type ModifiableParams interface {
 	ModifyDBInput(bool, rdsiface.RDSAPI) (*rds.ModifyDBInstanceInput, error)
 }
 
-// ModifyInstance enqueues a modify operation
-func ModifyInstance(
-	params ModifiableParams,
-	svc rdsiface.RDSAPI,
-) (err error) {
-	rdsParams, err := params.ModifyDBInput(
-		false,
-		svc,
-	)
-	if err != nil {
-		return err
-	}
-	_, err = svc.ModifyDBInstance(rdsParams)
-	return err
-}
-
 // GetLastSnapshot queries AWS looking for a Snapshot ID, depending on
 // an instance ID.
 func GetLastSnapshot(
