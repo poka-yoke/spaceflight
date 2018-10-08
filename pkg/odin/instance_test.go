@@ -19,6 +19,61 @@ func getTime(original string) (parsed time.Time) {
 	return
 }
 
+var exampleSnapshot1 = &rds.DBSnapshot{
+	AllocatedStorage:     aws.Int64(10),
+	AvailabilityZone:     aws.String("us-east-1c"),
+	DBInstanceIdentifier: aws.String("production-rds"),
+	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
+	MasterUsername:       aws.String("owner"),
+	SnapshotCreateTime:   aws.Time(getTime("2015-06-11T22:00:00+00:00")),
+	Status:               aws.String("available"),
+}
+
+func TestCreateDBInput(t *testing.T) {
+	tt := []struct{
+		input Instance
+		allocatedStorage int64
+		masterUsername string
+	}{
+		// No Snapshot
+		{
+			input: Instance{LastSnapshot: nil},
+			allocatedStorage: 0,
+			masterUsername: "",
+		},
+		// With snapshot
+		{
+			input: Instance{LastSnapshot: exampleSnapshot1},
+			allocatedStorage: 10,
+			masterUsername: "owner",
+		},
+	}
+	svc := mockrdsclient.NewMockRDSClient()
+	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
+	for _, tc := range tt {
+		res, err := tc.input.CreateDBInput()
+		if err != nil {
+			t.Errorf("It should not fail")
+		}
+		if res.AllocatedStorage != nil &&
+			*res.AllocatedStorage != tc.allocatedStorage {
+			t.Errorf(
+				"Expected: %v, got %v",
+				tc.allocatedStorage,
+				*res.AllocatedStorage,
+			)
+		}
+		if res.MasterUsername != nil &&
+			*res.MasterUsername != tc.masterUsername {
+			t.Errorf(
+				"Expected: %s, but got %s",
+				tc.masterUsername,
+				*res.MasterUsername,
+			)
+		}
+	}
+}
+
 func TestDeleteDBInput(t *testing.T) {
 	tt := []struct{
 		input Instance
@@ -43,7 +98,7 @@ func TestDeleteDBInput(t *testing.T) {
 		if res.SkipFinalSnapshot != nil &&
 			*res.SkipFinalSnapshot != tc.skipFinalSnapshot {
 			t.Errorf(
-				"SkipFinalSnapshot should be %v. Received %v",
+				"Expected: %v. Received %v",
 				tc.skipFinalSnapshot,
 				*res.SkipFinalSnapshot,
 			)
@@ -51,22 +106,12 @@ func TestDeleteDBInput(t *testing.T) {
 		if !tc.skipFinalSnapshot &&
 			*res.FinalDBSnapshotIdentifier != tc.finalSnapshotID {
 			t.Errorf(
-				"Wrong identifier. Expected %s, but got %s",
+				"Expected: %s, but got %s",
 				*res.FinalDBSnapshotIdentifier,
 				tc.finalSnapshotID,
 			)
 		}
 	}
-}
-
-var exampleSnapshot1 = &rds.DBSnapshot{
-	AllocatedStorage:     aws.Int64(10),
-	AvailabilityZone:     aws.String("us-east-1c"),
-	DBInstanceIdentifier: aws.String("production-rds"),
-	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-	MasterUsername:       aws.String("owner"),
-	SnapshotCreateTime:   aws.Time(getTime("2015-06-11T22:00:00+00:00")),
-	Status:               aws.String("available"),
 }
 
 func TestRestoreDBInput(t *testing.T) {
@@ -103,7 +148,7 @@ func TestRestoreDBInput(t *testing.T) {
 		if tc.err != nil &&
 			err.Error() != tc.err.Error() {
 			t.Errorf(
-				"Expected %s, but got %s",
+				"Expected: %s, but got %s",
 				err.Error(),
 				tc.err.Error(),
 			)
@@ -116,7 +161,7 @@ func TestRestoreDBInput(t *testing.T) {
 				t.Errorf("Snapshot Identifier should not be nil")
 			case *res.DBSnapshotIdentifier != tc.dbSnapshotIdentifier:
 				t.Errorf(
-					"Expected Snapshot identifier to be %s, but got %s",
+					"Expected: %s, but got %s",
 					*res.DBSnapshotIdentifier,
 					tc.dbSnapshotIdentifier,
 				)
