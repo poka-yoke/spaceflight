@@ -8,6 +8,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 )
 
+// InstanceActionFunc provides a standard prototype to define actions based on Instance operations
+type InstanceActionFunc func(
+	Instance,
+	rdsiface.RDSAPI,
+) string
+
 // Instance holds parameters needed for any operations related to
 // instances and provides methods to obtain the AWS structures needed
 // to perform them.
