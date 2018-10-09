@@ -1,49 +1,30 @@
-package odin
+package odin_test
 
 import(
 	"fmt"
 	"testing"
-	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/poka-yoke/spaceflight/internal/test/mockRDSClient"
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
-
-func getTime(original string) (parsed time.Time) {
-	parsed, _ = time.Parse(
-		RFC8601,
-		original,
-	)
-	return
-}
-
-var exampleSnapshot1 = &rds.DBSnapshot{
-	AllocatedStorage:     aws.Int64(10),
-	AvailabilityZone:     aws.String("us-east-1c"),
-	DBInstanceIdentifier: aws.String("production-rds"),
-	DBSnapshotIdentifier: aws.String("rds:production-2015-06-11"),
-	MasterUsername:       aws.String("owner"),
-	SnapshotCreateTime:   aws.Time(getTime("2015-06-11T22:00:00+00:00")),
-	Status:               aws.String("available"),
-}
 
 func TestCreateDBInput(t *testing.T) {
 	tt := []struct{
-		input Instance
+		input odin.Instance
 		allocatedStorage int64
 		masterUsername string
 	}{
 		// No Snapshot
 		{
-			input: Instance{LastSnapshot: nil},
+			input: odin.Instance{LastSnapshot: nil},
 			allocatedStorage: 0,
 			masterUsername: "",
 		},
 		// With snapshot
 		{
-			input: Instance{LastSnapshot: exampleSnapshot1},
+			input: odin.Instance{LastSnapshot: exampleSnapshot1},
 			allocatedStorage: 10,
 			masterUsername: "owner",
 		},
@@ -76,16 +57,16 @@ func TestCreateDBInput(t *testing.T) {
 
 func TestDeleteDBInput(t *testing.T) {
 	tt := []struct{
-		input Instance
+		input odin.Instance
 		skipFinalSnapshot bool
 		finalSnapshotID string
 	}{
 		{
-			input: Instance{FinalSnapshotID: ""},
+			input: odin.Instance{FinalSnapshotID: ""},
 			skipFinalSnapshot: true,
 		},
 		{
-			input: Instance{FinalSnapshotID: "123"},
+			input: odin.Instance{FinalSnapshotID: "123"},
 			finalSnapshotID: "123",
 		},
 	}
@@ -139,7 +120,7 @@ func TestModifyDBInputGroups(t *testing.T) {
 		},
 	}
 	for _, tc := range tt {
-		res, err := Instance{SecurityGroups: tc.securityGroups}.ModifyDBInput(false)
+		res, err := odin.Instance{SecurityGroups: tc.securityGroups}.ModifyDBInput(false)
 		if err != nil {
 			t.Errorf("It should not fail")
 		}
@@ -171,7 +152,7 @@ func TestModifyDBInputApplyNow(t *testing.T) {
 		{ applyNow: false },
 	}
 	for _, tc := range tt {
-		res, err := Instance{}.ModifyDBInput(tc.applyNow)
+		res, err := odin.Instance{}.ModifyDBInput(tc.applyNow)
 		if err != nil {
 			t.Errorf("It should not fail")
 		}
@@ -187,18 +168,18 @@ func TestModifyDBInputApplyNow(t *testing.T) {
 
 func TestRestoreDBInput(t *testing.T) {
 	tt := []struct{
-		input Instance
+		input odin.Instance
 		dbSnapshotIdentifier string
 		err error
 	}{
 		// Underspecified options
 		{
-			input: Instance{OriginalInstanceName: ""},
+			input: odin.Instance{OriginalInstanceName: ""},
 			err: fmt.Errorf("Original Instance Name was empty"),
 		},
 		// Non-existing snapshot
 		{
-			input: Instance{OriginalInstanceName: "im-not-here"},
+			input: odin.Instance{OriginalInstanceName: "im-not-here"},
 			err: fmt.Errorf(
 				"No snapshot found for %s instance",
 				"im-not-here",
@@ -207,7 +188,7 @@ func TestRestoreDBInput(t *testing.T) {
 		},
 		// Existing snapshot
 		{
-			input: Instance{OriginalInstanceName: "production-rds"},
+			input: odin.Instance{OriginalInstanceName: "production-rds"},
 			err: nil,
 			dbSnapshotIdentifier: "rds:production-2015-06-11",
 		},
