@@ -1,4 +1,4 @@
-package testcase
+package test
 
 import (
 	"testing"
@@ -6,37 +6,37 @@ import (
 	"github.com/go-test/deep"
 )
 
-// TestCase contains the basic elements of a test case:
+// Case contains the basic elements of a test case:
 //   * expected is what should be got.
 //   * expectedError is the string of the error message in case of such error being expected.
-type TestCase struct {
+type Case struct {
 	Expected      interface{}
 	ExpectedError string
 }
 
 // expectingError helps determine if the case was expecting an specific error.
-func (tc *TestCase) expectingError(err error) bool {
-	return tc.ExpectedError != "" && err.Error() == tc.ExpectedError
+func (c *Case) expectingError(err error) bool {
+	return c.ExpectedError != "" && err.Error() == c.ExpectedError
 }
 
 // Check is to be used by the test executor to validate the case is passing.
-func (tc *TestCase) Check(actual interface{}, err error, t *testing.T) {
+func (c *Case) Check(actual interface{}, err error, t *testing.T) {
 	switch {
-	case err != nil && !tc.expectingError(err):
+	case err != nil && !c.expectingError(err):
 		t.Errorf(
 			"Unexpected error: %v",
 			err,
 		)
-	case err != nil && tc.expectingError(err):
-	case err == nil && tc.ExpectedError != "":
+	case err != nil && c.expectingError(err):
+	case err == nil && c.ExpectedError != "":
 		t.Errorf(
 			"Expected error: %v missing",
-			tc.ExpectedError,
+			c.ExpectedError,
 		)
 	case err == nil:
 		if diff := deep.Equal(
 			actual,
-			tc.Expected,
+			c.Expected,
 		); diff != nil {
 			t.Errorf(
 				"Unexpected output: %s",
