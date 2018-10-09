@@ -114,10 +114,6 @@ func (i Instance) RestoreDBInput(
 	result *rds.RestoreDBInstanceFromDBSnapshotInput,
 	err error,
 ) {
-	if i.OriginalInstanceName == "" {
-		err = fmt.Errorf("Original Instance Name was empty")
-		return nil, err
-	}
 	instance, err := i.addLastSnapshot(svc)
 	if err != nil {
 		return nil, err
@@ -141,6 +137,10 @@ func (i Instance) RestoreDBInput(
 func (i *Instance) addLastSnapshot(
 	svc rdsiface.RDSAPI,
 ) (_ *Instance, err error) {
+	if i.OriginalInstanceName == "" {
+		err = fmt.Errorf("Original Instance Name was empty")
+		return nil, err
+	}
 	i.LastSnapshot, err = GetLastSnapshot(i.OriginalInstanceName, svc)
 	if err != nil {
 		err = fmt.Errorf(
