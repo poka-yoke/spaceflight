@@ -7,13 +7,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/rds"
 
-	"github.com/poka-yoke/spaceflight/internal/test_case"
-	"github.com/poka-yoke/spaceflight/internal/test/mockRDSClient"
+	"github.com/poka-yoke/spaceflight/internal/test"
+	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 type getLastSnapshotCase struct {
-	testcase.TestCase
+	test.Case
 	name       string
 	identifier string
 	snapshots  []*rds.DBSnapshot
@@ -22,7 +22,7 @@ type getLastSnapshotCase struct {
 var getLastSnapshotCases = []getLastSnapshotCase{
 	// Get snapshot id by instance id
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected:      exampleSnapshot1,
 			ExpectedError: "",
 		},
@@ -34,7 +34,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 	},
 	// Get non-existing snapshot id by instance id
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected:      nil,
 			ExpectedError: "No snapshot found for develop instance",
 		},
@@ -44,7 +44,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 	},
 	// Get last snapshot id by instance id out of two
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected:      exampleSnapshot3,
 			ExpectedError: "",
 		},
@@ -58,7 +58,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 }
 
 func TestGetLastSnapshot(t *testing.T) {
-	svc := mockrdsclient.NewMockRDSClient()
+	svc := mocks.NewRDSClient()
 	for _, test := range getLastSnapshotCases {
 		t.Run(
 			test.name,
@@ -126,7 +126,7 @@ var exampleSnapshot4 = &rds.DBSnapshot{
 }
 
 type listSnapshotsCase struct {
-	testcase.TestCase
+	test.Case
 	name       string
 	snapshots  []*rds.DBSnapshot
 	instanceID string
@@ -135,7 +135,7 @@ type listSnapshotsCase struct {
 var listSnapshotsCases = []listSnapshotsCase{
 	// No snapshots for any instance
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected:      []*rds.DBSnapshot{},
 			ExpectedError: "",
 		},
@@ -145,7 +145,7 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// One instance, one snapshot
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected:      []*rds.DBSnapshot{exampleSnapshot1},
 			ExpectedError: "",
 		},
@@ -155,7 +155,7 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// Two instances, two snapshots
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected: []*rds.DBSnapshot{
 				exampleSnapshot2,
 				exampleSnapshot1,
@@ -171,7 +171,7 @@ var listSnapshotsCases = []listSnapshotsCase{
 	},
 	// Instance selection
 	{
-		TestCase: testcase.TestCase{
+		Case: test.Case{
 			Expected: []*rds.DBSnapshot{
 				exampleSnapshot2,
 			},
@@ -191,7 +191,7 @@ func TestListSnapshots(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				svc := mockrdsclient.NewMockRDSClient()
+				svc := mocks.NewRDSClient()
 				svc.AddSnapshots(test.snapshots)
 				actual, err := odin.ListSnapshots(
 					test.instanceID,
