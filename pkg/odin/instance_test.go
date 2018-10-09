@@ -6,7 +6,7 @@ import(
 
 	"github.com/aws/aws-sdk-go/service/rds"
 
-	"github.com/poka-yoke/spaceflight/internal/test/mockRDSClient"
+	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
@@ -42,7 +42,7 @@ func TestCloneDBInput(t *testing.T) {
 			err: nil,
 		},
 	}
-	svc := mockrdsclient.NewMockRDSClient()
+	svc := mocks.NewRDSClient()
 	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
 	for _, tc := range tt {
 		res, err := tc.input.CloneDBInput(svc)
@@ -94,7 +94,7 @@ func TestCreateDBInput(t *testing.T) {
 			masterUsername: "owner",
 		},
 	}
-	svc := mockrdsclient.NewMockRDSClient()
+	svc := mocks.NewRDSClient()
 	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
 	for _, tc := range tt {
 		res, err := tc.input.CreateDBInput()
@@ -258,7 +258,7 @@ func TestRestoreDBInput(t *testing.T) {
 			dbSnapshotIdentifier: "rds:production-2015-06-11",
 		},
 	}
-	svc := mockrdsclient.NewMockRDSClient()
+	svc := mocks.NewRDSClient()
 	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
 	for _, tc := range tt {
 		res, err := tc.input.RestoreDBInput(svc)

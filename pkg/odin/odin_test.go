@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 
 	"github.com/poka-yoke/spaceflight/internal/test"
-	"github.com/poka-yoke/spaceflight/internal/test/mockRDSClient"
+	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
@@ -58,7 +58,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 }
 
 func TestGetLastSnapshot(t *testing.T) {
-	svc := mockrdsclient.NewMockRDSClient()
+	svc := mocks.NewRDSClient()
 	for _, test := range getLastSnapshotCases {
 		t.Run(
 			test.name,
@@ -191,7 +191,7 @@ func TestListSnapshots(t *testing.T) {
 		t.Run(
 			test.name,
 			func(t *testing.T) {
-				svc := mockrdsclient.NewMockRDSClient()
+				svc := mocks.NewRDSClient()
 				svc.AddSnapshots(test.snapshots)
 				actual, err := odin.ListSnapshots(
 					test.instanceID,
