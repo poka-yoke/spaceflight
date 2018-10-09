@@ -10,6 +10,71 @@ import(
 	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
+func TestCloneDBInput(t *testing.T) {
+	tt := []struct{
+		input odin.Instance
+		allocatedStorage int64
+		masterUsername string
+		err error
+	}{
+		// Underspecified options
+		{
+			input: odin.Instance{OriginalInstanceName: ""},
+			allocatedStorage: 0,
+			masterUsername: "",
+			err: fmt.Errorf("Original Instance Name was empty"),
+		},
+		// Non-existing snapshot
+		{
+			input: odin.Instance{OriginalInstanceName: "im-not-here"},
+			allocatedStorage: 0,
+			masterUsername: "",
+			err: fmt.Errorf(
+				"No snapshot found for %s instance",
+				"im-not-here",
+			),
+		},
+		// Existing snapshot
+		{
+			input: odin.Instance{OriginalInstanceName: "production-rds"},
+			allocatedStorage: 10,
+			masterUsername: "owner",
+			err: nil,
+		},
+	}
+	svc := mockrdsclient.NewMockRDSClient()
+	svc.AddSnapshots([]*rds.DBSnapshot{exampleSnapshot1})
+	for _, tc := range tt {
+		res, err := tc.input.CloneDBInput(svc)
+		if tc.err != nil &&
+			err.Error() != tc.err.Error() {
+			t.Errorf(
+				"Expected: %s, but got %s",
+				err.Error(),
+				tc.err.Error(),
+			)
+		}
+		if err == nil {
+			if res.AllocatedStorage != nil &&
+				*res.AllocatedStorage != tc.allocatedStorage {
+				t.Errorf(
+					"Expected: %v, got %v",
+					tc.allocatedStorage,
+					*res.AllocatedStorage,
+				)
+			}
+			if res.MasterUsername != nil &&
+				*res.MasterUsername != tc.masterUsername {
+				t.Errorf(
+					"Expected: %s, but got %s",
+					tc.masterUsername,
+					*res.MasterUsername,
+				)
+			}
+		}
+	}
+}
+
 func TestCreateDBInput(t *testing.T) {
 	tt := []struct{
 		input odin.Instance
