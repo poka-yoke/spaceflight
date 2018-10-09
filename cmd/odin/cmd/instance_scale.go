@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
 	"github.com/spf13/cobra"
 
 	"github.com/poka-yoke/spaceflight/pkg/odin"
@@ -28,16 +27,28 @@ var instanceScaleCmd = &cobra.Command{
 			Identifier: args[0],
 			Type:       instanceType,
 		}
-		result, err := scaleInstance(
-			params,
-			delay,
+		rdsParams, err := params.ModifyDBInput(!delay)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		out, err := svc.ModifyDBInstance(rdsParams)
+		if err != nil {
+			log.Fatalf("Error: %s", err)
+		}
+		err = waitForInstance(
+			out.DBInstance,
 			svc,
+			"available",
 			5*time.Second,
 		)
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
-		fmt.Println(result)
+		fmt.Printf(
+			"Instance %s is %s\n",
+			*out.DBInstance.DBInstanceIdentifier,
+			*out.DBInstance.DBInstanceClass,
+		)
 	},
 }
 
@@ -68,30 +79,4 @@ func init() {
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Toggle help message")
 
-}
-
-// scaleInstance scales an existing RDS database instance.
-func scaleInstance(
-	params odin.Instance,
-	delayChange bool,
-	svc rdsiface.RDSAPI,
-	duration time.Duration,
-) (result string, err error) {
-	rdsParams, err := params.ModifyDBInput(!delayChange, svc)
-	if err != nil {
-		return "", err
-	}
-	out, err := svc.ModifyDBInstance(rdsParams)
-	if err != nil {
-		return "", err
-	}
-	err = waitForInstance(out.DBInstance, svc, "available", duration)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(
-		"Instance %s is %s",
-		*out.DBInstance.DBInstanceIdentifier,
-		*out.DBInstance.DBInstanceClass,
-	), nil
 }

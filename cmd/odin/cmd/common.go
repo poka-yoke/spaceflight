@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rds/rdsiface"
+
+	"github.com/poka-yoke/spaceflight/pkg/odin"
 )
 
 const (
@@ -50,4 +52,18 @@ func waitForInstance(
 		time.Sleep(duration)
 	}
 	return
+}
+
+// modifyInstance enqueues a modify operation
+func modifyInstance(
+	params odin.ModifiableParams,
+	svc rdsiface.RDSAPI,
+	delay bool,
+) (err error) {
+	rdsParams, err := params.ModifyDBInput(delay)
+	if err != nil {
+		return err
+	}
+	_, err = svc.ModifyDBInstance(rdsParams)
+	return err
 }
