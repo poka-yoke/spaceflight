@@ -89,18 +89,14 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 	data := []struct {
 		cidr string
 		err  error
-		ret  []SearchResult
+		ret  []string
 	}{
 		{
 			cidr: "1.2.3.4/32",
 			err:  nil,
-			ret: []SearchResult{
-				{
-					GroupID:  "sg-1234",
-					Protocol: "tcp",
-					Port:     22,
-					Source:   "1.2.3.4/32",
-				}},
+			ret: []string{
+				"sg-1234 22/tcp 1.2.3.4/32",
+			},
 		},
 	}
 
@@ -115,11 +111,11 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 			t.Error("Mismatched results and expectations length")
 		}
 		for k, v := range ret {
-			if v.String() != tc.ret[k].String() {
+			if v != tc.ret[k] {
 				t.Errorf(
 					"Unexpected output %s != %s",
-					v.String(),
-					tc.ret[k].String(),
+					v,
+					tc.ret[k],
 				)
 			}
 		}

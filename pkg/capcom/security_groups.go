@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -41,7 +42,7 @@ func FindSecurityGroupsWithRange(
 	svc ec2iface.EC2API,
 	cidr string,
 ) (
-	out []SearchResult,
+	out []string,
 	err error,
 ) {
 	// IP we are searching for in the Security Groups
@@ -67,12 +68,15 @@ func FindSecurityGroupsWithRange(
 					)
 				}
 				if cont {
-					out = append(out, SearchResult{
-						GroupID:  *sg.GroupId,
-						Protocol: *perm.IpProtocol,
-						Port:     *perm.ToPort,
-						Source:   *ipRange.CidrIp,
-					})
+					out = append(out,
+						fmt.Sprintf(
+							"%s %s/%s %s",
+							*sg.GroupId,
+							strconv.FormatInt(*perm.ToPort, 10),
+							*perm.IpProtocol,
+							*ipRange.CidrIp,
+						),
+					)
 				}
 			}
 		}
