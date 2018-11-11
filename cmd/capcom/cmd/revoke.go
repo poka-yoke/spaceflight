@@ -21,7 +21,7 @@ string) to the specified port. E.g.:
 
     capcom revoke --source 1.2.3.4/32 sg-abc01234`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := capcom.Init()
+		svc := connect()
 		for _, sgid := range args {
 			if !strings.HasPrefix(sgid, "sg-") {
 				log.Fatalf("%s is invalid SG id\n", sgid)

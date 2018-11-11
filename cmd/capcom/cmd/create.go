@@ -19,7 +19,7 @@ var createCmd = &cobra.Command{
     capcom create --name test This is a test SG
     capcom create --name test --vpcid vpc-12345678 This is a test SG in a vpc`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := capcom.Init()
+		svc := connect()
 		sgid := capcom.CreateSG(name, strings.Join(args, " "), vpcid, svc)
 		fmt.Println(sgid)
 	},

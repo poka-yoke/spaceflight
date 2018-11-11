@@ -20,7 +20,7 @@ This option shows a information about the Security groups
 present in your account. The information is shown as a list
 but can also be presented in dot format for graphics processing.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := capcom.Init()
+		svc := connect()
 		if graph {
 			fmt.Print(capcom.GraphSGRelations(svc))
 		} else if search {

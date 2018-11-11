@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
@@ -247,16 +246,4 @@ func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 		ret = append(ret, *sg.GroupId)
 	}
 	return ret
-}
-
-// Init initializes connection to AWS API
-func Init() ec2iface.EC2API {
-	region := "us-east-1"
-	return ec2.New(
-		session.New(
-			&aws.Config{
-				Region: aws.String(region),
-			},
-		),
-	)
 }
