@@ -259,9 +259,8 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		perm, _ := NewPermission(tc.origin, tc.proto, tc.port)
-		out := AuthorizeAccessToSecurityGroup(
+		out := perm.AddToSG(
 			svc,
-			perm,
 			tc.destination,
 		)
 		if out != tc.expected {
@@ -287,9 +286,8 @@ func TestRevokeAccessToSecurityGroup(t *testing.T) {
 	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		perm, _ := NewPermission(tc.origin, tc.proto, tc.port)
-		out := RevokeAccessToSecurityGroup(
+		out := perm.RemoveToSG(
 			svc,
-			perm,
 			tc.destination,
 		)
 		if out != tc.expected {

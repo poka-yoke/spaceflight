@@ -30,19 +30,17 @@ string) to the specified port. E.g.:
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !capcom.RevokeAccessToSecurityGroup(
-				svc,
-				perm,
-				sgid,
-			) {
-				log.Fatalf("Failed to remove rule to %s: %s %s %d\n",
+			if !perm.RemoveToSG(svc, sgid) {
+				log.Fatalf(
+					"Failed to remove rule to %s: %s %s %d\n",
 					sgid,
 					source,
 					proto,
 					port,
 				)
 			}
-			log.Printf("Rule removed successfully to %s: %s %s %d\n",
+			log.Printf(
+				"Rule removed successfully to %s: %s %s %d\n",
 				sgid,
 				source,
 				proto,

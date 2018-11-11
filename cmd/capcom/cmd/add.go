@@ -33,19 +33,17 @@ string) to the specified port. E.g.:
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !capcom.AuthorizeAccessToSecurityGroup(
-				svc,
-				perm,
-				sgid,
-			) {
-				log.Fatalf("Failed to add rule to %s: %s %s %d\n",
+			if !perm.AddToSG(svc, sgid) {
+				log.Fatalf(
+					"Failed to add rule to %s: %s %s %d\n",
 					sgid,
 					source,
 					proto,
 					port,
 				)
 			}
-			log.Printf("Rule added successfully to %s: %s %s %d\n",
+			log.Printf(
+				"Rule added successfully to %s: %s %s %d\n",
 				sgid,
 				source,
 				proto,

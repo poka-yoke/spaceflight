@@ -57,6 +57,18 @@ func (p *Permission) buildIPPermission() (
 	return perm
 }
 
+// AddToSG adds the permission to the specified Security Group ID
+// using the service
+func (p *Permission) AddToSG(svc ec2iface.EC2API, sgid string) bool {
+	return authorizeAccessToSecurityGroup(svc, p, sgid)
+}
+
+// RemoveToSG removes the permission to the specified Security Group
+// ID using the service
+func (p *Permission) RemoveToSG(svc ec2iface.EC2API, sgid string) bool {
+	return revokeAccessToSecurityGroup(svc, p, sgid)
+}
+
 // CreateSG creates a new security group. If a vpcid is specified the security
 // group will be in that VPC
 func CreateSG(
@@ -87,7 +99,7 @@ func CreateSG(
 
 // AuthorizeAccessToSecurityGroup adds the specified permissions to the Ingress
 // list of the destination security group on protocol and port
-func AuthorizeAccessToSecurityGroup(
+func authorizeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
 	perm *Permission,
 	destination string,
@@ -108,7 +120,7 @@ func AuthorizeAccessToSecurityGroup(
 
 // RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
 // list of the destination security group on protocol and port
-func RevokeAccessToSecurityGroup(
+func revokeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
 	perm *Permission,
 	destination string,
