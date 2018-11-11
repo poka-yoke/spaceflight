@@ -52,7 +52,7 @@ func FindSecurityGroupsWithRange(
 		return nil, err
 	}
 	// Obtain and traverse AWS's Security Group structure
-	for _, sg := range getSecurityGroups(svc).SecurityGroups {
+	for _, sg := range getSecurityGroups(svc) {
 		for _, perm := range sg.IpPermissions {
 			for _, ipRange := range perm.IpRanges {
 				cont, err := networkContainsIPCheck(
@@ -85,18 +85,19 @@ func FindSecurityGroupsWithRange(
 }
 
 // getSecurityGroups retrieves the list of all Security Groups in the account
-func getSecurityGroups(svc ec2iface.EC2API) *ec2.DescribeSecurityGroupsOutput {
+func getSecurityGroups(svc ec2iface.EC2API) []*ec2.SecurityGroup {
+	// TODO: It may need pagination
 	res, err := svc.DescribeSecurityGroups(nil)
 	if err != nil {
 		log.Panic(err)
 	}
-	return res
+	return res.SecurityGroups
 }
 
 // ListSecurityGroups prints all available Security groups accessible
 // by the account on svc
 func ListSecurityGroups(svc ec2iface.EC2API) (out []string) {
-	for _, sg := range getSecurityGroups(svc).SecurityGroups {
+	for _, sg := range getSecurityGroups(svc) {
 		out = append(out, fmt.Sprintf("* %10s %20s %s\n",
 			*sg.GroupId,
 			*sg.GroupName,

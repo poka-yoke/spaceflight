@@ -170,7 +170,7 @@ func registerEdges(
 // GraphSGRelations returns a string containing a graph representation in DOT
 // format of the relations between Security Groups in the service.
 func GraphSGRelations(svc ec2iface.EC2API) string {
-	sglist := getSecurityGroups(svc).SecurityGroups
+	sglist := getSecurityGroups(svc)
 
 	g := gographviz.NewEscape()
 	if err := g.SetName("G"); err != nil {
