@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net"
 	"testing"
+
+	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 )
 
 func TestListSecurityGroups(t *testing.T) {
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	out := ListSecurityGroups(svc)
 	expected := []string{
 		fmt.Sprintf("* %10s %20s %s\n", "sg-1234", "", ""),
@@ -92,7 +94,7 @@ func TestCreateSG(t *testing.T) {
 		},
 	}
 
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		t.Run(
 			tc.description,
@@ -125,7 +127,7 @@ func TestFindSGByName(t *testing.T) {
 			},
 		},
 	}
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		ret := FindSGByName(tc.name, tc.vpc, svc)
 		for index := range ret {
@@ -146,7 +148,7 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 			cidr: "1.2.3.4/32",
 			err:  nil,
 			ret: []SearchResult{
-				SearchResult{
+				{
 					GroupID:  "sg-1234",
 					Protocol: "tcp",
 					Port:     22,
@@ -155,7 +157,7 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 		},
 	}
 
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		ret, err := FindSecurityGroupsWithRange(svc, tc.cidr)
 		if (err != nil && tc.err == nil) ||
@@ -254,7 +256,7 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 			expected: true,
 		},
 	}
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
 		out := AuthorizeAccessToSecurityGroup(
@@ -282,7 +284,7 @@ func TestRevokeAccessToSecurityGroup(t *testing.T) {
 			expected: true,
 		},
 	}
-	svc := &mockEC2Client{}
+	svc := &mocks.EC2Client{}
 	for _, tc := range data {
 		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
 		out := RevokeAccessToSecurityGroup(

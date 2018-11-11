@@ -208,7 +208,7 @@ func FindSGByName(name string, vpc string, svc ec2iface.EC2API) (ret []string) {
 	res, err := svc.DescribeSecurityGroups(
 		&ec2.DescribeSecurityGroupsInput{
 			Filters: []*ec2.Filter{
-				&ec2.Filter{
+				{
 					Name:   aws.String("group-name"),
 					Values: []*string{&name},
 				},
