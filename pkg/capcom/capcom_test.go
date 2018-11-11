@@ -61,7 +61,7 @@ func TestBuildIPPermission(t *testing.T) {
 		},
 	}
 	for _, tc := range data {
-		_, err := BuildIPPermission(
+		_, err := NewPermission(
 			tc.origin,
 			tc.proto,
 			tc.port,
@@ -258,7 +258,7 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 	}
 	svc := &mocks.EC2Client{}
 	for _, tc := range data {
-		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		perm, _ := NewPermission(tc.origin, tc.proto, tc.port)
 		out := AuthorizeAccessToSecurityGroup(
 			svc,
 			perm,
@@ -286,7 +286,7 @@ func TestRevokeAccessToSecurityGroup(t *testing.T) {
 	}
 	svc := &mocks.EC2Client{}
 	for _, tc := range data {
-		perm, _ := BuildIPPermission(tc.origin, tc.proto, tc.port)
+		perm, _ := NewPermission(tc.origin, tc.proto, tc.port)
 		out := RevokeAccessToSecurityGroup(
 			svc,
 			perm,

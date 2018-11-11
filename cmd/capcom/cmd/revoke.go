@@ -26,7 +26,7 @@ string) to the specified port. E.g.:
 			if !strings.HasPrefix(sgid, "sg-") {
 				log.Fatalf("%s is invalid SG id\n", sgid)
 			}
-			perm, err := capcom.BuildIPPermission(source, proto, port)
+			perm, err := capcom.NewPermission(source, proto, port)
 			if err != nil {
 				log.Fatal(err)
 			}

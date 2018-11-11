@@ -12,6 +12,51 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 )
 
+// Permission represents a Permission for a Security Group
+type Permission struct {
+	sgid, cidr, protocol string
+	port int64
+}
+
+// NewPermission returns a pointer to a new Permission object
+func NewPermission(origin, protocol string, port int64) (*Permission, error) {
+	perm := Permission{protocol: protocol, port:port}
+	switch {
+	case strings.HasPrefix(origin, "sg-"):
+		// It's a security group
+		perm.sgid = origin
+
+	case isCIDR(origin):
+		// It's a valid CIDR
+		perm.cidr = origin
+	default:
+		err := fmt.Errorf(
+			"%s is neither sgid nor IP range in CIDR notation",
+			origin,
+		)
+		return nil, err
+	}
+	return &perm, nil
+}
+
+// buildIPPermission provides an IpPermission object fully populated
+func (p *Permission) buildIPPermission() (
+	perm *ec2.IpPermission,
+) {
+	perm = &ec2.IpPermission{
+		FromPort:   &p.port,
+		ToPort:     &p.port,
+		IpProtocol: &p.protocol,
+	}
+	if p.sgid != "" {
+		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &p.sgid}}
+	}
+	if p.cidr != "" {
+		perm.IpRanges = []*ec2.IpRange{{CidrIp: &p.cidr}}
+	}
+	return perm
+}
+
 // CreateSG creates a new security group. If a vpcid is specified the security
 // group will be in that VPC
 func CreateSG(
@@ -44,13 +89,13 @@ func CreateSG(
 // list of the destination security group on protocol and port
 func AuthorizeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
-	perm *ec2.IpPermission,
+	perm *Permission,
 	destination string,
 ) bool {
 	out, error := svc.AuthorizeSecurityGroupIngress(
 		&ec2.AuthorizeSecurityGroupIngressInput{
 			GroupId:       &destination,
-			IpPermissions: []*ec2.IpPermission{perm},
+			IpPermissions: []*ec2.IpPermission{perm.buildIPPermission()},
 		})
 	if error != nil {
 		log.Panic(error)
@@ -65,13 +110,13 @@ func AuthorizeAccessToSecurityGroup(
 // list of the destination security group on protocol and port
 func RevokeAccessToSecurityGroup(
 	svc ec2iface.EC2API,
-	perm *ec2.IpPermission,
+	perm *Permission,
 	destination string,
 ) bool {
 	out, error := svc.RevokeSecurityGroupIngress(
 		&ec2.RevokeSecurityGroupIngressInput{
 			GroupId:       &destination,
-			IpPermissions: []*ec2.IpPermission{perm},
+			IpPermissions: []*ec2.IpPermission{perm.buildIPPermission()},
 		})
 	if error != nil {
 		log.Panic(error)
@@ -161,37 +206,6 @@ func NetworkContainsIPCheck(cidr string, searchIP net.IP) (out bool, err error) 
 		return
 	}
 	out = ip.Equal(searchIP) || sub.Contains(searchIP)
-	return
-}
-
-// BuildIPPermission provides an IpPermission object fully populated
-func BuildIPPermission(
-	origin string,
-	proto string,
-	port int64,
-) (
-	perm *ec2.IpPermission,
-	err error,
-) {
-	perm = &ec2.IpPermission{
-		FromPort:   &port,
-		ToPort:     &port,
-		IpProtocol: &proto,
-	}
-	switch {
-	case strings.HasPrefix(origin, "sg-"):
-		// It's a security group
-		perm.UserIdGroupPairs = []*ec2.UserIdGroupPair{{GroupId: &origin}}
-
-	case isCIDR(origin):
-		// It's a valid CIDR
-		perm.IpRanges = []*ec2.IpRange{{CidrIp: &origin}}
-	default:
-		err = fmt.Errorf(
-			"%s is neither sgid nor IP range in CIDR notation",
-			origin,
-		)
-	}
 	return
 }
 
