@@ -18,9 +18,6 @@ func CreateSG(
 	vpcid string,
 	svc ec2iface.EC2API,
 ) string {
-	if description == "" {
-		log.Fatal("Not a valid description")
-	}
 	params := &ec2.CreateSecurityGroupInput{
 		Description: aws.String(description),
 		GroupName:   aws.String(name),
@@ -51,7 +48,7 @@ func FindSecurityGroupsWithRange(
 	searchIP, _, err := net.ParseCIDR(cidr)
 	if err != nil {
 		err = fmt.Errorf("%s is not a valid CIDR", cidr)
-		return
+		return nil, err
 	}
 	// Obtain and traverse AWS's Security Group structure
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {

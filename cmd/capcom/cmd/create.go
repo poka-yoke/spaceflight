@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,12 @@ var createCmd = &cobra.Command{
     capcom create --name test --vpcid vpc-12345678 This is a test SG in a vpc`,
 	Run: func(cmd *cobra.Command, args []string) {
 		svc := connect()
-		sgid := capcom.CreateSG(name, strings.Join(args, " "), vpcid, svc)
+		description := strings.Join(args, " ")
+		if description == "" {
+			log.Fatal("Not a valid description")
+		}
+
+		sgid := capcom.CreateSG(name, description, vpcid, svc)
 		fmt.Println(sgid)
 	},
 }
