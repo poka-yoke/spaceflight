@@ -17,7 +17,7 @@ var warning, critical int
 var blCmd = &cobra.Command{
 	Use:   "bl",
 	Short: "Check for blacklist presence",
-	Long:  `Checks the supplied list of DNS-based blacklists for a specific IP presence. It returns the results in a Nagios compliat string. Thresholds for different Nagios states can be supplied as well.`,
+	Long:  `Checks the supplied list of DNS-based blacklists for a specific IP presence and sends the results as metrics to a Prometheus' Push Gateway.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if blacklist == "" {
 			log.Fatal("No file with blacklist addresses specified")
