@@ -14,7 +14,7 @@ import (
 var cloudinaryCmd = &cobra.Command{
 	Use:   "cloudinary",
 	Short: "Get cloudinary metrics",
-	Long:  `Gets the cloudinary usage metrics from the Admin API and returns the results in a Nagios compliant string. Thresholds for different Nagios states can be supplied as well.`,
+	Long:  `Gets the cloudinary usage metrics from the Admin API and sends the results as metrics to a Prometheus' Push Gateway.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		must(cloudinary.NewCredentials(
 			os.Getenv("CLOUDINARY_CLOUD_NAME"),
