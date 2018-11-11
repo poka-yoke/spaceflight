@@ -32,7 +32,7 @@ func (s sGInstanceState) has(key string) bool {
 	return false
 }
 
-func getInstances(svc ec2iface.EC2API) *ec2.DescribeInstancesOutput {
+func getInstanceReservations(svc ec2iface.EC2API) []*ec2.Reservation {
 	// TODO: Check for need of pagination and handle it
 	resp, err := svc.DescribeInstances(
 		&ec2.DescribeInstancesInput{
@@ -42,7 +42,7 @@ func getInstances(svc ec2iface.EC2API) *ec2.DescribeInstancesOutput {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	return resp
+	return resp.Reservations
 }
 
 func getInstancesStates(instances []*ec2.Reservation) sGInstanceState {
@@ -181,7 +181,7 @@ func GraphSGRelations(svc ec2iface.EC2API) string {
 	}
 	log.Println("Created graph")
 
-	nodesPresence := getInstancesStates(getInstances(svc).Reservations)
+	nodesPresence := getInstancesStates(getInstanceReservations(svc))
 	registerNodes(sglist, g, nodesPresence)
 	registerEdges(sglist, g, nodesPresence)
 	return g.String()

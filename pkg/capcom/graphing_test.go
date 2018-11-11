@@ -28,9 +28,9 @@ func TestSGInstanceStateGetKeysAndHas(t *testing.T) {
 
 func TestGetInstances(t *testing.T) {
 	svc := &mocks.EC2Client{}
-	res := getInstances(svc)
-	if *res.Reservations[0].Instances[0].State.Name != "pending" ||
-		*res.Reservations[0].Groups[0].GroupId != "sg-12345678" {
+	res := getInstanceReservations(svc)
+	if *res[0].Instances[0].State.Name != "pending" ||
+		*res[0].Groups[0].GroupId != "sg-12345678" {
 		t.Error("Should be equal")
 	}
 }
