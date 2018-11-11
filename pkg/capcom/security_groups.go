@@ -57,7 +57,7 @@ func FindSecurityGroupsWithRange(
 	for _, sg := range getSecurityGroups(svc).SecurityGroups {
 		for _, perm := range sg.IpPermissions {
 			for _, ipRange := range perm.IpRanges {
-				cont, err := NetworkContainsIPCheck(
+				cont, err := networkContainsIPCheck(
 					*ipRange.CidrIp,
 					searchIP,
 				)

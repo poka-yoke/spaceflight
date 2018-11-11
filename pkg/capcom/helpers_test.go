@@ -58,7 +58,7 @@ func TestNetworkContainsIPCheck(t *testing.T) {
 	}
 	for _, tc := range data {
 		ip, _, _ := net.ParseCIDR(tc.ip)
-		ret, err := NetworkContainsIPCheck(tc.cidr, ip)
+		ret, err := networkContainsIPCheck(tc.cidr, ip)
 		if (err != nil && tc.err == nil) ||
 			(err == nil && tc.err != nil) {
 			t.Error("Unexpected/mismatched error")
