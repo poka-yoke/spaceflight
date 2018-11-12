@@ -144,18 +144,6 @@
   revision = "00c29f56e2386353d58c599509e8dc3801b0d716"
 
 [[projects]]
-  name = "github.com/olivere/elastic"
-  packages = ["uritemplates"]
-  revision = "d6362604399c7af560b54f048b4fcfbdd6eff293"
-  version = "v6.1.14"
-
-[[projects]]
-  name = "github.com/olorin/nagiosplugin"
-  packages = ["."]
-  revision = "45f5074f5e843de86ff40fd12ee0628d0e6a9780"
-  version = "v1.2.0"
-
-[[projects]]
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   revision = "acdc4509485b587f5e675510c4f2c63e90ff68a8"
@@ -258,12 +246,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "gopkg.in/olivere/elastic.v1"
-  packages = ["."]
-  revision = "65a54b2f4d7706edacb93f923d204af7f1696a2a"
-  version = "v1.0.1"
-
-[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -272,6 +254,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5c2fa0666e9b9fec45c01bdeeed4995d6c0e8b22ed73e89920a6aafea223ea5e"
+  inputs-digest = "b5935196da87d370d37f7e739434d2b5ba00a9b4f4baaefdc3bd3845f238a2cf"
   solver-name = "gps-cdcl"
   solver-version = 1
