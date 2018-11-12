@@ -3,6 +3,9 @@ package capcom
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+
 	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 )
 
@@ -28,6 +31,25 @@ func TestSGInstanceStateGetKeysAndHas(t *testing.T) {
 
 func TestGetInstances(t *testing.T) {
 	svc := &mocks.EC2Client{}
+	svc.ReservationList = append(
+		svc.ReservationList,
+		[]*ec2.Reservation{
+			{
+				Instances: []*ec2.Instance{
+					{
+						State: &ec2.InstanceState{
+							Name: aws.String("pending"),
+						},
+					},
+				},
+				Groups: []*ec2.GroupIdentifier{
+					{
+						GroupId: aws.String("sg-12345678"),
+					},
+				},
+			},
+		}...,
+	)
 	res := getInstanceReservations(svc)
 	if *res[0].Instances[0].State.Name != "pending" ||
 		*res[0].Groups[0].GroupId != "sg-12345678" {
@@ -37,6 +59,25 @@ func TestGetInstances(t *testing.T) {
 
 func TestGetInstancesStates(t *testing.T) {
 	svc := &mocks.EC2Client{}
+	svc.ReservationList = append(
+		svc.ReservationList,
+		[]*ec2.Reservation{
+			{
+				Instances: []*ec2.Instance{
+					{
+						State: &ec2.InstanceState{
+							Name: aws.String("pending"),
+						},
+					},
+				},
+				Groups: []*ec2.GroupIdentifier{
+					{
+						GroupId: aws.String("sg-12345678"),
+					},
+				},
+			},
+		}...,
+	)
 	res := getInstancesStates(getInstanceReservations(svc))
 	if len(res) != 1 {
 		t.Error("Unexpected amount of results")

@@ -9,6 +9,8 @@ import (
 // EC2Client implements The EC2 service insterface
 type EC2Client struct {
 	ec2iface.EC2API
+	SGList          []*ec2.SecurityGroup
+	ReservationList []*ec2.Reservation
 }
 
 // AuthorizeSecurityGroupIngress mocks the equivalent AWS SDK function
@@ -45,22 +47,7 @@ func (m *EC2Client) DescribeInstances(
 	err error,
 ) {
 	return &ec2.DescribeInstancesOutput{
-		Reservations: []*ec2.Reservation{
-			{
-				Instances: []*ec2.Instance{
-					{
-						State: &ec2.InstanceState{
-							Name: aws.String("pending"),
-						},
-					},
-				},
-				Groups: []*ec2.GroupIdentifier{
-					{
-						GroupId: aws.String("sg-12345678"),
-					},
-				},
-			},
-		},
+		Reservations: m.ReservationList,
 	}, nil
 }
 
@@ -71,25 +58,9 @@ func (m *EC2Client) DescribeSecurityGroups(
 	out *ec2.DescribeSecurityGroupsOutput,
 	err error,
 ) {
-	out = &ec2.DescribeSecurityGroupsOutput{
-		SecurityGroups: []*ec2.SecurityGroup{
-			{
-				Description: aws.String(""),
-				GroupId:     aws.String("sg-1234"),
-				GroupName:   aws.String(""),
-				IpPermissions: []*ec2.IpPermission{
-					{
-						IpProtocol: aws.String("tcp"),
-						ToPort:     aws.Int64(22),
-						IpRanges: []*ec2.IpRange{
-							{CidrIp: aws.String("1.2.3.4/32")},
-						},
-					},
-				},
-			},
-		},
-	}
-	return
+	return &ec2.DescribeSecurityGroupsOutput{
+		SecurityGroups: m.SGList,
+	}, nil
 }
 
 // RevokeSecurityGroupIngress mocks the equivalent AWS SDK function

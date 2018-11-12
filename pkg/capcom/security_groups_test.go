@@ -4,11 +4,25 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+
 	"github.com/poka-yoke/spaceflight/internal/test/mocks"
 )
 
 func TestListSecurityGroups(t *testing.T) {
 	svc := &mocks.EC2Client{}
+	svc.SGList = append(
+		svc.SGList,
+		[]*ec2.SecurityGroup{
+			{
+				GroupId:     aws.String("sg-1234"),
+				GroupName:   aws.String(""),
+				Description: aws.String(""),
+			},
+		}...,
+	)
+
 	out := ListSecurityGroups(svc)
 	expected := []string{
 		fmt.Sprintf("* %10s %20s %s\n", "sg-1234", "", ""),
@@ -101,6 +115,25 @@ func TestFindSecurityGroupsWithRange(t *testing.T) {
 	}
 
 	svc := &mocks.EC2Client{}
+	svc.SGList = append(
+		svc.SGList,
+		[]*ec2.SecurityGroup{
+			{
+				GroupId:   aws.String("sg-1234"),
+				GroupName: aws.String(""),
+				IpPermissions: []*ec2.IpPermission{
+					{
+						IpProtocol: aws.String("tcp"),
+						ToPort:     aws.Int64(22),
+						IpRanges: []*ec2.IpRange{
+							{CidrIp: aws.String("1.2.3.4/32")},
+						},
+					},
+				},
+			},
+		}...,
+	)
+
 	for _, tc := range data {
 		ret, err := FindSecurityGroupsWithRange(svc, tc.cidr)
 		if (err != nil && tc.err == nil) ||
