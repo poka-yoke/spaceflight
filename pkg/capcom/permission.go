@@ -2,7 +2,6 @@ package capcom
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -13,6 +12,7 @@ import (
 type Permission struct {
 	sgid, cidr, protocol string
 	port                 int64
+	errs                 []error
 }
 
 // NewPermission returns a pointer to a new Permission object
@@ -36,6 +36,60 @@ func NewPermission(origin, protocol string, port int64) (*Permission, error) {
 	return &perm, nil
 }
 
+// AddToSG adds the permission to the specified Security Group ID
+// using the service
+func (p *Permission) AddToSG(svc ec2iface.EC2API, sgid string) bool {
+	_, err := svc.AuthorizeSecurityGroupIngress(
+		&ec2.AuthorizeSecurityGroupIngressInput{
+			GroupId:       &sgid,
+			IpPermissions: []*ec2.IpPermission{p.buildIPPermission()},
+		},
+	)
+	if err != nil {
+		p.errs = append(
+			p.errs,
+			NewPermissionError("adding", sgid, err),
+		)
+		return false
+	}
+	return true
+}
+
+// RemoveToSG removes the permission to the specified Security Group
+// ID using the service
+func (p *Permission) RemoveToSG(svc ec2iface.EC2API, sgid string) bool {
+	_, err := svc.RevokeSecurityGroupIngress(
+		&ec2.RevokeSecurityGroupIngressInput{
+			GroupId:       &sgid,
+			IpPermissions: []*ec2.IpPermission{p.buildIPPermission()},
+		},
+	)
+	if err != nil {
+		p.errs = append(
+			p.errs,
+			NewPermissionError("revoking", sgid, err),
+		)
+		return false
+	}
+	return true
+}
+
+// Err returns any error that may have occurred during the execution
+// and a bool to signal if there are more errors pending to be checked
+func (p *Permission) Err() (out error, more bool) {
+	switch len(p.errs) {
+	case 0:
+		return nil, false
+	case 1:
+		out, p.errs = p.errs[0], nil
+		return out, false
+	default:
+		out, p.errs = p.errs[0], p.errs[1:]
+		return out, true
+	}
+
+}
+
 // buildIPPermission provides an IpPermission object fully populated
 func (p *Permission) buildIPPermission() (
 	perm *ec2.IpPermission,
@@ -54,56 +108,25 @@ func (p *Permission) buildIPPermission() (
 	return perm
 }
 
-// AddToSG adds the permission to the specified Security Group ID
-// using the service
-func (p *Permission) AddToSG(svc ec2iface.EC2API, sgid string) bool {
-	return authorizeAccessToSecurityGroup(svc, p, sgid)
+// PermissionError implements error interface to encapsulate errors on
+// Permission operations
+type PermissionError struct {
+	err       error
+	sgid      string
+	operation string
 }
 
-// RemoveToSG removes the permission to the specified Security Group
-// ID using the service
-func (p *Permission) RemoveToSG(svc ec2iface.EC2API, sgid string) bool {
-	return revokeAccessToSecurityGroup(svc, p, sgid)
+// NewPermissionError creates a new PermissionError
+func NewPermissionError(operation, sgid string, err error) PermissionError {
+	return PermissionError{err: err, sgid: sgid, operation: operation}
 }
 
-// AuthorizeAccessToSecurityGroup adds the specified permissions to the Ingress
-// list of the destination security group on protocol and port
-func authorizeAccessToSecurityGroup(
-	svc ec2iface.EC2API,
-	perm *Permission,
-	destination string,
-) bool {
-	out, error := svc.AuthorizeSecurityGroupIngress(
-		&ec2.AuthorizeSecurityGroupIngressInput{
-			GroupId:       &destination,
-			IpPermissions: []*ec2.IpPermission{perm.buildIPPermission()},
-		})
-	if error != nil {
-		log.Panic(error)
-	}
-	if !(out != nil) {
-		return false
-	}
-	return true
-}
-
-// RevokeAccessToSecurityGroup adds the specified permissions to the Ingress
-// list of the destination security group on protocol and port
-func revokeAccessToSecurityGroup(
-	svc ec2iface.EC2API,
-	perm *Permission,
-	destination string,
-) bool {
-	out, error := svc.RevokeSecurityGroupIngress(
-		&ec2.RevokeSecurityGroupIngressInput{
-			GroupId:       &destination,
-			IpPermissions: []*ec2.IpPermission{perm.buildIPPermission()},
-		})
-	if error != nil {
-		log.Panic(error)
-	}
-	if !(out != nil) {
-		return false
-	}
-	return true
+// Error is required to satisfy the error interface
+func (e PermissionError) Error() string {
+	return fmt.Sprintf(
+		"Error while %s on %s: %s",
+		e.operation,
+		e.sgid,
+		e.err.Error(),
+	)
 }
