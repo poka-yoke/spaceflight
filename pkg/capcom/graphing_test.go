@@ -1,6 +1,7 @@
 package capcom
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -29,64 +30,118 @@ func TestSGInstanceStateGetKeysAndHas(t *testing.T) {
 	}
 }
 
-func TestGetInstances(t *testing.T) {
+func TestGetInstanceReservations(t *testing.T) {
+	data := []struct {
+		state, id *string
+	}{
+		{
+			state: aws.String("pending"),
+			id:    aws.String("sg-12345678"),
+		},
+		{
+			state: aws.String("running"),
+			id:    aws.String("sg-23456789"),
+		},
+	}
+
 	svc := &mocks.EC2Client{}
-	svc.ReservationList = append(
-		svc.ReservationList,
-		[]*ec2.Reservation{
+	for _, tc := range data {
+		svc.ReservationList = []*ec2.Reservation{
 			{
 				Instances: []*ec2.Instance{
 					{
 						State: &ec2.InstanceState{
-							Name: aws.String("pending"),
+							Name: tc.state,
 						},
 					},
 				},
 				Groups: []*ec2.GroupIdentifier{
 					{
-						GroupId: aws.String("sg-12345678"),
+						GroupId: tc.id,
 					},
 				},
 			},
-		}...,
-	)
-	res := getInstanceReservations(svc)
-	if *res[0].Instances[0].State.Name != "pending" ||
-		*res[0].Groups[0].GroupId != "sg-12345678" {
-		t.Error("Should be equal")
+		}
+		t.Run(
+			fmt.Sprintf("%s %s", *tc.state, *tc.id),
+			func(t *testing.T) {
+				res := getInstanceReservations(svc)
+				if *res[0].Instances[0].State.Name != *tc.state {
+					t.Errorf(
+						"Expected state to be %s, but got: %s",
+						*tc.state,
+						*res[0].Instances[0].State.Name,
+					)
+				}
+				if *res[0].Groups[0].GroupId != *tc.id {
+					t.Errorf(
+						"Expected ID to be %s, but got: %s",
+						*tc.id,
+						*res[0].Groups[0].GroupId,
+					)
+				}
+			},
+		)
 	}
 }
 
 func TestGetInstancesStates(t *testing.T) {
-	svc := &mocks.EC2Client{}
-	svc.ReservationList = append(
-		svc.ReservationList,
-		[]*ec2.Reservation{
+	data := []struct {
+		state, id *string
+	}{
+		{
+			state: aws.String("pending"),
+			id:    aws.String("sg-12345678"),
+		},
+		{
+			state: aws.String("running"),
+			id:    aws.String("sg-23456789"),
+		},
+	}
+
+	for _, tc := range data {
+		reservationList := []*ec2.Reservation{
 			{
 				Instances: []*ec2.Instance{
 					{
 						State: &ec2.InstanceState{
-							Name: aws.String("pending"),
+							Name: tc.state,
 						},
 					},
 				},
 				Groups: []*ec2.GroupIdentifier{
 					{
-						GroupId: aws.String("sg-12345678"),
+						GroupId: tc.id,
 					},
 				},
 			},
-		}...,
-	)
-	res := getInstancesStates(getInstanceReservations(svc))
-	if len(res) != 1 {
-		t.Error("Unexpected amount of results")
-	}
-	if state := res["sg-12345678"]; state != nil {
-		if state["pending"] != 1 {
-			t.Error("Unexpected values")
 		}
-	} else {
-		t.Error("Expected key missing")
+		t.Run(
+			fmt.Sprintf("%s %s", *tc.state, *tc.id),
+			func(t *testing.T) {
+				res := getInstancesStates(reservationList)
+				if len(res) != 1 {
+					t.Errorf(
+						"Unexpected amount of results. Expected %d but got %d",
+						1,
+						len(res),
+					)
+				}
+				state, ok := res[*tc.id]
+				if !ok {
+					t.Errorf(
+						"Expected key %s not found",
+						*tc.id,
+					)
+				}
+				if state[*tc.state] != 1 {
+					t.Errorf(
+						"Expected state %s to equal %d",
+						*tc.state,
+						1,
+					)
+				}
+			},
+		)
 	}
 }
