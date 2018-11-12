@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
@@ -11,6 +13,8 @@ type EC2Client struct {
 	ec2iface.EC2API
 	SGList          []*ec2.SecurityGroup
 	ReservationList []*ec2.Reservation
+	FailAuthorizeSG bool // Forces AuthorizeSecurityGroupIngress to fail
+	FailRevokeSG    bool // Forces RevokeSecurityGroupIngress to fail
 }
 
 // AuthorizeSecurityGroupIngress mocks the equivalent AWS SDK function
@@ -20,6 +24,9 @@ func (m *EC2Client) AuthorizeSecurityGroupIngress(
 	*ec2.AuthorizeSecurityGroupIngressOutput,
 	error,
 ) {
+	if m.FailAuthorizeSG {
+		return nil, fmt.Errorf("It had to fail")
+	}
 	return &ec2.AuthorizeSecurityGroupIngressOutput{}, nil
 }
 
@@ -70,5 +77,9 @@ func (m *EC2Client) RevokeSecurityGroupIngress(
 	*ec2.RevokeSecurityGroupIngressOutput,
 	error,
 ) {
+	if m.FailRevokeSG {
+		return nil, fmt.Errorf("It had to fail")
+	}
+
 	return &ec2.RevokeSecurityGroupIngressOutput{}, nil
 }
