@@ -21,28 +21,26 @@ string) to the specified port. E.g.:
 
     capcom revoke --source 1.2.3.4/32 sg-abc01234`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := capcom.Init()
+		svc := connect()
 		for _, sgid := range args {
 			if !strings.HasPrefix(sgid, "sg-") {
 				log.Fatalf("%s is invalid SG id\n", sgid)
 			}
-			perm, err := capcom.BuildIPPermission(source, proto, port)
+			perm, err := capcom.NewPermission(source, proto, port)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !capcom.RevokeAccessToSecurityGroup(
-				svc,
-				perm,
-				sgid,
-			) {
-				log.Fatalf("Failed to remove rule to %s: %s %s %d\n",
+			if !perm.RemoveToSG(svc, sgid) {
+				log.Fatalf(
+					"Failed to remove rule to %s: %s %s %d\n",
 					sgid,
 					source,
 					proto,
 					port,
 				)
 			}
-			log.Printf("Rule removed successfully to %s: %s %s %d\n",
+			log.Printf(
+				"Rule removed successfully to %s: %s %s %d\n",
 				sgid,
 				source,
 				proto,

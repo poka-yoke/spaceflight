@@ -24,28 +24,26 @@ string) to the specified port. E.g.:
 
     capcom add --source 1.2.3.4/32 sg-abc01234`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := capcom.Init()
+		svc := connect()
 		for _, sgid := range args {
 			if !strings.HasPrefix(sgid, "sg-") {
 				log.Fatalf("%s is invalid SG id\n", sgid)
 			}
-			perm, err := capcom.BuildIPPermission(source, proto, port)
+			perm, err := capcom.NewPermission(source, proto, port)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !capcom.AuthorizeAccessToSecurityGroup(
-				svc,
-				perm,
-				sgid,
-			) {
-				log.Fatalf("Failed to add rule to %s: %s %s %d\n",
+			if !perm.AddToSG(svc, sgid) {
+				log.Fatalf(
+					"Failed to add rule to %s: %s %s %d\n",
 					sgid,
 					source,
 					proto,
 					port,
 				)
 			}
-			log.Printf("Rule added successfully to %s: %s %s %d\n",
+			log.Printf(
+				"Rule added successfully to %s: %s %s %d\n",
 				sgid,
 				source,
 				proto,
