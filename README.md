@@ -23,7 +23,6 @@ Finally, here you can find a relation of tools:
 | [dextre](mss/dextre) | MSS | Spam blacklists presence and mail reputation check |
 | [trek](mcc/trek) | MCC | Redirection management tool |
 | [fido](mcc/fido) | MCC | Configuration management tool |
-| [surgeon](mcc/surgeon) | MCC | (WIP) Service Diagnosing tool |
 | [odin](mcc/odin) | MCC | (WIP) Databases management tool |
 
 ## Collaborations
