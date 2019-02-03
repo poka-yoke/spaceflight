@@ -27,6 +27,12 @@ var deleteCmd = &cobra.Command{
 		zoneid := got.GetZoneID(zoneName, svc)
 		list := got.GetResourceRecordSet(zoneid, svc)
 		changes := got.DeleteChangeList(args, typ, list)
+		for _, change := range changes {
+			log.Printf(
+				"Change %s added for deletion",
+				*change.ResourceRecordSet.Name,
+			)
+		}
 		if !dryrun {
 			res, err := got.ApplyChanges(changes, &zoneid, svc)
 			if err != nil {

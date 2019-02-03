@@ -98,6 +98,7 @@ var ttlCmd = &cobra.Command{
 				changeResponse.ChangeInfo,
 				svc,
 			)
+			log.Println("All changes applied")
 		}
 	},
 }

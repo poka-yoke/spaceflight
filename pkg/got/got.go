@@ -71,11 +71,6 @@ func UpsertChangeList(
 		Action:            aws.String("UPSERT"),
 		ResourceRecordSet: val,
 	}
-	log.Printf(
-		"Adding %s to change list for TTL %d\n",
-		*val.Name,
-		ttl,
-	)
 	res = append(res, change)
 	return
 }
@@ -100,7 +95,6 @@ func DeleteChangeList(
 			ResourceRecordSet: record,
 		}
 		res = append(res, change)
-		log.Printf("Added %s to delete list\n", name)
 	}
 	return
 }
@@ -121,8 +115,6 @@ func WaitForChangeToComplete(
 		time.Second,
 		30*time.Second,
 	).Do(req)
-
-	log.Println("All changes applied")
 }
 
 // UpsertResourceRecordSetTTL performs the request to change the TTL of the list

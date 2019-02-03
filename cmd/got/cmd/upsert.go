@@ -32,6 +32,13 @@ var upsertCmd = &cobra.Command{
 		zoneid := got.GetZoneID(zoneName, svc)
 		list := got.NewResourceRecordList(args)
 		changes := got.UpsertChangeList(list, ttl, name, typ)
+		for _, change := range changes {
+			log.Printf(
+				"Change %s added with TTL %v",
+				*change.ResourceRecordSet.Name,
+				ttl,
+			)
+		}
 		if !dryrun {
 			res, err := got.ApplyChanges(changes, &zoneid, svc)
 			if err != nil {
