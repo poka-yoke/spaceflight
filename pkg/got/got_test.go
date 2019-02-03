@@ -214,7 +214,7 @@ func TestGetZoneID(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
 	for _, s := range grrstest {
 		t.Run(s, func(t *testing.T) {
-			out := GetZoneID(s, mockSvc)
+			out, _ := GetZoneID(s, mockSvc)
 			if out != s {
 				t.Error("Response doesn't match")
 			}

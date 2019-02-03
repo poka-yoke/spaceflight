@@ -23,7 +23,10 @@ var ttlCmd = &cobra.Command{
 		if len(zoneName) <= 0 {
 			log.Fatal("No zone name specified")
 		}
-		zoneID := got.GetZoneID(zoneName, svc)
+		zoneID, err := got.GetZoneID(zoneName, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		list := got.GetResourceRecordSet(zoneID, svc)
 		// Filter list in between

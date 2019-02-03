@@ -1,6 +1,7 @@
 package got
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -199,17 +200,18 @@ func FilterResourceRecords(
 
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
-func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
+func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string, err error) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
 	}
 	resp, err := svc.ListHostedZonesByName(params)
 	if err != nil {
-		log.Println(err.Error())
+		return
 	}
 	if len(resp.HostedZones) == 0 {
-		log.Fatalf("No results for zone %s. Exiting.\n", zoneName)
+		err = fmt.Errorf("No results for zone %s. Exiting.\n", zoneName)
+		return
 	}
 	zoneID = *resp.HostedZones[0].Id
 	return
