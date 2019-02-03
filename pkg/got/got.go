@@ -1,9 +1,7 @@
 package got
 
 import (
-	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,22 +17,6 @@ var Verbose bool
 
 // Dryrun flag
 var Dryrun bool
-
-// Filter type for generic filtering
-type Filter []string
-
-// String interface for Filter
-func (f *Filter) String() string {
-	return fmt.Sprint(*f)
-}
-
-// Set so flag can initialize flags of type Filter
-func (f *Filter) Set(value string) error {
-	for _, val := range strings.Split(value, ",") {
-		*f = append(*f, val)
-	}
-	return nil
-}
 
 // Init initializes conections to Route53
 func Init() *route53.Route53 {
@@ -227,19 +209,6 @@ func ApplyChanges(
 		if Verbose {
 			fmt.Println(changeResponse.ChangeInfo)
 		}
-	}
-	return
-}
-
-// PrintRecords prints all records in a zone using the API's built-in method
-// ListResourceRecordSets.
-func PrintRecords(
-	p *route53.ListResourceRecordSetsOutput,
-	last bool,
-) (shouldContinue bool) {
-	shouldContinue = *p.IsTruncated
-	for idx, val := range p.ResourceRecordSets {
-		fmt.Println(idx, *val)
 	}
 	return
 }

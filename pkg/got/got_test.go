@@ -185,25 +185,6 @@ func TestFilterResourceRecords(t *testing.T) {
 	}
 }
 
-var fstest = []string{
-	"",
-	"a,b",
-	"a,,a,,c,,",
-}
-
-func TestFilterSet(t *testing.T) {
-	for _, s := range fstest {
-		t.Run(s, func(t *testing.T) {
-			var f Filter
-			_ = f.Set(s)
-			j := strings.Join(f, ",")
-			if s != j {
-				t.Error(j, " doesn't match")
-			}
-		})
-	}
-}
-
 var grrstest = []string{
 	"test",
 }
