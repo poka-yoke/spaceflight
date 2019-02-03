@@ -14,7 +14,7 @@ var deleteCmd = &cobra.Command{
 	Short: "Remove DNS records",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := got.Init()
+		svc := connect()
 		if len(zoneName) <= 0 {
 			log.Fatal("No zone name specified")
 		}

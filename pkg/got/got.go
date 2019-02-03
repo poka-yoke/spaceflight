@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 
@@ -17,15 +16,6 @@ var Verbose bool
 
 // Dryrun flag
 var Dryrun bool
-
-// Init initializes conections to Route53
-func Init() *route53.Route53 {
-	sess, err := session.NewSession()
-	if err != nil {
-		log.Panicf("Failed to create session: %s", err)
-	}
-	return route53.New(sess)
-}
 
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
