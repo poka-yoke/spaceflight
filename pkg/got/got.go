@@ -11,12 +11,6 @@ import (
 	"github.com/poka-yoke/spaceflight/internal/http"
 )
 
-// Verbose flag
-var Verbose bool
-
-// Dryrun flag
-var Dryrun bool
-
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
 // entries at most.
@@ -28,9 +22,6 @@ func GetResourceRecordSet(
 		HostedZoneId: aws.String(zoneID),
 	}
 	for respIsTruncated := true; respIsTruncated; {
-		if Verbose {
-			fmt.Printf("Query params: %s\n", params)
-		}
 		resp, err := svc.ListResourceRecordSets(params)
 		if err != nil {
 			panic(err)
@@ -131,9 +122,6 @@ func WaitForChangeToComplete(
 		30*time.Second,
 	).Do(req)
 
-	if Verbose {
-		fmt.Println(getChangeOutput.ChangeInfo)
-	}
 	log.Println("All changes applied")
 }
 
@@ -191,14 +179,9 @@ func ApplyChanges(
 		log.Panic(err.Error())
 	}
 	// Submit batch changes
-	if !Dryrun {
-		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
-		if err != nil {
-			log.Panic(err)
-		}
-		if Verbose {
-			fmt.Println(changeResponse.ChangeInfo)
-		}
+	changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
+	if err != nil {
+		log.Panic(err)
 	}
 	return
 }
@@ -237,9 +220,5 @@ func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 		log.Fatalf("No results for zone %s. Exiting.\n", zoneName)
 	}
 	zoneID = *resp.HostedZones[0].Id
-	if Verbose {
-		// Pretty-print the response data.
-		fmt.Println(zoneID)
-	}
 	return
 }
