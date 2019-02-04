@@ -28,7 +28,10 @@ var deleteCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		list := got.GetResourceRecordSet(zoneid, svc)
+		list, err := got.GetResourceRecordSet(zoneid, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 		changes := got.DeleteChangeList(args, typ, list)
 		for _, change := range changes {
 			log.Printf(

@@ -28,7 +28,10 @@ var ttlCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		list := got.GetResourceRecordSet(zoneID, svc)
+		list, err := got.GetResourceRecordSet(zoneID, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 		// Filter list in between
 		if exclude && filterByType {
 			list = got.FilterResourceRecords(

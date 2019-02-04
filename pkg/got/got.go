@@ -2,7 +2,6 @@ package got
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,14 +17,18 @@ import (
 func GetResourceRecordSet(
 	zoneID string,
 	svc route53iface.Route53API,
-) (resourceRecordSet []*route53.ResourceRecordSet) {
+) (
+	resourceRecordSet []*route53.ResourceRecordSet,
+	err error,
+) {
 	params := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(zoneID),
 	}
 	for respIsTruncated := true; respIsTruncated; {
-		resp, err := svc.ListResourceRecordSets(params)
+		var resp *route53.ListResourceRecordSetsOutput
+		resp, err = svc.ListResourceRecordSets(params)
 		if err != nil {
-			panic(err)
+			return
 		}
 		if *resp.IsTruncated {
 			params.StartRecordName = resp.NextRecordName
@@ -130,7 +133,8 @@ func UpsertResourceRecordSetTTL(
 	err error,
 ) {
 	if len(list) <= 0 {
-		log.Fatal("No records to process.")
+		err = fmt.Errorf("no records to process")
+		return
 	}
 	changeSlice := []*route53.Change{}
 	for _, r := range list {
@@ -153,14 +157,15 @@ func ApplyChanges(
 	err error,
 ) {
 	if len(changes) <= 0 {
-		log.Fatal("No records to process.")
+		err = fmt.Errorf("no records to process")
+		return
 	}
 	// Create batch with all jobs
 	changeBatch := &route53.ChangeBatch{
 		Changes: changes,
 	}
-	if err := changeBatch.Validate(); err != nil {
-		log.Panic(err.Error())
+	if err = changeBatch.Validate(); err != nil {
+		return
 	}
 
 	changeRRSInput := &route53.ChangeResourceRecordSetsInput{
@@ -168,14 +173,11 @@ func ApplyChanges(
 		HostedZoneId: zoneID,
 	}
 
-	if err := changeRRSInput.Validate(); err != nil {
-		log.Panic(err.Error())
+	if err = changeRRSInput.Validate(); err != nil {
+		return
 	}
 	// Submit batch changes
 	changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
-	if err != nil {
-		log.Panic(err)
-	}
 	return
 }
 
@@ -210,7 +212,7 @@ func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string, err
 		return
 	}
 	if len(resp.HostedZones) == 0 {
-		err = fmt.Errorf("No results for zone %s. Exiting.\n", zoneName)
+		err = fmt.Errorf("no results for zone %s. Exiting", zoneName)
 		return
 	}
 	zoneID = *resp.HostedZones[0].Id

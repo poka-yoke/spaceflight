@@ -193,7 +193,10 @@ func TestGetResourceRecordSet(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
 	for _, s := range grrstest {
 		t.Run(s, func(t *testing.T) {
-			out := GetResourceRecordSet(s, mockSvc)
+			out, err := GetResourceRecordSet(s, mockSvc)
+			if err != nil {
+				t.Errorf("Unexpected error %s", err)
+			}
 			if len(out) != len(ResourceRecordSetList) {
 				t.Error("Response doesn't match")
 			}
