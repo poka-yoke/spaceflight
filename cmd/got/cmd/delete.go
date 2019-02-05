@@ -14,7 +14,7 @@ var deleteCmd = &cobra.Command{
 	Short: "Remove DNS records",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := got.Init()
+		svc := connect()
 		if len(zoneName) <= 0 {
 			log.Fatal("No zone name specified")
 		}
@@ -24,9 +24,21 @@ var deleteCmd = &cobra.Command{
 		if len(args) <= 0 {
 			log.Fatal("No record names specified")
 		}
-		zoneid := got.GetZoneID(zoneName, svc)
-		list := got.GetResourceRecordSet(zoneid, svc)
+		zoneid, err := got.GetZoneID(zoneName, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
+		list, err := got.GetResourceRecordSet(zoneid, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 		changes := got.DeleteChangeList(args, typ, list)
+		for _, change := range changes {
+			log.Printf(
+				"Change %s added for deletion",
+				*change.ResourceRecordSet.Name,
+			)
+		}
 		if !dryrun {
 			res, err := got.ApplyChanges(changes, &zoneid, svc)
 			if err != nil {

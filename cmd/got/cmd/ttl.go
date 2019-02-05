@@ -19,13 +19,19 @@ var ttlCmd = &cobra.Command{
 	Short: "Modify Time To Live of a set of records in a DNS zone",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := got.Init()
+		svc := connect()
 		if len(zoneName) <= 0 {
 			log.Fatal("No zone name specified")
 		}
-		zoneID := got.GetZoneID(zoneName, svc)
+		zoneID, err := got.GetZoneID(zoneName, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		list := got.GetResourceRecordSet(zoneID, svc)
+		list, err := got.GetResourceRecordSet(zoneID, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 		// Filter list in between
 		if exclude && filterByType {
 			list = got.FilterResourceRecords(
@@ -98,6 +104,7 @@ var ttlCmd = &cobra.Command{
 				changeResponse.ChangeInfo,
 				svc,
 			)
+			log.Println("All changes applied")
 		}
 	},
 }

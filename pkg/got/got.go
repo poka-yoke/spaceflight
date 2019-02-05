@@ -2,48 +2,14 @@ package got
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 
 	"github.com/poka-yoke/spaceflight/internal/http"
 )
-
-// Verbose flag
-var Verbose bool
-
-// Dryrun flag
-var Dryrun bool
-
-// Filter type for generic filtering
-type Filter []string
-
-// String interface for Filter
-func (f *Filter) String() string {
-	return fmt.Sprint(*f)
-}
-
-// Set so flag can initialize flags of type Filter
-func (f *Filter) Set(value string) error {
-	for _, val := range strings.Split(value, ",") {
-		*f = append(*f, val)
-	}
-	return nil
-}
-
-// Init initializes conections to Route53
-func Init() *route53.Route53 {
-	sess, err := session.NewSession()
-	if err != nil {
-		log.Panicf("Failed to create session: %s", err)
-	}
-	return route53.New(sess)
-}
 
 // GetResourceRecordSet returns a slice containing all responses for specified
 // query. It may issue more than one request as each returns a fixed amount of
@@ -51,17 +17,18 @@ func Init() *route53.Route53 {
 func GetResourceRecordSet(
 	zoneID string,
 	svc route53iface.Route53API,
-) (resourceRecordSet []*route53.ResourceRecordSet) {
+) (
+	resourceRecordSet []*route53.ResourceRecordSet,
+	err error,
+) {
 	params := &route53.ListResourceRecordSetsInput{
 		HostedZoneId: aws.String(zoneID),
 	}
 	for respIsTruncated := true; respIsTruncated; {
-		if Verbose {
-			fmt.Printf("Query params: %s\n", params)
-		}
-		resp, err := svc.ListResourceRecordSets(params)
+		var resp *route53.ListResourceRecordSetsOutput
+		resp, err = svc.ListResourceRecordSets(params)
 		if err != nil {
-			panic(err)
+			return
 		}
 		if *resp.IsTruncated {
 			params.StartRecordName = resp.NextRecordName
@@ -108,11 +75,6 @@ func UpsertChangeList(
 		Action:            aws.String("UPSERT"),
 		ResourceRecordSet: val,
 	}
-	log.Printf(
-		"Adding %s to change list for TTL %d\n",
-		*val.Name,
-		ttl,
-	)
 	res = append(res, change)
 	return
 }
@@ -137,7 +99,6 @@ func DeleteChangeList(
 			ResourceRecordSet: record,
 		}
 		res = append(res, change)
-		log.Printf("Added %s to delete list\n", name)
 	}
 	return
 }
@@ -158,11 +119,6 @@ func WaitForChangeToComplete(
 		time.Second,
 		30*time.Second,
 	).Do(req)
-
-	if Verbose {
-		fmt.Println(getChangeOutput.ChangeInfo)
-	}
-	log.Println("All changes applied")
 }
 
 // UpsertResourceRecordSetTTL performs the request to change the TTL of the list
@@ -177,7 +133,8 @@ func UpsertResourceRecordSetTTL(
 	err error,
 ) {
 	if len(list) <= 0 {
-		log.Fatal("No records to process.")
+		err = fmt.Errorf("no records to process")
+		return
 	}
 	changeSlice := []*route53.Change{}
 	for _, r := range list {
@@ -200,14 +157,15 @@ func ApplyChanges(
 	err error,
 ) {
 	if len(changes) <= 0 {
-		log.Fatal("No records to process.")
+		err = fmt.Errorf("no records to process")
+		return
 	}
 	// Create batch with all jobs
 	changeBatch := &route53.ChangeBatch{
 		Changes: changes,
 	}
-	if err := changeBatch.Validate(); err != nil {
-		log.Panic(err.Error())
+	if err = changeBatch.Validate(); err != nil {
+		return
 	}
 
 	changeRRSInput := &route53.ChangeResourceRecordSetsInput{
@@ -215,32 +173,11 @@ func ApplyChanges(
 		HostedZoneId: zoneID,
 	}
 
-	if err := changeRRSInput.Validate(); err != nil {
-		log.Panic(err.Error())
+	if err = changeRRSInput.Validate(); err != nil {
+		return
 	}
 	// Submit batch changes
-	if !Dryrun {
-		changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
-		if err != nil {
-			log.Panic(err)
-		}
-		if Verbose {
-			fmt.Println(changeResponse.ChangeInfo)
-		}
-	}
-	return
-}
-
-// PrintRecords prints all records in a zone using the API's built-in method
-// ListResourceRecordSets.
-func PrintRecords(
-	p *route53.ListResourceRecordSetsOutput,
-	last bool,
-) (shouldContinue bool) {
-	shouldContinue = *p.IsTruncated
-	for idx, val := range p.ResourceRecordSets {
-		fmt.Println(idx, *val)
-	}
+	changeResponse, err = svc.ChangeResourceRecordSets(changeRRSInput)
 	return
 }
 
@@ -265,22 +202,19 @@ func FilterResourceRecords(
 
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
-func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
+func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string, err error) {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
 	}
 	resp, err := svc.ListHostedZonesByName(params)
 	if err != nil {
-		log.Println(err.Error())
+		return
 	}
 	if len(resp.HostedZones) == 0 {
-		log.Fatalf("No results for zone %s. Exiting.\n", zoneName)
+		err = fmt.Errorf("no results for zone %s. Exiting", zoneName)
+		return
 	}
 	zoneID = *resp.HostedZones[0].Id
-	if Verbose {
-		// Pretty-print the response data.
-		fmt.Println(zoneID)
-	}
 	return
 }

@@ -16,7 +16,7 @@ var upsertCmd = &cobra.Command{
 	Short: "Upsert a DNS record",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := got.Init()
+		svc := connect()
 		if len(zoneName) <= 0 {
 			log.Fatal("No zone name specified")
 		}
@@ -29,9 +29,19 @@ var upsertCmd = &cobra.Command{
 		if len(args) <= 0 {
 			log.Fatal("No destination specified")
 		}
-		zoneid := got.GetZoneID(zoneName, svc)
+		zoneid, err := got.GetZoneID(zoneName, svc)
+		if err != nil {
+			log.Fatal(err)
+		}
 		list := got.NewResourceRecordList(args)
 		changes := got.UpsertChangeList(list, ttl, name, typ)
+		for _, change := range changes {
+			log.Printf(
+				"Change %s added with TTL %v",
+				*change.ResourceRecordSet.Name,
+				ttl,
+			)
+		}
 		if !dryrun {
 			res, err := got.ApplyChanges(changes, &zoneid, svc)
 			if err != nil {
