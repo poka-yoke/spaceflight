@@ -44,5 +44,3 @@ deploy:
     - roosa
     - short
     - trek
-  on:
-    tags: true
