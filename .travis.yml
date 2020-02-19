@@ -37,6 +37,8 @@ deploy:
   skip_cleanup: true
   token:
     secure: BFHZUiJkr6/74OAU9OkuulGBahnafdFSdHYiE0GpclgyNtbGSGKAIOrue1rZ/NclWGDFhA4rOfBxouOr9eu3anQ9qEKSHVsyJodzDGRA5ARcEFgYna2/osYSQibgiwCbvBGm7w1B7oUUodiKRGMrn5vhgIAQBSejOLxUlNbriZHnIbWCUtshPaQ6ktGhj+7yxsWoRjcs4i7KauhdXH/W4D714WLCm+RO67kMZ5q395CcoUPPdbVO+x+OhPMDkOjgyGkanGTr5jRurobBo4l/KdjfV92FJ9h0AqHHwtJ4sQdJ3iAl7Er7RD+rEN67J6EzS77FPD/izOYQLNDbF9mb1j5DjRsV85f/dxYYG6Ts3dv43BfdbqEvDB/84pWckbihW3PC2kbAIL56pcfZ75QVlekwLGegDac3gsoeqP7D5BFGY0YVjnlwGYyjllRy6/L/gtPRYO46AjVgmDSA5FRANU3SjrB7oTMGOxn5v7yDnFBv6ZZquv6Sjl9Uaq9/RqU8SchFyr12rl6dZfdtRoXYhJkT9gG2a5Vy9JN3o6vnxgtdt/7QqGErCOLlUo5vM16AtI5iLGYrFJkiVNPUiDBhHMnIKmuXyt/Ac9+cc/gEUHgwgbu71jOhdNBNWoTGPmJAAZcnyCO/00FpXFZGUPsQQoctgUNytwCWTKjL3o/uXnw=
+  on:
+    branch: master
   file:
     - capcom
     - dextre
