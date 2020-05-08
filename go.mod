@@ -8,6 +8,7 @@ require (
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-test/deep v1.0.1
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.2.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/inconshreveable/mousetrap v1.0.0
