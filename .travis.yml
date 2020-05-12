@@ -41,7 +41,6 @@ deploy:
     branch: master
   file:
     - capcom
-    - dextre
     - fido
     - got
     - health

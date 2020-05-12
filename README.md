@@ -20,7 +20,6 @@ Finally, here you can find a relation of tools:
 | [got](mcc/got) | MCC | Tool to manage changes in DNS |
 | [capcom](mcc/capcom) | MCC | Communicactions management tool |
 | [roosa](mcc/roosa) | MCC | Detection and visualization of relationships |
-| [dextre](mss/dextre) | MSS | Spam blacklists presence and mail reputation check |
 | [trek](mcc/trek) | MCC | Redirection management tool |
 | [fido](mcc/fido) | MCC | Configuration management tool |
 | [odin](mcc/odin) | MCC | (WIP) Databases management tool |
