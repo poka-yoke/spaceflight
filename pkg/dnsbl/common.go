@@ -32,10 +32,10 @@ func reverseAddress(ipAddress string) string {
 	return sb.String()
 }
 
-// Query queries a DNSBL and returns true if the argument gets a match
-// in the BL. Returns the number of results in the lookup where 0
-// means not present.
-func Query(provider, address string) int {
+// Query queries a DNSBL and returns the number of matches present in
+// the BL. If the number of matches in the lookup were 0, it means not
+// present.
+func Query(ctx context.Context, provider, address string) int {
 	queryAddress := fmt.Sprintf(
 		"%v.%v",
 		reverseAddress(address),
@@ -45,11 +45,7 @@ func Query(provider, address string) int {
 	// We ignore errors because the providers where we are not
 	// flagged can't be resolved. We can not distinguish if we are
 	// not on their list or their service is broken.
-	result, _ := LookupHostFunc(
-		Resolver,
-		context.Background(),
-		queryAddress,
-	)
+	result, _ := LookupHostFunc(Resolver, ctx, queryAddress)
 	if len(result) > 0 {
 		log.Printf("%v returned %v\n", queryAddress, result)
 	}

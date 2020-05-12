@@ -44,7 +44,7 @@ func TestQuery(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%s %s - %d", tc.provider, tc.address, tc.result),
 			func(t *testing.T) {
-				result := dnsbl.Query(tc.provider, tc.address)
+				result := dnsbl.Query(context.Background(), tc.provider, tc.address)
 				if result != tc.result {
 					t.Errorf(
 						"Result for %s should be %d instead of %d",
