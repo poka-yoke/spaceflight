@@ -30,11 +30,7 @@ func GetResourceRecordSet(
 			params.StartRecordType = resp.NextRecordType
 		}
 		respIsTruncated = *resp.IsTruncated
-
-		// Iterate over all entries and add changes to change_slice
-		for _, val := range resp.ResourceRecordSets {
-			resourceRecordSet = append(resourceRecordSet, val)
-		}
+		resourceRecordSet = append(resourceRecordSet, resp.ResourceRecordSets...)
 	}
 	return
 }
