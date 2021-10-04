@@ -10,37 +10,14 @@ import (
 	"testing"
 )
 
-func TestCheckCreate(t *testing.T) {
-	data := []struct {
-		name, schedule, channels, tags string
-		slug                           string
-		status                         int
-	}{
-		{
-			name:     "New check",
-			schedule: "* * * * *",
-			channels: "*",
-			tags:     "new minute alert",
-			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
-			status:   http.StatusCreated,
-		},
-		{
-			name:     "New check",
-			schedule: "0 * * * *",
-			channels: "*",
-			tags:     "new hourly alert",
-			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
-			status:   http.StatusCreated,
-		},
-		{
-			name:     "New check",
-			schedule: "0 * * * *",
-			tags:     "new hourly noalert",
-			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
-			status:   http.StatusCreated,
-		},
-	}
-	server := httptest.NewServer(http.HandlerFunc(func(
+type testCase struct {
+	name, schedule, channels, tags string
+	slug                           string
+	status                         int
+}
+
+func serverFunc(t *testing.T, data []testCase) func(w http.ResponseWriter, r *http.Request) {
+	return func(
 		w http.ResponseWriter,
 		r *http.Request,
 	) {
@@ -110,7 +87,36 @@ func TestCheckCreate(t *testing.T) {
 			}
 		}
 		http.Error(w, "Bad Request", http.StatusBadRequest)
-	}))
+	}
+}
+
+func TestCheckCreate(t *testing.T) {
+	data := []testCase{
+		{
+			name:     "New check",
+			schedule: "* * * * *",
+			channels: "*",
+			tags:     "new minute alert",
+			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
+			status:   http.StatusCreated,
+		},
+		{
+			name:     "New check",
+			schedule: "0 * * * *",
+			channels: "*",
+			tags:     "new hourly alert",
+			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
+			status:   http.StatusCreated,
+		},
+		{
+			name:     "New check",
+			schedule: "0 * * * *",
+			tags:     "new hourly noalert",
+			slug:     "f618072a-7bde-4eee-af63-71a77c5723bc",
+			status:   http.StatusCreated,
+		},
+	}
+	server := httptest.NewServer(http.HandlerFunc(serverFunc(t, data)))
 	defer server.Close()
 
 	for _, tt := range data {
