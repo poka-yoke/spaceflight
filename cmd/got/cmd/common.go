@@ -9,11 +9,13 @@ import (
 // connect initializes connection to AWS API
 func connect() *route53.Route53 {
 	region := "us-east-1"
-	return route53.New(
-		session.New(
-			&aws.Config{
-				Region: aws.String(region),
-			},
-		),
+	session, err := session.NewSession(
+		&aws.Config{
+			Region: aws.String(region),
+		},
 	)
+	if err != nil {
+		panic(err)
+	}
+	return route53.New(session)
 }

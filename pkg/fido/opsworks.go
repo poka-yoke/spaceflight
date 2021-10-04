@@ -13,7 +13,10 @@ import (
 // Init initializes connection to AWS API
 func Init() opsworksiface.OpsWorksAPI {
 	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
+	sess, err := session.NewSession(&aws.Config{Region: aws.String(region)})
+	if err != nil {
+		panic(err)
+	}
 	return opsworks.New(sess)
 }
 

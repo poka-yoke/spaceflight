@@ -18,15 +18,15 @@ const (
 
 // awsLogin initializes connection to AWS API
 func rdsLogin(region string) rdsiface.RDSAPI {
-	return rds.New(
-		session.New(
-			&aws.Config{
-				Region: aws.String(
-					region,
-				),
-			},
-		),
+	session, err := session.NewSession(
+		&aws.Config{
+			Region: aws.String(region),
+		},
 	)
+	if err != nil {
+		panic(err)
+	}
+	return rds.New(session)
 }
 
 func waitForInstance(
