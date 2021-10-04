@@ -37,7 +37,7 @@ func GetResourceRecordSet(
 
 // GetZoneID returns a string containing the ZoneID for use in further API
 // actions
-func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
+func GetZoneID(zoneName string, svc route53iface.Route53API) string {
 	params := &route53.ListHostedZonesByNameInput{
 		DNSName:  aws.String(zoneName),
 		MaxItems: aws.String("100"),
@@ -46,8 +46,7 @@ func GetZoneID(zoneName string, svc route53iface.Route53API) (zoneID string) {
 	if err != nil {
 		log.Println(err.Error())
 	}
-	zoneID = *resp.HostedZones[0].Id
-	return
+	return *resp.HostedZones[0].Id
 }
 
 // FilterResourceRecords returns a slice containing only the entries that
@@ -110,17 +109,17 @@ func (rtl *ReferenceTreeList) GetReferenceTrees() map[string][]*Node {
 }
 
 // String returns a string representing ReferenceTreeList contents.
-func (rtl *ReferenceTreeList) String() (output string) {
+func (rtl *ReferenceTreeList) String() string {
 	if rtl.lookup == nil {
 		rtl.GetReferenceTrees()
 	}
-	output = ""
+	output := ""
 	for _, tree := range rtl.lookup {
 		for _, node := range tree {
 			output += fmt.Sprintf("%v\n", node)
 		}
 	}
-	return
+	return output
 }
 
 // fill fills the referral lookup table with the base records.
