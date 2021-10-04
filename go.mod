@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/awalterschulze/gographviz v0.0.0-20170410065617-c84395e536e1
-	github.com/aws/aws-sdk-go v1.15.73
+	github.com/aws/aws-sdk-go v1.40.54
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/go-test/deep v1.0.1
 	github.com/gogo/protobuf v1.3.1 // indirect
@@ -21,6 +21,5 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.2.1
-	golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 )
