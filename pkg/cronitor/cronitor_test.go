@@ -96,13 +96,13 @@ func healthCheckServer(t *testing.T) func(http.ResponseWriter, *http.Request) {
 					"status":      "Waiting for the first ping",
 					"name":        d.name,
 					"notifications": map[string][]string{
-						"templates": []string{},
-						"pagerduty": []string{},
-						"slack":     []string{},
-						"phones":    []string{},
-						"emails":    []string{d.email},
-						"webhooks":  []string{},
-						"hipchat":   []string{},
+						"templates": {},
+						"pagerduty": {},
+						"slack":     {},
+						"phones":    {},
+						"emails":    {d.email},
+						"webhooks":  {},
+						"hipchat":   {},
 					},
 					"tags":     strings.Split(d.tags, " "),
 					"timezone": nil,
@@ -143,7 +143,7 @@ func TestCheckCreate(t *testing.T) {
 			"name": tc.name,
 			"type": "heartbeat",
 			"notifications": map[string][]string{
-				"emails": []string{
+				"emails": {
 					tc.email,
 				},
 			},

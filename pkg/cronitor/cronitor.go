@@ -61,7 +61,7 @@ func SetMessage(schedule, name, tags, email string) map[string]interface{} {
 	}
 	if email != "" {
 		message["notifications"] = map[string][]string{
-			"emails": []string{
+			"emails": {
 				email,
 			},
 		}

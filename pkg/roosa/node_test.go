@@ -15,7 +15,7 @@ var parentRRS = &route53.ResourceRecordSet{
 	Name: &parentName,
 	Type: &A,
 	ResourceRecords: []*route53.ResourceRecord{
-		&route53.ResourceRecord{
+		{
 			Value: &parentValue,
 		},
 	},
@@ -28,7 +28,7 @@ var child1RRS = &route53.ResourceRecordSet{
 	Name: &child1Name,
 	Type: &CNAME,
 	ResourceRecords: []*route53.ResourceRecord{
-		&route53.ResourceRecord{
+		{
 			Value: &parentName,
 		},
 	},
@@ -42,7 +42,7 @@ var child2RRS = &route53.ResourceRecordSet{
 	Name: &child2Name,
 	Type: &CNAME,
 	ResourceRecords: []*route53.ResourceRecord{
-		&route53.ResourceRecord{
+		{
 			Value: &child1Name,
 		},
 	},

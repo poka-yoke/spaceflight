@@ -19,23 +19,22 @@ func mockLookupHost(resolv *net.Resolver, ctx context.Context, host string) ([]s
 	return addresses, nil
 }
 
-
 func TestQuery(t *testing.T) {
 	t.Parallel()
 
 	var table = []struct {
 		address, provider string
-		result  int
+		result            int
 	}{
 		{
-			address: "127.0.0.1",
+			address:  "127.0.0.1",
 			provider: "positive.dnsbl.com",
-			result:  1,
+			result:   1,
 		},
 		{
-			address: "127.0.0.1",
+			address:  "127.0.0.1",
 			provider: "negative.dnsbl.com",
-			result:  0,
+			result:   0,
 		},
 	}
 	dnsbl.Resolver = nil // Do not resolve external addresses
