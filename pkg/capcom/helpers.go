@@ -22,8 +22,5 @@ func networkContainsIPCheck(cidr string, searchIP net.IP) (out bool, err error) 
 
 func isCIDR(origin string) bool {
 	_, _, err := net.ParseCIDR(origin)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
