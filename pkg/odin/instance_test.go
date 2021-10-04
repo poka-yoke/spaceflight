@@ -22,7 +22,7 @@ func TestCloneDBInput(t *testing.T) {
 			input:            odin.Instance{OriginalInstanceName: ""},
 			allocatedStorage: 0,
 			masterUsername:   "",
-			err:              fmt.Errorf("Original Instance Name was empty"),
+			err:              fmt.Errorf("original Instance Name was empty"),
 		},
 		// Non-existing snapshot
 		{
@@ -30,7 +30,7 @@ func TestCloneDBInput(t *testing.T) {
 			allocatedStorage: 0,
 			masterUsername:   "",
 			err: fmt.Errorf(
-				"No snapshot found for %s instance",
+				"no snapshot found for %s instance",
 				"im-not-here",
 			),
 		},
@@ -50,8 +50,8 @@ func TestCloneDBInput(t *testing.T) {
 			err.Error() != tc.err.Error() {
 			t.Errorf(
 				"Expected: %s, but got %s",
-				err.Error(),
 				tc.err.Error(),
+				err.Error(),
 			)
 		}
 		if err == nil {
@@ -240,13 +240,13 @@ func TestRestoreDBInput(t *testing.T) {
 		// Underspecified options
 		{
 			input: odin.Instance{OriginalInstanceName: ""},
-			err:   fmt.Errorf("Original Instance Name was empty"),
+			err:   fmt.Errorf("original Instance Name was empty"),
 		},
 		// Non-existing snapshot
 		{
 			input: odin.Instance{OriginalInstanceName: "im-not-here"},
 			err: fmt.Errorf(
-				"No snapshot found for %s instance",
+				"no snapshot found for %s instance",
 				"im-not-here",
 			),
 			dbSnapshotIdentifier: "not-found",
@@ -266,8 +266,8 @@ func TestRestoreDBInput(t *testing.T) {
 			err.Error() != tc.err.Error() {
 			t.Errorf(
 				"Expected: %s, but got %s",
-				err.Error(),
 				tc.err.Error(),
+				err.Error(),
 			)
 		}
 		if err == nil {

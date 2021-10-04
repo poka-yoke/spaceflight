@@ -196,6 +196,6 @@ func ExamplePermission_Err() {
 		}
 	}
 	// Unordered output:
-	// Error while adding on sg-1234: It had to fail
-	// Error while revoking on sg-3456: It had to fail
+	// Error while adding on sg-1234: it had to fail
+	// Error while revoking on sg-3456: it had to fail
 }

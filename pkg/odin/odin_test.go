@@ -36,7 +36,7 @@ var getLastSnapshotCases = []getLastSnapshotCase{
 	{
 		Case: test.Case{
 			Expected:      nil,
-			ExpectedError: "No snapshot found for develop instance",
+			ExpectedError: "no snapshot found for develop instance",
 		},
 		name:       "Get non-existing snapshot id by instance id",
 		identifier: "develop",

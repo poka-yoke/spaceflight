@@ -35,11 +35,11 @@ func (m *RDSClient) TakeFinalSnapshot(
 	}
 	if !*params.SkipFinalSnapshot {
 		if params.FinalDBSnapshotIdentifier == nil {
-			err = fmt.Errorf("Final Snapshot ID not specified")
+			err = fmt.Errorf("final Snapshot ID not specified")
 			return
 		}
 		if *params.FinalDBSnapshotIdentifier == "" {
-			err = fmt.Errorf("Final Snapshot ID not specified")
+			err = fmt.Errorf("final Snapshot ID not specified")
 			return
 		}
 		identifier := params.DBInstanceIdentifier
@@ -97,7 +97,7 @@ func (m RDSClient) FindSnapshotInstance(instanceID string) (
 	}
 	if !found {
 		err = fmt.Errorf(
-			"No snapshot for instance %s",
+			"no snapshot for instance %s",
 			instanceID,
 		)
 	}
@@ -122,7 +122,7 @@ func (m RDSClient) FindSnapshot(id string) (
 	}
 	if !found {
 		err = fmt.Errorf(
-			"No such snapshot %s",
+			"no such snapshot %s",
 			id,
 		)
 	}
@@ -147,7 +147,7 @@ func (m RDSClient) findInstance(id string) (
 	}
 	if !found {
 		err = fmt.Errorf(
-			"No such instance %s",
+			"no such instance %s",
 			id,
 		)
 	}
@@ -187,7 +187,7 @@ func (m *RDSClient) CreateDBSnapshot(
 	_, snapshot, _ := m.FindSnapshot(*id)
 	if snapshot != nil {
 		err = fmt.Errorf(
-			"Snapshot %s already exists",
+			"snapshot %s already exists",
 			*id,
 		)
 		return
@@ -291,18 +291,18 @@ func (m *RDSClient) CreateDBInstance(
 	}
 	if inputParams.MasterUsername == nil ||
 		*inputParams.MasterUsername == "" {
-		err = errors.New("Specify Master User")
+		err = errors.New("specify Master User")
 		return
 	}
 	if inputParams.MasterUserPassword == nil ||
 		*inputParams.MasterUserPassword == "" {
-		err = errors.New("Specify Master User Password")
+		err = errors.New("specify Master User Password")
 		return
 	}
 	if inputParams.AllocatedStorage == nil ||
 		*inputParams.AllocatedStorage < 5 ||
 		*inputParams.AllocatedStorage > 6144 {
-		err = errors.New("Specify size between 5 and 6144")
+		err = errors.New("specify size between 5 and 6144")
 		return
 	}
 	region := trimLast(*az)
