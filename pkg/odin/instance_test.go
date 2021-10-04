@@ -1,6 +1,6 @@
 package odin_test
 
-import(
+import (
 	"fmt"
 	"testing"
 
@@ -11,35 +11,35 @@ import(
 )
 
 func TestCloneDBInput(t *testing.T) {
-	tt := []struct{
-		input odin.Instance
+	tt := []struct {
+		input            odin.Instance
 		allocatedStorage int64
-		masterUsername string
-		err error
+		masterUsername   string
+		err              error
 	}{
 		// Underspecified options
 		{
-			input: odin.Instance{OriginalInstanceName: ""},
+			input:            odin.Instance{OriginalInstanceName: ""},
 			allocatedStorage: 0,
-			masterUsername: "",
-			err: fmt.Errorf("Original Instance Name was empty"),
+			masterUsername:   "",
+			err:              fmt.Errorf("original Instance Name was empty"),
 		},
 		// Non-existing snapshot
 		{
-			input: odin.Instance{OriginalInstanceName: "im-not-here"},
+			input:            odin.Instance{OriginalInstanceName: "im-not-here"},
 			allocatedStorage: 0,
-			masterUsername: "",
+			masterUsername:   "",
 			err: fmt.Errorf(
-				"No snapshot found for %s instance",
+				"no snapshot found for %s instance",
 				"im-not-here",
 			),
 		},
 		// Existing snapshot
 		{
-			input: odin.Instance{OriginalInstanceName: "production-rds"},
+			input:            odin.Instance{OriginalInstanceName: "production-rds"},
 			allocatedStorage: 10,
-			masterUsername: "owner",
-			err: nil,
+			masterUsername:   "owner",
+			err:              nil,
 		},
 	}
 	svc := mocks.NewRDSClient()
@@ -50,8 +50,8 @@ func TestCloneDBInput(t *testing.T) {
 			err.Error() != tc.err.Error() {
 			t.Errorf(
 				"Expected: %s, but got %s",
-				err.Error(),
 				tc.err.Error(),
+				err.Error(),
 			)
 		}
 		if err == nil {
@@ -76,22 +76,22 @@ func TestCloneDBInput(t *testing.T) {
 }
 
 func TestCreateDBInput(t *testing.T) {
-	tt := []struct{
-		input odin.Instance
+	tt := []struct {
+		input            odin.Instance
 		allocatedStorage int64
-		masterUsername string
+		masterUsername   string
 	}{
 		// No Snapshot
 		{
-			input: odin.Instance{LastSnapshot: nil},
+			input:            odin.Instance{LastSnapshot: nil},
 			allocatedStorage: 0,
-			masterUsername: "",
+			masterUsername:   "",
 		},
 		// With snapshot
 		{
-			input: odin.Instance{LastSnapshot: exampleSnapshot1},
+			input:            odin.Instance{LastSnapshot: exampleSnapshot1},
 			allocatedStorage: 10,
-			masterUsername: "owner",
+			masterUsername:   "owner",
 		},
 	}
 	svc := mocks.NewRDSClient()
@@ -121,17 +121,17 @@ func TestCreateDBInput(t *testing.T) {
 }
 
 func TestDeleteDBInput(t *testing.T) {
-	tt := []struct{
-		input odin.Instance
+	tt := []struct {
+		input             odin.Instance
 		skipFinalSnapshot bool
-		finalSnapshotID string
+		finalSnapshotID   string
 	}{
 		{
-			input: odin.Instance{FinalSnapshotID: ""},
+			input:             odin.Instance{FinalSnapshotID: ""},
 			skipFinalSnapshot: true,
 		},
 		{
-			input: odin.Instance{FinalSnapshotID: "123"},
+			input:           odin.Instance{FinalSnapshotID: "123"},
 			finalSnapshotID: "123",
 		},
 	}
@@ -161,7 +161,7 @@ func TestDeleteDBInput(t *testing.T) {
 }
 
 func TestModifyDBInputGroups(t *testing.T) {
-	tt := []struct{
+	tt := []struct {
 		securityGroups []string
 	}{
 		// No groups
@@ -210,11 +210,11 @@ func TestModifyDBInputGroups(t *testing.T) {
 }
 
 func TestModifyDBInputApplyNow(t *testing.T) {
-	tt := []struct{
+	tt := []struct {
 		applyNow bool
 	}{
-		{ applyNow: true },
-		{ applyNow: false },
+		{applyNow: true},
+		{applyNow: false},
 	}
 	for _, tc := range tt {
 		res, err := odin.Instance{}.ModifyDBInput(tc.applyNow)
@@ -232,29 +232,29 @@ func TestModifyDBInputApplyNow(t *testing.T) {
 }
 
 func TestRestoreDBInput(t *testing.T) {
-	tt := []struct{
-		input odin.Instance
+	tt := []struct {
+		input                odin.Instance
 		dbSnapshotIdentifier string
-		err error
+		err                  error
 	}{
 		// Underspecified options
 		{
 			input: odin.Instance{OriginalInstanceName: ""},
-			err: fmt.Errorf("Original Instance Name was empty"),
+			err:   fmt.Errorf("original Instance Name was empty"),
 		},
 		// Non-existing snapshot
 		{
 			input: odin.Instance{OriginalInstanceName: "im-not-here"},
 			err: fmt.Errorf(
-				"No snapshot found for %s instance",
+				"no snapshot found for %s instance",
 				"im-not-here",
 			),
 			dbSnapshotIdentifier: "not-found",
 		},
 		// Existing snapshot
 		{
-			input: odin.Instance{OriginalInstanceName: "production-rds"},
-			err: nil,
+			input:                odin.Instance{OriginalInstanceName: "production-rds"},
+			err:                  nil,
 			dbSnapshotIdentifier: "rds:production-2015-06-11",
 		},
 	}
@@ -266,8 +266,8 @@ func TestRestoreDBInput(t *testing.T) {
 			err.Error() != tc.err.Error() {
 			t.Errorf(
 				"Expected: %s, but got %s",
-				err.Error(),
 				tc.err.Error(),
+				err.Error(),
 			)
 		}
 		if err == nil {

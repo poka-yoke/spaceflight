@@ -138,13 +138,13 @@ func (i *Instance) addLastSnapshot(
 	svc rdsiface.RDSAPI,
 ) (_ *Instance, err error) {
 	if i.OriginalInstanceName == "" {
-		err = fmt.Errorf("Original Instance Name was empty")
+		err = fmt.Errorf("original Instance Name was empty")
 		return nil, err
 	}
 	i.LastSnapshot, err = GetLastSnapshot(i.OriginalInstanceName, svc)
 	if err != nil {
 		err = fmt.Errorf(
-			"No snapshot found for %s instance",
+			"no snapshot found for %s instance",
 			i.OriginalInstanceName,
 		)
 		return i, err
@@ -161,7 +161,7 @@ type Validator interface {
 func validate(result Validator) error {
 	if err := result.Validate(); err != nil {
 		err = fmt.Errorf(
-			"DB instance parameters failed to validate: %s",
+			"instance parameters for DB failed to validate: %s",
 			err,
 		)
 		return err

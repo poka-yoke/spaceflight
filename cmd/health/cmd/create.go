@@ -29,7 +29,7 @@ var createCmd = &cobra.Command{
 	Short: "",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		message := make(map[string]interface{})
+		var message map[string]interface{}
 		out := []string{}
 		// Select backend to prepare request
 		switch {

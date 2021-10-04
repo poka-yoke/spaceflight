@@ -209,10 +209,6 @@ func TestGetResourceRecordSet(t *testing.T) {
 	}
 }
 
-var gzitest = []string{
-	"test",
-}
-
 func TestGetZoneID(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
 	for _, s := range grrstest {
@@ -234,7 +230,7 @@ var rrltest = []struct {
 			one,
 		},
 		[]*route53.ResourceRecord{
-			&route53.ResourceRecord{
+			{
 				Value: &one,
 			},
 		},
@@ -244,7 +240,7 @@ var rrltest = []struct {
 			two,
 		},
 		[]*route53.ResourceRecord{
-			&route53.ResourceRecord{
+			{
 				Value: &two,
 			},
 		},
@@ -255,10 +251,10 @@ var rrltest = []struct {
 			two,
 		},
 		[]*route53.ResourceRecord{
-			&route53.ResourceRecord{
+			{
 				Value: &one,
 			},
-			&route53.ResourceRecord{
+			{
 				Value: &two,
 			},
 		},
@@ -268,7 +264,7 @@ var rrltest = []struct {
 			awsCname,
 		},
 		[]*route53.ResourceRecord{
-			&route53.ResourceRecord{
+			{
 				Value: &awsCname,
 			},
 		},
@@ -321,7 +317,7 @@ var actest = []struct {
 			zoneid  string
 		}{
 			[]*route53.Change{
-				&route53.Change{
+				{
 					Action:            pstr("UPSERT"),
 					ResourceRecordSet: onerecordA,
 				},

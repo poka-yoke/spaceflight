@@ -94,7 +94,7 @@ func TestAuthorizeAccessToSecurityGroup(t *testing.T) {
 				out,
 			)
 		}
-		err, _ := perm.Err()
+		_, err := perm.Err()
 		if err != nil && tc.expected {
 			t.Error(err)
 		}
@@ -136,7 +136,7 @@ func TestRevokeAccessToSecurityGroup(t *testing.T) {
 				out,
 			)
 		}
-		err, _ := perm.Err()
+		_, err := perm.Err()
 		if err != nil && tc.expected {
 			t.Error(err)
 		}
@@ -184,7 +184,7 @@ func ExamplePermission_Err() {
 		for cont {
 			// We don't know how many errors are there, so
 			// loop until there are none left
-			error, more := perm.Err()
+			more, error := perm.Err()
 			if error != nil {
 				// Handle error and report it
 				fmt.Println(error)
@@ -196,6 +196,6 @@ func ExamplePermission_Err() {
 		}
 	}
 	// Unordered output:
-	// Error while adding on sg-1234: It had to fail
-	// Error while revoking on sg-3456: It had to fail
+	// Error while adding on sg-1234: it had to fail
+	// Error while revoking on sg-3456: it had to fail
 }

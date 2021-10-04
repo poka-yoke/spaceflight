@@ -76,16 +76,16 @@ func (p *Permission) RemoveToSG(svc ec2iface.EC2API, sgid string) bool {
 
 // Err returns any error that may have occurred during the execution
 // and a bool to signal if there are more errors pending to be checked
-func (p *Permission) Err() (out error, more bool) {
+func (p *Permission) Err() (more bool, out error) {
 	switch len(p.errs) {
 	case 0:
-		return nil, false
+		return false, nil
 	case 1:
 		out, p.errs = p.errs[0], nil
-		return out, false
+		return false, out
 	default:
 		out, p.errs = p.errs[0], p.errs[1:]
-		return out, true
+		return true, out
 	}
 
 }

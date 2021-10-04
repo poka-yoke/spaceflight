@@ -53,7 +53,7 @@ func (s Service) Update(domain, path, url string) error {
 	body := s.Body(domain, path, url)
 	req, err := s.Request(http.MethodPut, s.UpdateURL, body)
 	if err != nil {
-		return fmt.Errorf("Failed building request: %s", err.Error())
+		return fmt.Errorf("failed building request: %s", err.Error())
 	}
 	res, err := s.Do(req)
 	if err != nil {
@@ -101,7 +101,7 @@ func (s Service) Request(method, endpoint string, body io.Reader) (req *http.Req
 func (s Service) Do(req *http.Request) (res *http.Response, err error) {
 	res, err = http.DefaultClient.Do(req)
 	if err != nil {
-		err = fmt.Errorf("Failed executing request: %s", err.Error())
+		err = fmt.Errorf("failed executing request: %s", err.Error())
 		return
 	}
 	return

@@ -1,0 +1,156 @@
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Run tests
+        run: |
+          go test -v ./... -coverprofile=coverage.out -covermode=atomic
+  check-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Check formatting
+        run: |
+          gofmt -s -e -d -l . | tee /tmp/gofmt.output && [ $(cat /tmp/gofmt.output | wc -l) -eq 0 ]
+  check-smells:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Check code smells
+        run: |
+          go vet ./...
+  check-complexity:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install gocyclo
+        run: |
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+      -
+        name: Check cyclomatic complexity
+        run: |
+          gocyclo -over 15 .
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install golint
+        run: |
+          go install golang.org/x/lint/golint@latest
+      -
+        name: Check Style
+        run: |
+          golint ./...
+  check-ineffectual-assignments:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install ineffassign
+        run: |
+          go install github.com/gordonklaus/ineffassign@latest
+      -
+        name: Download dependencies to local
+        run : |
+          go mod download
+      -
+        name: Check ineffectual assignments
+        run: |
+          ineffassign ./...
+  check-spelling:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install spellchecker
+        run: |
+          go install github.com/client9/misspell/cmd/misspell@latest
+      -
+        name: Check spelling
+        run: |
+          misspell -error .
+  staticcheck:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+      -
+        name: Download dependencies to local
+        run : |
+          go mod download
+      -
+        name: Run staticcheck
+        run: |
+          staticcheck ./...
+  check-license:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Check license file is present
+        run: |
+          find . -name LICENSE.md

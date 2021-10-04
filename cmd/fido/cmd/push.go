@@ -8,8 +8,6 @@ import (
 	"github.com/poka-yoke/spaceflight/pkg/fido"
 )
 
-var file string
-
 // pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:   "push",

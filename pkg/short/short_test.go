@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func ExampleServiceAdd() {
+func ExampleService_Add() {
 	service := NewService().SetAPIKey("my-api-key")
 	service.AddURL = "https://example.com/shortener/add"
 	err := service.Add("xample.cm", "this", "https://example.com/very/long/url")
@@ -18,7 +18,7 @@ func ExampleServiceAdd() {
 	}
 }
 
-func ExampleServiceUpdate() {
+func ExampleService_Update() {
 	service := NewService().SetAPIKey("my-api-key")
 	service.UpdateURL = "https://example.com/shortener/add"
 	err := service.Update("xample.cm", "this", "https://example.com/very/long/url")

@@ -13,7 +13,10 @@ import (
 // Init initializes connection to AWS API
 func Init() opsworksiface.OpsWorksAPI {
 	region := "us-east-1"
-	sess := session.New(&aws.Config{Region: aws.String(region)})
+	sess, err := session.NewSession(&aws.Config{Region: aws.String(region)})
+	if err != nil {
+		panic(err)
+	}
 	return opsworks.New(sess)
 }
 
@@ -28,7 +31,7 @@ func GetStackID(svc opsworksiface.OpsWorksAPI, name string) (string, error) {
 			return *stack.StackId, nil
 		}
 	}
-	return "", fmt.Errorf("No stack matches %s", name)
+	return "", fmt.Errorf("no stack matches %s", name)
 }
 
 // GetCustomJSON obtains the CustomJSON string from OpsWorks
@@ -49,7 +52,7 @@ func GetCustomJSON(
 		log.Panic(err)
 	}
 	if len(out.Stacks) < 1 {
-		return "", fmt.Errorf("No Stack found for ID %s", stackID)
+		return "", fmt.Errorf("no Stack found for ID %s", stackID)
 	}
 	return *out.Stacks[0].CustomJson, nil
 }

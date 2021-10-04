@@ -69,7 +69,7 @@ func Add(initialContent, original, final string) (
 	result string, err error,
 ) {
 	if original == "" || final == "" {
-		err = fmt.Errorf("You must specify both original and final")
+		err = fmt.Errorf("you must specify both original and final")
 		return
 	}
 	newContent := ""

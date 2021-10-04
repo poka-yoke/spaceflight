@@ -30,7 +30,7 @@ func GetLastSnapshot(
 ) {
 	results, err := ListSnapshots(id, svc)
 	if err != nil || len(results) == 0 {
-		err = fmt.Errorf("No snapshot found for %s instance", id)
+		err = fmt.Errorf("no snapshot found for %s instance", id)
 		return
 	}
 	return results[0], nil

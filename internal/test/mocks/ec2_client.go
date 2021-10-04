@@ -25,7 +25,7 @@ func (m *EC2Client) AuthorizeSecurityGroupIngress(
 	error,
 ) {
 	if m.FailAuthorizeSG {
-		return nil, fmt.Errorf("It had to fail")
+		return nil, fmt.Errorf("it had to fail")
 	}
 	return &ec2.AuthorizeSecurityGroupIngressOutput{}, nil
 }
@@ -78,7 +78,7 @@ func (m *EC2Client) RevokeSecurityGroupIngress(
 	error,
 ) {
 	if m.FailRevokeSG {
-		return nil, fmt.Errorf("It had to fail")
+		return nil, fmt.Errorf("it had to fail")
 	}
 
 	return &ec2.RevokeSecurityGroupIngressOutput{}, nil

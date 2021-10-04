@@ -18,7 +18,7 @@ type Credentials struct {
 // NewCredentials creates the Credentials object.
 func NewCredentials(cloudName, key, secret string) error {
 	if key == "" || secret == "" || cloudName == "" {
-		return errors.New("No credentials defined")
+		return errors.New("no credentials defined")
 	}
 	CloudinaryCredentials = &Credentials{
 		cloudName: cloudName,
