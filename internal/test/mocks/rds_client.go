@@ -154,17 +154,6 @@ func (m RDSClient) findInstance(id string) (
 	return
 }
 
-// addInstances add a list of instances to the mock
-func (m *RDSClient) addInstances(
-	instances []*rds.DBInstance,
-) {
-	m.dbInstances = []*rds.DBInstance{}
-	m.dbInstances = append(
-		m.dbInstances,
-		instances...,
-	)
-}
-
 // AddSnapshots add a list of snapshots to the mock
 func (m *RDSClient) AddSnapshots(
 	snapshots []*rds.DBSnapshot,

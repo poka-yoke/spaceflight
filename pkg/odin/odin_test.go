@@ -82,7 +82,6 @@ func getTime(original string) (parsed time.Time) {
 	return
 }
 
-var exampleSnapshot1Type = aws.String("db.m1.medium")
 var exampleSnapshot1DBID = aws.String("production-rds")
 var exampleSnapshot1ID = aws.String("rds:production-2015-06-11")
 var exampleSnapshot1Time = "2015-06-11T22:00:00+00:00"
@@ -116,13 +115,6 @@ var exampleSnapshot3 = &rds.DBSnapshot{
 	DBInstanceIdentifier: exampleSnapshot3DBID,
 	DBSnapshotIdentifier: exampleSnapshot3ID,
 	SnapshotCreateTime:   aws.Time(getTime(exampleSnapshot3Time)),
-}
-
-var exampleSnapshot4DBID = aws.String("develop-rds")
-var exampleSnapshot4ID = aws.String("rds:develop-2017-07-11")
-var exampleSnapshot4 = &rds.DBSnapshot{
-	DBInstanceIdentifier: exampleSnapshot4DBID,
-	DBSnapshotIdentifier: exampleSnapshot4ID,
 }
 
 type listSnapshotsCase struct {

@@ -134,7 +134,6 @@ func (rtl *ReferenceTreeList) fill() {
 		rtl.lookup[name] = append(rtl.lookup[name], node)
 	}
 	log.Printf("Added %d records to Lookup\n", len(rtl.lookup))
-	return
 }
 
 // clean removes non-root elements from the referral lookup table.

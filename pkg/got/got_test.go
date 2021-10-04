@@ -209,10 +209,6 @@ func TestGetResourceRecordSet(t *testing.T) {
 	}
 }
 
-var gzitest = []string{
-	"test",
-}
-
 func TestGetZoneID(t *testing.T) {
 	mockSvc := &mockRoute53Client{}
 	for _, s := range grrstest {
