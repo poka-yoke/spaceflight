@@ -16,6 +16,9 @@ var (
 	// Resolver allows to override the DNS resolver. Defaults to
 	// the standard library's default resolver.
 	Resolver = net.DefaultResolver
+	// reverserCache caches the reversing of IP Address members to
+	// avoid recomputation if the IP does not change
+	reverserCache = make(map[string]string)
 )
 
 // reverseAddress converts IP address into reversed address for query.
@@ -36,9 +39,14 @@ func reverseAddress(ipAddress string) string {
 // the BL. If the number of matches in the lookup were 0, it means not
 // present.
 func Query(ctx context.Context, provider, address string) int {
+	reverse, ok := reverserCache[address]
+	if !ok {
+		reverse = reverseAddress(address)
+		reverserCache[address] = reverse
+	}
 	queryAddress := fmt.Sprintf(
 		"%v.%v",
-		reverseAddress(address),
+		reverse,
 		provider,
 	)
 
